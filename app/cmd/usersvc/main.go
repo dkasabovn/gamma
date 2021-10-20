@@ -5,23 +5,20 @@ import (
 	"gamma/app/system/auth"
 	"net/http"
 
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
-
-
 
 func main() {
 
 	e := echo.New()
 
-
 	authRequired := e.Group("/api")
 
 	// Configure middleware with the custom claims type
 	jwtConfig := middleware.JWTConfig{
-		Claims:     &auth.Claims{},
-		SigningKey: []byte(auth.GetJwtSecret()),
+		Claims:      &auth.Claims{},
+		SigningKey:  []byte(auth.GetJwtSecret()),
 		TokenLookup: "cookie:access-token",
 	}
 	authRequired.Use(middleware.JWTWithConfig(jwtConfig))
@@ -31,7 +28,6 @@ func main() {
 
 	e.Logger.Fatal(e.Start(":8000"))
 
-
 }
 
 func noAuth(ctx echo.Context) error {
@@ -39,6 +35,6 @@ func noAuth(ctx echo.Context) error {
 }
 
 func authNeed(ctx echo.Context) error {
-	userCookie, _:= ctx.Cookie("user")
-	return ctx.JSON(http.StatusAccepted, fmt.Sprintf("You have been authenticated %s", userCookie.Value ))
+	userCookie, _ := ctx.Cookie("user")
+	return ctx.JSON(http.StatusAccepted, fmt.Sprintf("You have been authenticated %s", userCookie.Value))
 }

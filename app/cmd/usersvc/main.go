@@ -13,9 +13,6 @@ func main() {
 
 	e := echo.New()
 
-	//any request should try to update the tokens
-	e.Use(user.MiddleTokenUpdate)
-
 	// adds temp get and post routes
 	user.JwtRoutes(e)
 

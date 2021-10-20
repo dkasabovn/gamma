@@ -7,8 +7,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
-
 func main() {
 
 	e := echo.New()
@@ -20,7 +18,6 @@ func main() {
 	e.GET("/", noAuth)
 
 	e.Logger.Fatal(e.Start(":8000"))
-
 
 }
 

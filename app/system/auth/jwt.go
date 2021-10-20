@@ -11,16 +11,16 @@ import (
 
 const (
 	// name of tokens in request
-	AccessName = "access-token"
+	AccessName  = "access-token"
 	RefreshName = "refresh-token"
 
 	// keys
-	jwtSecretKey = "SECRET"
+	jwtSecretKey  = "SECRET"
 	jwtRefreshKey = "REFRESH"
 )
 
 type Claims struct {
-	Email    string `json:"email"`
+	Email string `json:"email"`
 	jwt.StandardClaims
 }
 
@@ -28,8 +28,8 @@ var (
 
 	// config for JWT tokens specail token name
 	CustomJwtConfig = middleware.JWTConfig{
-		Claims:     &Claims{},
-		SigningKey: []byte(jwtSecretKey),
+		Claims:      &Claims{},
+		SigningKey:  []byte(jwtSecretKey),
 		TokenLookup: fmt.Sprintf("cookie:%s", AccessName),
 	}
 )
@@ -48,14 +48,14 @@ func TokenCookie(name, token string, expiration time.Time) *http.Cookie {
 	cookie.Name = name
 	cookie.Value = token
 	cookie.Expires = expiration
-    cookie.Path = "/"
-    // Http-only helps mitigate the risk of client side script accessing the protected cookie.
+	cookie.Path = "/"
+	// Http-only helps mitigate the risk of client side script accessing the protected cookie.
 	cookie.HttpOnly = true
 
 	return cookie
 }
 
-func UserCookie(email string , expireTime time.Time) *http.Cookie{
+func UserCookie(email string, expireTime time.Time) *http.Cookie {
 	// sets user
 	cookie := new(http.Cookie)
 	cookie.Name = "email"
@@ -72,7 +72,7 @@ func generateToken(email string, expireTime time.Time, secret []byte) (string, t
 		Email: email,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
-		} ,
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
@@ -94,11 +94,3 @@ func GenerateRefreshToken(email string) (string, time.Time, error) {
 	expireTime := time.Now().Add(72 * time.Hour)
 	return generateToken(email, expireTime, []byte(jwtRefreshKey))
 }
-
-
-
-
-
-
-
-

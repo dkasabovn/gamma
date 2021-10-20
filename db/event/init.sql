@@ -56,3 +56,5 @@ ALTER TABLE "EventApplications" ADD FOREIGN KEY ("OrgEventFk") REFERENCES "Organ
 ALTER TABLE "UserEvents" ADD FOREIGN KEY ("UserFk") REFERENCES "Users" ("UserID");
 
 ALTER TABLE "UserEvents" ADD FOREIGN KEY ("OrgEventFk") REFERENCES "OrganizationEvents" ("OrganizationEventID");
+
+CREATE UNIQUE INDEX "UserUuidIndex" ON "Users" ("UserUuid");

@@ -124,6 +124,26 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
+// UserByUserUUID retrieves a row from 'public.Users' as a User.
+//
+// Generated from index 'UserUuidIndex'.
+func UserByUserUUID(ctx context.Context, db DB, userUUID sql.NullString) (*User, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`UserID, UserUuid ` +
+		`FROM public.Users ` +
+		`WHERE UserUuid = $1`
+	// run
+	logf(sqlstr, userUUID)
+	u := User{
+		_exists: true,
+	}
+	if err := db.QueryRowContext(ctx, sqlstr, userUUID).Scan(&u.UserID, &u.UserUUID); err != nil {
+		return nil, logerror(err)
+	}
+	return &u, nil
+}
+
 // UserByUserID retrieves a row from 'public.Users' as a User.
 //
 // Generated from index 'Users_pkey'.

@@ -27,7 +27,7 @@ func updateTokens(email string , c echo.Context) error {
 	return nil
 }
 
-func MiddleTokenUpdate(next echo.HandlerFunc) echo.HandlerFunc {
+func middleTokenUpdate(next echo.HandlerFunc) echo.HandlerFunc {
 
 	// middleware to update refresh tokens
 
@@ -68,17 +68,27 @@ func MiddleTokenUpdate(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 
-func JwtRoutes(e *echo.Echo) {
-	authRequired := e.Group("/api")
-	authRequired.Use(middleware.JWTWithConfig(auth.CustomJwtConfig))
-
+func OpenRoutes(e *echo.Echo) {
+	
+	open := e.Group("/user")
+	
 	{
-		user(authRequired)
+		open.GET("/", getUsers)
+		open.POST("/", createUser)
+		open.POST("/login", login)
 	}
 
+	
 }
 
-func user(group *echo.Group) {
-	group.GET("/", getUser)
-	group.POST("/", createUser)
+func JwtRoutes(e *echo.Echo) {
+	authRequired := e.Group("/auth")
+	authRequired.Use(middleware.JWTWithConfig(auth.CustomJwtConfig))
+	authRequired.Use(middleTokenUpdate)
+
+	{
+		// authRequired.GET("/", getAuth)
+		// authRequired.POST("/", updateUser)
+	}
+
 }

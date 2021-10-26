@@ -25,7 +25,7 @@ var (
 	clientSingleton sync.Once
 )
 
-func envVariable(key string) string {
+func EnvVariable(key string) string {
 
   // load .env file
   err := godotenv.Load(".env")
@@ -49,7 +49,7 @@ func MongoUsers() *mongo.Collection {
 
 func createConnection() *mongo.Client {
 	// methods creates connection with mongodb
-	uri := envVariable("MONGO_URI")
+	uri := EnvVariable("MONGO_URI")
 	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(uri))
 	if err != nil {
 		panic(err)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	userDB "gamma/app/datastore/user"
+	"gamma/app/system/auth"
 	"gamma/app/system/auth/argon"
 
 	"github.com/labstack/echo/v4"
@@ -19,6 +20,7 @@ type(
 	userids struct {
 		IDs []primitive.ObjectID `bson:"ids"`
 	}
+
 )
 
 func validateNewUser(user *userDB.User) error {
@@ -50,10 +52,9 @@ func getUsers(c echo.Context) error {
 	}
 
 	filter := bson.M{"_id": bson.M{"$in": ids.IDs}}
-	opts := options.Find().SetProjection(bson.M{"hashedPassword": 0})
+	opts := options.Find().SetProjection(bson.M{"hashedPassword": 0, "device": 0})
 	
-	// var users []userDB.User
-	cursor, err := userDB.MongoUsers().Find(context.TODO(), filter, opts)
+	cursor, err := userDB.MongoUsers().Find(c.Request().Context(), filter, opts)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
@@ -64,6 +65,20 @@ func getUsers(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, users)
+}
+
+func getUser(c echo.Context) error {
+	
+	userCookie, _ := c.Cookie(auth.ClaimID)
+	id, _ := primitive.ObjectIDFromHex(userCookie.Value)
+	var dbUser userDB.User
+	filter := bson.M{"_id": id}
+
+	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter).Decode(&dbUser); err != nil {
+		return c.JSON(http.StatusServiceUnavailable, err)
+	}
+
+	return c.JSON(http.StatusAccepted, dbUser)
 }
 
 func createUser(c echo.Context) error {
@@ -84,7 +99,7 @@ func createUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, "HASHING ISSUE")
 	}
 
-	result, err := userDB.MongoUsers().InsertOne(context.TODO(), user)
+	result, err := userDB.MongoUsers().InsertOne(c.Request().Context(), user)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
@@ -107,32 +122,54 @@ func login(c echo.Context) error {
 
 
 	var dbUser userDB.User
-	opts := options.FindOne().SetProjection(bson.M{"hashedPassword": 1})
+	// opts := options.FindOne().SetProjection(bson.M{"hashedPassword": 1, "hashedPassword": 1})
 	filter := bson.M{"email": user.Email}
 
-	if err := userDB.MongoUsers().FindOne(context.TODO(), filter, opts).Decode(&dbUser); err != nil {
-		fmt.Println("user not found")
+	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter).Decode(&dbUser); err != nil {
 		return c.JSON(http.StatusServiceUnavailable, err)
 	}
 	
 
 	match, err := argon.PasswordIsMatch(user.HashedPassword, dbUser.HashedPassword)
 	if !match {
-		fmt.Println("poops")
 		return c.JSON(http.StatusUnauthorized, "Incorrect Password")
 	}
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "HASHING error")
 	}
-	fmt.Println("Found could match")
+	fmt.Println(dbUser)
 
-	if err := updateTokens(dbUser.Email, c); err != nil {
+	if err := updateTokens(dbUser.ID, c); err != nil {
 		return c.JSON(http.StatusUnauthorized, "Token is invalid")
 	}
 
 	return c.JSON(http.StatusAccepted, "Logged In")
-	
-
 }
 
+func updateUser(c echo.Context) error {
+
+	userCookie, _ := c.Cookie(auth.ClaimID)
+	id, _ := primitive.ObjectIDFromHex(userCookie.Value)
+
+	updateData := new(userDB.User)
+	if err := c.Bind(updateData); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
+
+	updates := bson.M{
+		"$set":  bson.M{
+        	"imageLinks":  updateData.ImageLinks,
+        	"bio": updateData.Bio,
+    }}
+
+	result, err := userDB.MongoUsers().UpdateByID(c.Request().Context(), id, updates)
+	if err != nil {
+		return c.JSON(http.StatusServiceUnavailable, err)
+	}
+	if result.ModifiedCount == 0 {
+		return c.JSON(http.StatusBadRequest, "User does not exist")
+	}
+
+	return c.JSON(http.StatusAccepted, "updated")
+}

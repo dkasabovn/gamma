@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"gamma/app/system/auth"
 	"net/http"
 	"time"
@@ -8,20 +9,21 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 
-func updateTokens(email string , c echo.Context) error {
-	accessToken, accessExp, err := auth.GenerateAccessToken(email)
+func updateTokens(id primitive.ObjectID , c echo.Context) error {
+	accessToken, accessExp, err := auth.GenerateAccessToken(id)
 	if err != nil {
 		return err
 	}
-	refreshToken, refreshExp, err := auth.GenerateRefreshToken(email)
+	refreshToken, refreshExp, err := auth.GenerateRefreshToken(id)
 	if err != nil {
 		return err
 	}
 
-	c.SetCookie(auth.UserCookie(email, accessExp))
+	c.SetCookie(auth.UserCookie(id, accessExp))
 	c.SetCookie(auth.TokenCookie(auth.AccessName, accessToken, accessExp))
 	c.SetCookie(auth.TokenCookie(auth.RefreshName, refreshToken, refreshExp))
 	return nil
@@ -33,11 +35,12 @@ func middleTokenUpdate(next echo.HandlerFunc) echo.HandlerFunc {
 
 
 	return func (c echo.Context) error {
-		if c.Get("email") == nil {
+		if c.Get(auth.ClaimID) == nil {
+			fmt.Println("id not found")
 			return next(c)
 		}
 
-		u := c.Get("email").(*jwt.Token)
+		u := c.Get(auth.ClaimID).(*jwt.Token)
 		claims := u.Claims.(*auth.Claims)
 
 		if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) < 15 * time.Minute {
@@ -54,7 +57,7 @@ func middleTokenUpdate(next echo.HandlerFunc) echo.HandlerFunc {
 				}
 
 				if refreshTkn != nil && refreshTkn.Valid {
-					err = updateTokens(claims.Email, c)
+					err = updateTokens(claims.ID, c)
 					if err != nil {
 						return next(c)
 					}
@@ -70,14 +73,12 @@ func middleTokenUpdate(next echo.HandlerFunc) echo.HandlerFunc {
 
 func OpenRoutes(e *echo.Echo) {
 	
-	open := e.Group("/user")
+	open := e.Group("/api")
 	
 	{
-		open.GET("/", getUsers)
-		open.POST("/", createUser)
+		open.POST("/user", createUser)
 		open.POST("/login", login)
 	}
-
 	
 }
 
@@ -85,10 +86,11 @@ func JwtRoutes(e *echo.Echo) {
 	authRequired := e.Group("/auth")
 	authRequired.Use(middleware.JWTWithConfig(auth.CustomJwtConfig))
 	authRequired.Use(middleTokenUpdate)
-
+	
 	{
-		// authRequired.GET("/", getAuth)
-		// authRequired.POST("/", updateUser)
+		authRequired.GET("/users", getUsers)
+		authRequired.GET("", getUser)
+		authRequired.POST("", updateUser)
 	}
 
 }

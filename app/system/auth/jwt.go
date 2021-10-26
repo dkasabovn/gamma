@@ -2,11 +2,13 @@ package auth
 
 import (
 	"fmt"
+	"gamma/app/datastore/user"
 	"net/http"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4/middleware"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -20,12 +22,12 @@ const (
 )
 
 type Claims struct {
-	Email string `json:"email"`
+	ID     primitive.ObjectID `bson:"_id"`
 	jwt.StandardClaims
 }
 
 var (
-
+	ClaimID = "_id"
 	// config for JWT tokens specail token name
 	CustomJwtConfig = middleware.JWTConfig{
 		Claims:      &Claims{},
@@ -35,11 +37,11 @@ var (
 )
 
 func GetJwtSecret() string {
-	return jwtSecretKey
+	return user.EnvVariable("SECRET_JWT")
 }
 
 func GetJwtRefresh() string {
-	return jwtRefreshKey
+	return user.EnvVariable("REFRESH_JWT")
 }
 
 func TokenCookie(name, token string, expiration time.Time) *http.Cookie {
@@ -55,21 +57,21 @@ func TokenCookie(name, token string, expiration time.Time) *http.Cookie {
 	return cookie
 }
 
-func UserCookie(email string, expireTime time.Time) *http.Cookie {
+func UserCookie(id primitive.ObjectID, expireTime time.Time) *http.Cookie {
 	// sets user
 	cookie := new(http.Cookie)
-	cookie.Name = "email"
-	cookie.Value = email
+	cookie.Name = ClaimID
+	cookie.Value = id.Hex()
 	cookie.Expires = expireTime
 	cookie.Path = "/"
 
 	return cookie
 }
 
-func generateToken(email string, expireTime time.Time, secret []byte) (string, time.Time, error) {
+func generateToken(id primitive.ObjectID, expireTime time.Time, secret []byte) (string, time.Time, error) {
 	// generates user token
 	claim := &Claims{
-		Email: email,
+		ID: id,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
 		},
@@ -85,12 +87,12 @@ func generateToken(email string, expireTime time.Time, secret []byte) (string, t
 	return tokenString, expireTime, nil
 }
 
-func GenerateAccessToken(email string) (string, time.Time, error) {
+func GenerateAccessToken(id primitive.ObjectID) (string, time.Time, error) {
 	expireTime := time.Now().Add(1 * time.Hour)
-	return generateToken(email, expireTime, []byte(jwtSecretKey))
+	return generateToken(id, expireTime, []byte(jwtSecretKey))
 }
 
-func GenerateRefreshToken(email string) (string, time.Time, error) {
+func GenerateRefreshToken(id primitive.ObjectID) (string, time.Time, error) {
 	expireTime := time.Now().Add(72 * time.Hour)
-	return generateToken(email, expireTime, []byte(jwtRefreshKey))
+	return generateToken(id, expireTime, []byte(jwtRefreshKey))
 }

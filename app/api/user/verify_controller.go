@@ -25,18 +25,27 @@ type(
 
 func validateNewUser(user *userDB.User) error {
 	if user.HashedPassword == "" {
+		fmt.Println("password")
 		return errors.New("missing password")
 	}
 	if user.Email == "" {
+		fmt.Println("email")
+
 		return errors.New("missing email")
 	} 
 	if user.FirstName == "" {
+		fmt.Println("firstname")
+
 		return errors.New("missing firstname")
 	}
 	if user.DisplayName == "" {
+		fmt.Println("display")
+
 		return errors.New("missing DisplayName")
 	}
 	if user.Bio == "" {
+		fmt.Println("bio")
+
 		return errors.New("missing bio")
 	}
 
@@ -86,11 +95,11 @@ func createUser(c echo.Context) error {
 	user := new(userDB.User)
 	
 	if err := c.Bind(user); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, "binding issue")
 	}
 
 	if err := validateNewUser(user); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, "not valid user")
 	}
 
 	var err error

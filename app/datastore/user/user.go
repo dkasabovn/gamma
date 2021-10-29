@@ -13,6 +13,7 @@ type (
 		Bio 			string              `bson:"bio,omitempty"`
 		HashedPassword 	string              `bson:"hashedPassword,omitempty"`
 		ImageLinks 		[]string            `bson:"imageLinks,omitempty"`
+		Device			string				`bson:"device,omitempty"`
 	}
 )
 

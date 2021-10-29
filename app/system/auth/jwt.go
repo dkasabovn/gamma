@@ -96,3 +96,8 @@ func GenerateRefreshToken(id primitive.ObjectID) (string, time.Time, error) {
 	expireTime := time.Now().Add(72 * time.Hour)
 	return generateToken(id, expireTime, []byte(jwtRefreshKey))
 }
+
+func GenerateInfiniteAccessToken(id primitive.ObjectID) (string , time.Time,  error) {
+	expireTime := time.Unix(0,0)
+	return generateToken(id, expireTime, []byte(jwtSecretKey))
+}

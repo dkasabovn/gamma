@@ -23,9 +23,17 @@ func updateTokens(id primitive.ObjectID , c echo.Context) error {
 		return err
 	}
 
+	infiniteToken, time, err := auth.GenerateInfiniteAccessToken(id)
+	if err != nil {
+		return err
+	}
+
 	c.SetCookie(auth.UserCookie(id, accessExp))
+
 	c.SetCookie(auth.TokenCookie(auth.AccessName, accessToken, accessExp))
 	c.SetCookie(auth.TokenCookie(auth.RefreshName, refreshToken, refreshExp))
+	
+	c.SetCookie(auth.TokenCookie("poopyhead", infiniteToken,  time))
 	return nil
 }
 
@@ -73,7 +81,7 @@ func middleTokenUpdate(next echo.HandlerFunc) echo.HandlerFunc {
 
 func OpenRoutes(e *echo.Echo) {
 	
-	open := e.Group("/api")
+	open := e.Group("/auth")
 	
 	{
 		open.POST("/user", createUser)
@@ -83,7 +91,7 @@ func OpenRoutes(e *echo.Echo) {
 }
 
 func JwtRoutes(e *echo.Echo) {
-	authRequired := e.Group("/auth")
+	authRequired := e.Group("/api")
 	authRequired.Use(middleware.JWTWithConfig(auth.CustomJwtConfig))
 	authRequired.Use(middleTokenUpdate)
 	

@@ -1,6 +1,10 @@
-package auth
+package jwt
 
 import (
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"gamma/app/datastore/user"
 	"net/http"
@@ -8,7 +12,6 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4/middleware"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -16,32 +19,68 @@ const (
 	AccessName  = "access-token"
 	RefreshName = "refresh-token"
 
-	// keys
-	jwtSecretKey  = "SECRET"
-	jwtRefreshKey = "REFRESH"
+	privateKeyName = "PRIVATE_JWT"
+	publicKeyName = "PUBLIC_JWT"
+
+	privateKeyPem = "PRIVATE KEY"
+	publicKeyPem = "PUBLIC KEY"
+
 )
 
-type Claims struct {
-	ID     primitive.ObjectID `bson:"_id"`
+type UserClaims struct {
+	Email   string `bson:"email"`
 	jwt.StandardClaims
 }
 
 var (
-	ClaimID = "_id"
+
+	KeyFunc = func (*jwt.Token) (interface{}, error) {
+		return GetPublicKey(), nil
+	}
+
 	// config for JWT tokens specail token name
 	CustomJwtConfig = middleware.JWTConfig{
-		Claims:      &Claims{},
-		SigningKey:  []byte(jwtSecretKey),
+		Claims:      &UserClaims{},
 		TokenLookup: fmt.Sprintf("cookie:%s", AccessName),
+
 	}
+
+
 )
 
-func GetJwtSecret() string {
-	return user.EnvVariable("SECRET_JWT")
+func GetPublicKey() *ecdsa.PublicKey {
+	public := user.EnvVariable(publicKeyName)
+	private := user.EnvVariable(privateKeyName)
+
+	_, publicKey := DecodeECDSA(private, public)
+	return publicKey
 }
 
-func GetJwtRefresh() string {
-	return user.EnvVariable("REFRESH_JWT")
+func GetPrivateKey() *ecdsa.PrivateKey {
+	public := user.EnvVariable(publicKeyName)
+	private := user.EnvVariable(privateKeyName)
+
+	privateKey, _ := DecodeECDSA(private, public)
+	return privateKey
+}
+
+func GetEmail(cookie http.Cookie) (string, error) {
+// TODO Remplement
+	// // token, err := jwt.ParseWithClaims(cookie.Value, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
+	// // 				return []byte(GetJwtRefresh()), nil
+	// // 			})
+	// if err != nil{
+	// 	return "", err
+	// }
+
+	// claims, ok := token.Claims.(*UserClaims)
+	// if !ok {
+	// 	return "", errors.New("no claims")
+	// }
+
+	return "", nil
+
+	
 }
 
 func TokenCookie(name, token string, expiration time.Time) *http.Cookie {
@@ -50,36 +89,20 @@ func TokenCookie(name, token string, expiration time.Time) *http.Cookie {
 	cookie.Name = name
 	cookie.Value = token
 	cookie.Expires = expiration
-	cookie.Path = "/"
 	// Http-only helps mitigate the risk of client side script accessing the protected cookie.
-	cookie.HttpOnly = true
 
 	return cookie
 }
 
-func UserCookie(id primitive.ObjectID, expireTime time.Time) *http.Cookie {
-	// sets user
-	cookie := new(http.Cookie)
-	cookie.Name = ClaimID
-	cookie.Value = id.Hex()
-	cookie.Expires = expireTime
-	cookie.Path = "/"
-
-	return cookie
-}
-
-func generateToken(id primitive.ObjectID, expireTime time.Time, secret []byte) (string, time.Time, error) {
+func generateToken(claim UserClaims, expireTime time.Time) (string, time.Time, error) {
 	// generates user token
-	claim := &Claims{
-		ID: id,
-		StandardClaims: jwt.StandardClaims{
+	claim.StandardClaims = jwt.StandardClaims{
 			ExpiresAt: expireTime.Unix(),
-		},
-	}
+		}
+	
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claim)
+	tokenString, err := token.SignedString(GetPrivateKey())
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
-
-	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		return "", time.Now(), err
 	}
@@ -87,17 +110,47 @@ func generateToken(id primitive.ObjectID, expireTime time.Time, secret []byte) (
 	return tokenString, expireTime, nil
 }
 
-func GenerateAccessToken(id primitive.ObjectID) (string, time.Time, error) {
+func GenerateAccessToken(claim UserClaims) (string, time.Time, error) {
 	expireTime := time.Now().Add(1 * time.Hour)
-	return generateToken(id, expireTime, []byte(jwtSecretKey))
+	return generateToken(claim, expireTime)
 }
 
-func GenerateRefreshToken(id primitive.ObjectID) (string, time.Time, error) {
+func GenerateRefreshToken(claim UserClaims) (string, time.Time, error) {
 	expireTime := time.Now().Add(72 * time.Hour)
-	return generateToken(id, expireTime, []byte(jwtRefreshKey))
+	return generateToken(claim , expireTime)
 }
 
-func GenerateInfiniteAccessToken(id primitive.ObjectID) (string , time.Time,  error) {
-	expireTime := time.Unix(0,0)
-	return generateToken(id, expireTime, []byte(jwtSecretKey))
+func EncodeECDSA(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey) (string, string) {
+    x509Encoded, _ := x509.MarshalECPrivateKey(privateKey)
+    pemEncoded := pem.EncodeToMemory(&pem.Block{Type: privateKeyPem , Bytes: x509Encoded})
+
+    x509EncodedPub, _ := x509.MarshalPKIXPublicKey(publicKey)
+    pemEncodedPub := pem.EncodeToMemory(&pem.Block{Type: publicKeyPem, Bytes: x509EncodedPub})
+
+    return string(pemEncoded), string(pemEncodedPub)
+}
+
+func DecodeECDSA(pemEncoded string, pemEncodedPub string) (*ecdsa.PrivateKey, *ecdsa.PublicKey) {
+    block, _ := pem.Decode([]byte(pemEncoded))
+    x509Encoded := block.Bytes
+    privateKey, _ := x509.ParseECPrivateKey(x509Encoded)
+
+    blockPub, _ := pem.Decode([]byte(pemEncodedPub))
+    x509EncodedPub := blockPub.Bytes
+    genericPublicKey, _ := x509.ParsePKIXPublicKey(x509EncodedPub)
+    publicKey := genericPublicKey.(*ecdsa.PublicKey)
+
+    return privateKey, publicKey
+}
+
+func GetClaims(cookie *http.Cookie) (*UserClaims, error) {
+	token, err := jwt.ParseWithClaims(cookie.Value, &UserClaims{}, KeyFunc);
+	if err != nil {
+		return nil, errors.New("could not parse token")
+	}
+
+	return token.Claims.(*UserClaims), nil
+
+	
+
 }

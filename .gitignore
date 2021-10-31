@@ -2,3 +2,4 @@ app/datastore/user/.env
 setup.fish
 app/cmd/usersvc/.env
 .gitignore
+.keys

@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	refresh "gamma/app/api/core"
 	userDB "gamma/app/datastore/user"
-	"gamma/app/system/auth"
+	jwt "gamma/app/system/auth"
 	"gamma/app/system/auth/argon"
 
 	"github.com/labstack/echo/v4"
@@ -22,6 +23,12 @@ type(
 	}
 
 )
+
+var (
+	displayData = bson.M{"hashedPassword": 0, "device": 0}
+)
+
+
 
 func validateNewUser(user *userDB.User) error {
 	if user.HashedPassword == "" {
@@ -57,20 +64,20 @@ func getUsers(c echo.Context) error {
 	ids := new(userids)
 	
 	if err := c.Bind(ids); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	filter := bson.M{"_id": bson.M{"$in": ids.IDs}}
-	opts := options.Find().SetProjection(bson.M{"hashedPassword": 0, "device": 0})
+	opts := options.Find().SetProjection(displayData)
 	
 	cursor, err := userDB.MongoUsers().Find(c.Request().Context(), filter, opts)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	var users []userDB.User
 	if err := cursor.All(context.TODO(), &users); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	return c.JSON(http.StatusOK, users)
@@ -78,13 +85,17 @@ func getUsers(c echo.Context) error {
 
 func getUser(c echo.Context) error {
 	
-	userCookie, _ := c.Cookie(auth.ClaimID)
-	id, _ := primitive.ObjectIDFromHex(userCookie.Value)
-	var dbUser userDB.User
-	filter := bson.M{"_id": id}
+	email, err := getEmail(c)
+	if err != nil {
+		return c.JSON(http.StatusServiceUnavailable, err.Error())
+	}
 
-	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter).Decode(&dbUser); err != nil {
-		return c.JSON(http.StatusServiceUnavailable, err)
+	filter := bson.M{"email": email}
+	opts := options.FindOne().SetProjection(displayData)
+	
+	var dbUser userDB.User
+	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter, opts).Decode(&dbUser); err != nil {
+		return c.JSON(http.StatusServiceUnavailable, err.Error())
 	}
 
 	return c.JSON(http.StatusAccepted, dbUser)
@@ -99,7 +110,7 @@ func createUser(c echo.Context) error {
 	}
 
 	if err := validateNewUser(user); err != nil {
-		return c.JSON(http.StatusBadRequest, "not valid user")
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	var err error
@@ -110,7 +121,7 @@ func createUser(c echo.Context) error {
 
 	result, err := userDB.MongoUsers().InsertOne(c.Request().Context(), user)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 	
 	fmt.Printf("[+] inserted: %s", result.InsertedID)
@@ -125,13 +136,8 @@ func login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
-	if err := validateNewUser(&user); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
-	}
-
 
 	var dbUser userDB.User
-	// opts := options.FindOne().SetProjection(bson.M{"hashedPassword": 1, "hashedPassword": 1})
 	filter := bson.M{"email": user.Email}
 
 	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter).Decode(&dbUser); err != nil {
@@ -147,23 +153,27 @@ func login(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "HASHING error")
 	}
-	fmt.Println(dbUser)
+	
+	claims := &jwt.UserClaims{
+		Email:  user.Email,
+	} 
 
-	if err := updateTokens(dbUser.ID, c); err != nil {
+	if err := refresh.UpdateTokens(*claims, c); err != nil {
 		return c.JSON(http.StatusUnauthorized, "Token is invalid")
 	}
 
 	return c.JSON(http.StatusAccepted, "Logged In")
 }
 
+// TODO now needs to update based on email
 func updateUser(c echo.Context) error {
 
-	userCookie, _ := c.Cookie(auth.ClaimID)
-	id, _ := primitive.ObjectIDFromHex(userCookie.Value)
+	userCookie, _ := c.Cookie(jwt.RefreshName)
+	email, _ := jwt.GetEmail(*userCookie)
 
 	updateData := new(userDB.User)
 	if err := c.Bind(updateData); err != nil {
-		return c.JSON(http.StatusBadRequest, err)
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	updates := bson.M{
@@ -172,13 +182,30 @@ func updateUser(c echo.Context) error {
         	"bio": updateData.Bio,
     }}
 
-	result, err := userDB.MongoUsers().UpdateByID(c.Request().Context(), id, updates)
+	result, err := userDB.MongoUsers().UpdateByID(c.Request().Context(), email, updates)
 	if err != nil {
-		return c.JSON(http.StatusServiceUnavailable, err)
+		return c.JSON(http.StatusServiceUnavailable, err.Error())
 	}
 	if result.ModifiedCount == 0 {
 		return c.JSON(http.StatusBadRequest, "User does not exist")
 	}
 
 	return c.JSON(http.StatusAccepted, "updated")
+}
+
+func getEmail(c echo.Context) (string, error) {
+	accessCookie, err := c.Cookie(jwt.AccessName)
+	if err != nil {
+		return "", err
+	}
+
+	claims, err := jwt.GetClaims(accessCookie)
+	if err != nil {
+		return "", err
+	}
+
+	return claims.Email, nil
+
+
+	
 }

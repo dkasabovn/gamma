@@ -65,22 +65,20 @@ func GetPrivateKey() *ecdsa.PrivateKey {
 }
 
 func GetEmail(cookie http.Cookie) (string, error) {
-// TODO Remplement
-	// // token, err := jwt.ParseWithClaims(cookie.Value, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-	// // 				return []byte(GetJwtRefresh()), nil
-	// // 			})
-	// if err != nil{
-	// 	return "", err
-	// }
+	token, err := jwt.ParseWithClaims(cookie.Value, &UserClaims{}, KeyFunc)
+	if err != nil{
+		return "", err
+	}
 
-	// claims, ok := token.Claims.(*UserClaims)
-	// if !ok {
-	// 	return "", errors.New("no claims")
-	// }
+	claims, ok := token.Claims.(*UserClaims)
+	if !ok {
+		return "", errors.New("no claims")
+	}
+	if claims.Email == "" {
+		return "", errors.New("no email in Claims")
+	}
 
-	return "", nil
-
-	
+	return claims.Email , nil
 }
 
 func TokenCookie(name, token string, expiration time.Time) *http.Cookie {

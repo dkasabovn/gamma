@@ -143,6 +143,7 @@ func login(c echo.Context) error {
 	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter).Decode(&dbUser); err != nil {
 		return c.JSON(http.StatusServiceUnavailable, err)
 	}
+
 	
 
 	match, err := argon.PasswordIsMatch(user.HashedPassword, dbUser.HashedPassword)
@@ -155,14 +156,15 @@ func login(c echo.Context) error {
 	}
 	
 	claims := &jwt.UserClaims{
-		Email:  user.Email,
-	} 
+		Email:  dbUser.Email,
+		UUID: dbUser.ID,
+	}
 
 	if err := refresh.UpdateTokens(*claims, c); err != nil {
 		return c.JSON(http.StatusUnauthorized, "Token is invalid")
 	}
 
-	return c.JSON(http.StatusAccepted, "Logged In")
+	return c.JSON(http.StatusAccepted, "Logged in")
 }
 
 // TODO now needs to update based on email

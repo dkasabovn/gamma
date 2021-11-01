@@ -3,3 +3,4 @@ setup.fish
 app/cmd/usersvc/.env
 .gitignore
 .keys
+.vscode/settings.json

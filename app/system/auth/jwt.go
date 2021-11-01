@@ -12,6 +12,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4/middleware"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -29,6 +30,7 @@ const (
 
 type UserClaims struct {
 	Email   string `bson:"email"`
+	UUID    primitive.ObjectID `bson:"_id" json:"_id"`
 	jwt.StandardClaims
 }
 
@@ -56,7 +58,7 @@ func GetPublicKey() *ecdsa.PublicKey {
 	return publicKey
 }
 
-func GetPrivateKey() *ecdsa.PrivateKey {
+func getPrivateKey() *ecdsa.PrivateKey {
 	public := user.EnvVariable(publicKeyName)
 	private := user.EnvVariable(privateKeyName)
 
@@ -99,7 +101,7 @@ func generateToken(claim UserClaims, expireTime time.Time) (string, time.Time, e
 		}
 	
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, claim)
-	tokenString, err := token.SignedString(GetPrivateKey())
+	tokenString, err := token.SignedString(getPrivateKey())
 
 	if err != nil {
 		return "", time.Now(), err
@@ -115,6 +117,11 @@ func GenerateAccessToken(claim UserClaims) (string, time.Time, error) {
 
 func GenerateRefreshToken(claim UserClaims) (string, time.Time, error) {
 	expireTime := time.Now().Add(72 * time.Hour)
+	return generateToken(claim , expireTime)
+}
+
+func GenerateServiceToken(claim UserClaims) (string, time.Time, error) {
+	expireTime := time.Now().Add(5 * time.Minute)
 	return generateToken(claim , expireTime)
 }
 
@@ -148,7 +155,6 @@ func GetClaims(cookie *http.Cookie) (*UserClaims, error) {
 	}
 
 	return token.Claims.(*UserClaims), nil
-
-	
-
 }
+
+

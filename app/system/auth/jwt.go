@@ -30,7 +30,7 @@ const (
 
 type UserClaims struct {
 	Email   string `bson:"email"`
-	UUID    primitive.ObjectID `bson:"_id" json:"_id"`
+	UUID    primitive.ObjectID `bson:"_id" json:"uuid"`
 	jwt.StandardClaims
 }
 

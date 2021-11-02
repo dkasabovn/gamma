@@ -4,13 +4,12 @@ package models
 
 import (
 	"context"
-	"database/sql"
 )
 
 // User represents a row from 'public.Users'.
 type User struct {
-	UserID   int            `json:"UserID"`   // UserID
-	UserUUID sql.NullString `json:"UserUuid"` // UserUuid
+	UserID   int    `json:"UserID"`   // UserID
+	UserUUID string `json:"UserUuid"` // UserUuid
 	// xo fields
 	_exists, _deleted bool
 }
@@ -127,7 +126,7 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 // UserByUserUUID retrieves a row from 'public.Users' as a User.
 //
 // Generated from index 'UserUuidIndex'.
-func UserByUserUUID(ctx context.Context, db DB, userUUID sql.NullString) (*User, error) {
+func UserByUserUUID(ctx context.Context, db DB, userUUID string) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
 		`UserID, UserUuid ` +

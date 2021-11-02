@@ -4,15 +4,14 @@ package models
 
 import (
 	"context"
-	"database/sql"
 )
 
 // Organization represents a row from 'public.Organizations'.
 type Organization struct {
-	OrganizationID   int            `json:"OrganizationID"`   // OrganizationID
-	Name             sql.NullString `json:"Name"`             // Name
-	Description      sql.NullString `json:"Description"`      // Description
-	OrganizationUUID sql.NullString `json:"OrganizationUuid"` // OrganizationUuid
+	OrganizationID   int    `json:"OrganizationID"`   // OrganizationID
+	Name             string `json:"Name"`             // Name
+	Description      string `json:"Description"`      // Description
+	OrganizationUUID string `json:"OrganizationUuid"` // OrganizationUuid
 	// xo fields
 	_exists, _deleted bool
 }

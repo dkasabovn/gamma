@@ -1,9 +1,13 @@
 package main
 
 import (
-	"gamma/app/datastore/event"
+	"gamma/app/api/event"
+
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
-	event.EventDB()
+	e := echo.New()
+	event.SetUpInfoGroup(e)
+	e.Logger.Fatal(e.Start(":8080"))
 }

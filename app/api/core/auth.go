@@ -1,4 +1,4 @@
-package refresh
+package core
 
 import (
 	"fmt"
@@ -24,14 +24,12 @@ func UpdateTokens(claim auth.UserClaims, c echo.Context) error {
 		fmt.Println("error while making refresh")
 		return err
 	}
-	
-	
+
 	c.SetCookie(auth.TokenCookie(auth.AccessName, accessToken, accessExp))
 	c.SetCookie(auth.TokenCookie(auth.RefreshName, refreshToken, refreshExp))
-	
+
 	return nil
 }
-
 
 /*
 Middleware method to validate JWT and update tokens if needed
@@ -40,30 +38,28 @@ return status.unauthorized if refresh tokens are bad, or if tokens could no be u
 func JwtMiddle(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
-
-		refreshCookie, err := c.Cookie(auth.RefreshName);
+		refreshCookie, err := c.Cookie(auth.RefreshName)
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, "Log in first");
+			return c.JSON(http.StatusUnauthorized, "Log in first")
 		}
-		accessCookie, err := c.Cookie(auth.AccessName);
+		accessCookie, err := c.Cookie(auth.AccessName)
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, "Log in first");
+			return c.JSON(http.StatusUnauthorized, "Log in first")
 		}
 
-		
-		refreshToken, err := jwt.ParseWithClaims(refreshCookie.Value, &auth.UserClaims{}, auth.KeyFunc);
+		refreshToken, err := jwt.ParseWithClaims(refreshCookie.Value, &auth.UserClaims{}, auth.KeyFunc)
 		if err != nil || refreshToken == nil {
 			fmt.Print(err)
-			return  c.JSON(http.StatusUnauthorized, "Expired Refresh");
+			return c.JSON(http.StatusUnauthorized, "Expired Refresh")
 		}
 
 		claims := refreshToken.Claims.(*auth.UserClaims)
-		accessToken, err := jwt.ParseWithClaims(accessCookie.Value, &auth.UserClaims{}, auth.KeyFunc);
-		if err != nil || accessToken == nil{
+		accessToken, err := jwt.ParseWithClaims(accessCookie.Value, &auth.UserClaims{}, auth.KeyFunc)
+		if err != nil || accessToken == nil {
 			if err = UpdateTokens(*claims, c); err != nil {
-				return  c.JSON(http.StatusUnauthorized, "Expired Access and could not update tokens, Login in again ");
+				return c.JSON(http.StatusUnauthorized, "Expired Access and could not update tokens, Login in again ")
 			}
-		} else if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) < 15 * time.Minute {
+		} else if time.Unix(claims.ExpiresAt, 0).Sub(time.Now()) < 15*time.Minute {
 			if err = UpdateTokens(*claims, c); err != nil {
 				return c.JSON(http.StatusBadRequest, "Bad Claims")
 			}
@@ -77,7 +73,6 @@ func JwtMiddle(next echo.HandlerFunc) echo.HandlerFunc {
 
 // 	// middleware to update refresh tokens
 
-
 // 	return func (c echo.Context) error {
 // 		for _, cookie := range c.Cookies() {
 // 		fmt.Printf(">%s<\n", cookie.Name)
@@ -88,7 +83,6 @@ func JwtMiddle(next echo.HandlerFunc) echo.HandlerFunc {
 // 			return next(c)
 // 		}
 // 		fmt.Println("Found")
-
 
 // 		u := c.Get(auth.RefreshName).(*jwt.Token)
 // 		claims := u.Claims.(*auth.UserClaims)
@@ -112,7 +106,7 @@ func JwtMiddle(next echo.HandlerFunc) echo.HandlerFunc {
 // 						return next(c)
 // 					}
 // 				}
-				
+
 // 			}
 
 // 		}

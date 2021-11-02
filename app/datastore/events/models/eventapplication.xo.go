@@ -4,15 +4,15 @@ package models
 
 import (
 	"context"
-	"database/sql"
+	"time"
 )
 
 // EventApplication represents a row from 'public.EventApplications'.
 type EventApplication struct {
-	EventApplicationID int           `json:"EventApplicationID"` // EventApplicationID
-	UserFk             sql.NullInt64 `json:"UserFk"`             // UserFk
-	DateCreated        sql.NullTime  `json:"DateCreated"`        // DateCreated
-	OrgEventFk         sql.NullInt64 `json:"OrgEventFk"`         // OrgEventFk
+	EventApplicationID int       `json:"EventApplicationID"` // EventApplicationID
+	UserFk             int       `json:"UserFk"`             // UserFk
+	DateCreated        time.Time `json:"DateCreated"`        // DateCreated
+	OrgEventFk         int       `json:"OrgEventFk"`         // OrgEventFk
 	// xo fields
 	_exists, _deleted bool
 }
@@ -126,6 +126,40 @@ func (ea *EventApplication) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
+// EventApplicationsByUserFk retrieves a row from 'public.EventApplications' as a EventApplication.
+//
+// Generated from index 'EventApplicationsIndex'.
+func EventApplicationsByUserFk(ctx context.Context, db DB, userFk int) ([]*EventApplication, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`EventApplicationID, UserFk, DateCreated, OrgEventFk ` +
+		`FROM public.EventApplications ` +
+		`WHERE UserFk = $1`
+	// run
+	logf(sqlstr, userFk)
+	rows, err := db.QueryContext(ctx, sqlstr, userFk)
+	if err != nil {
+		return nil, logerror(err)
+	}
+	defer rows.Close()
+	// process
+	var res []*EventApplication
+	for rows.Next() {
+		ea := EventApplication{
+			_exists: true,
+		}
+		// scan
+		if err := rows.Scan(&ea.EventApplicationID, &ea.UserFk, &ea.DateCreated, &ea.OrgEventFk); err != nil {
+			return nil, logerror(err)
+		}
+		res = append(res, &ea)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, logerror(err)
+	}
+	return res, nil
+}
+
 // EventApplicationByEventApplicationID retrieves a row from 'public.EventApplications' as a EventApplication.
 //
 // Generated from index 'EventApplications_pkey'.
@@ -150,12 +184,12 @@ func EventApplicationByEventApplicationID(ctx context.Context, db DB, eventAppli
 //
 // Generated from foreign key 'EventApplications_OrgEventFk_fkey'.
 func (ea *EventApplication) OrganizationEvent(ctx context.Context, db DB) (*OrganizationEvent, error) {
-	return OrganizationEventByOrganizationEventID(ctx, db, int(ea.OrgEventFk.Int64))
+	return OrganizationEventByOrganizationEventID(ctx, db, ea.OrgEventFk)
 }
 
 // User returns the User associated with the EventApplication's (UserFk).
 //
 // Generated from foreign key 'EventApplications_UserFk_fkey'.
 func (ea *EventApplication) User(ctx context.Context, db DB) (*User, error) {
-	return UserByUserID(ctx, db, int(ea.UserFk.Int64))
+	return UserByUserID(ctx, db, ea.UserFk)
 }

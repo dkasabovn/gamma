@@ -4,7 +4,9 @@ package main
 
 import (
 	"errors"
-	"gamma/app/datastore/event"
+	"fmt"
+	"gamma/app/datastore/events"
+	"gamma/build/db"
 
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
@@ -13,6 +15,13 @@ import (
 type (
 	Run      mg.Namespace
 	Generate mg.Namespace
+)
+
+const (
+	POSTGRES_PASSWORD = "nhPldb98Rt"
+	POSTGRES_PORT     = 5432
+	POSTGRES_USER     = "postgres"
+	POSTGRES_DB       = "postgres"
 )
 
 func (Run) EventDB() error {
@@ -31,12 +40,36 @@ func (Run) EventDB() error {
 }
 
 func (Generate) EventModels() error {
-	eventdb := event.EventDB()
+	eventdb := events.EventDB()
 	if eventdb == nil {
 		return errors.New("Couldn't connect to database")
 	}
-
-	err := sh.RunV("xo", "schema", "pgsql://docker:nhPldb98Rt@localhost:5432/eventsvcdb?sslmode=disable", "-o", "./app/datastore/event/models")
 	eventdb.Close()
+	err := sh.RunV("xo", "schema", fmt.Sprintf("pgsql://%s:%s@localhost:%d/%s?sslmode=disable", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB), "-o", "./app/datastore/event/models")
 	return err
+}
+
+func (Generate) EventModelQueries() error {
+	queries := db.FindXOQueries("event")
+
+	for _, query := range queries {
+		err := sh.RunV(
+			"xo",
+			"query",
+			fmt.Sprintf("pg://%s:%s@localhost:%d/%s?sslmode=disable", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB),
+			"-o",
+			"./app/datastore/event/models",
+			"-M",
+			"-B",
+			"-2",
+			"-T",
+			query.TypeName,
+			"-Q",
+			fmt.Sprintf("%s", query.Query),
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

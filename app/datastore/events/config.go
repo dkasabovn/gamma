@@ -1,4 +1,4 @@
-package event
+package events
 
 import (
 	"database/sql"
@@ -11,9 +11,9 @@ import (
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = "docker"
+	user     = "postgres"
 	password = "nhPldb98Rt"
-	dbname   = "eventsvcdb"
+	dbname   = "postgres"
 )
 
 var dbCon *sql.DB

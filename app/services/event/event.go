@@ -2,7 +2,7 @@ package event
 
 import (
 	"database/sql"
-	"gamma/app/datastore/event"
+	"gamma/app/datastore/events"
 	"sync"
 )
 
@@ -15,10 +15,10 @@ type EventRepository struct {
 	db *sql.DB
 }
 
-func Events() *EventRepository {
+func EventRepo() *EventRepository {
 	eventSingle.Do(func() {
 		eventRepo = &EventRepository{
-			db: event.EventDB(),
+			db: events.EventDB(),
 		}
 	})
 	return eventRepo

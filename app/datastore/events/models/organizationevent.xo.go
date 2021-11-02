@@ -4,21 +4,20 @@ package models
 
 import (
 	"context"
-	"database/sql"
 )
 
 // OrganizationEvent represents a row from 'public.OrganizationEvents'.
 type OrganizationEvent struct {
-	OrganizationEventID int             `json:"OrganizationEventID"` // OrganizationEventID
-	Name                sql.NullString  `json:"Name"`                // Name
-	Latitude            sql.NullFloat64 `json:"Latitude"`            // Latitude
-	Longitude           sql.NullFloat64 `json:"Longitude"`           // Longitude
-	City                sql.NullString  `json:"City"`                // City
-	State               sql.NullString  `json:"State"`               // State
-	OrgFk               sql.NullInt64   `json:"OrgFk"`               // OrgFk
-	Capacity            sql.NullInt64   `json:"Capacity"`            // Capacity
-	Attending           sql.NullInt64   `json:"Attending"`           // Attending
-	EventUUID           sql.NullString  `json:"EventUuid"`           // EventUuid
+	OrganizationEventID int     `json:"OrganizationEventID"` // OrganizationEventID
+	Name                string  `json:"Name"`                // Name
+	Latitude            float64 `json:"Latitude"`            // Latitude
+	Longitude           float64 `json:"Longitude"`           // Longitude
+	City                string  `json:"City"`                // City
+	State               string  `json:"State"`               // State
+	OrgFk               int     `json:"OrgFk"`               // OrgFk
+	Capacity            int     `json:"Capacity"`            // Capacity
+	Attending           int     `json:"Attending"`           // Attending
+	EventUUID           string  `json:"EventUuid"`           // EventUuid
 	// xo fields
 	_exists, _deleted bool
 }
@@ -132,6 +131,26 @@ func (oe *OrganizationEvent) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
+// OrganizationEventByEventUUID retrieves a row from 'public.OrganizationEvents' as a OrganizationEvent.
+//
+// Generated from index 'OrganizationEventIndex'.
+func OrganizationEventByEventUUID(ctx context.Context, db DB, eventUUID string) (*OrganizationEvent, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`OrganizationEventID, Name, Latitude, Longitude, City, State, OrgFk, Capacity, Attending, EventUuid ` +
+		`FROM public.OrganizationEvents ` +
+		`WHERE EventUuid = $1`
+	// run
+	logf(sqlstr, eventUUID)
+	oe := OrganizationEvent{
+		_exists: true,
+	}
+	if err := db.QueryRowContext(ctx, sqlstr, eventUUID).Scan(&oe.OrganizationEventID, &oe.Name, &oe.Latitude, &oe.Longitude, &oe.City, &oe.State, &oe.OrgFk, &oe.Capacity, &oe.Attending, &oe.EventUUID); err != nil {
+		return nil, logerror(err)
+	}
+	return &oe, nil
+}
+
 // OrganizationEventByOrganizationEventID retrieves a row from 'public.OrganizationEvents' as a OrganizationEvent.
 //
 // Generated from index 'OrganizationEvents_pkey'.
@@ -156,5 +175,5 @@ func OrganizationEventByOrganizationEventID(ctx context.Context, db DB, organiza
 //
 // Generated from foreign key 'OrganizationEvents_OrgFk_fkey'.
 func (oe *OrganizationEvent) Organization(ctx context.Context, db DB) (*Organization, error) {
-	return OrganizationByOrganizationID(ctx, db, int(oe.OrgFk.Int64))
+	return OrganizationByOrganizationID(ctx, db, oe.OrgFk)
 }

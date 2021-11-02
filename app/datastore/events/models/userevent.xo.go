@@ -4,14 +4,13 @@ package models
 
 import (
 	"context"
-	"database/sql"
 )
 
 // UserEvent represents a row from 'public.UserEvents'.
 type UserEvent struct {
-	UserEventID int           `json:"UserEventID"` // UserEventID
-	OrgEventFk  sql.NullInt64 `json:"OrgEventFk"`  // OrgEventFk
-	UserFk      sql.NullInt64 `json:"UserFk"`      // UserFk
+	UserEventID int `json:"UserEventID"` // UserEventID
+	OrgEventFk  int `json:"OrgEventFk"`  // OrgEventFk
+	UserFk      int `json:"UserFk"`      // UserFk
 	// xo fields
 	_exists, _deleted bool
 }
@@ -125,6 +124,40 @@ func (ue *UserEvent) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
+// UserEventsByUserFk retrieves a row from 'public.UserEvents' as a UserEvent.
+//
+// Generated from index 'UserEventsIndex'.
+func UserEventsByUserFk(ctx context.Context, db DB, userFk int) ([]*UserEvent, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`UserEventID, OrgEventFk, UserFk ` +
+		`FROM public.UserEvents ` +
+		`WHERE UserFk = $1`
+	// run
+	logf(sqlstr, userFk)
+	rows, err := db.QueryContext(ctx, sqlstr, userFk)
+	if err != nil {
+		return nil, logerror(err)
+	}
+	defer rows.Close()
+	// process
+	var res []*UserEvent
+	for rows.Next() {
+		ue := UserEvent{
+			_exists: true,
+		}
+		// scan
+		if err := rows.Scan(&ue.UserEventID, &ue.OrgEventFk, &ue.UserFk); err != nil {
+			return nil, logerror(err)
+		}
+		res = append(res, &ue)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, logerror(err)
+	}
+	return res, nil
+}
+
 // UserEventByUserEventID retrieves a row from 'public.UserEvents' as a UserEvent.
 //
 // Generated from index 'UserEvents_pkey'.
@@ -149,12 +182,12 @@ func UserEventByUserEventID(ctx context.Context, db DB, userEventID int) (*UserE
 //
 // Generated from foreign key 'UserEvents_OrgEventFk_fkey'.
 func (ue *UserEvent) OrganizationEvent(ctx context.Context, db DB) (*OrganizationEvent, error) {
-	return OrganizationEventByOrganizationEventID(ctx, db, int(ue.OrgEventFk.Int64))
+	return OrganizationEventByOrganizationEventID(ctx, db, ue.OrgEventFk)
 }
 
 // User returns the User associated with the UserEvent's (UserFk).
 //
 // Generated from foreign key 'UserEvents_UserFk_fkey'.
 func (ue *UserEvent) User(ctx context.Context, db DB) (*User, error) {
-	return UserByUserID(ctx, db, int(ue.UserFk.Int64))
+	return UserByUserID(ctx, db, ue.UserFk)
 }

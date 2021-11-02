@@ -4,15 +4,14 @@ package models
 
 import (
 	"context"
-	"database/sql"
 )
 
 // OrgUser represents a row from 'public.OrgUsers'.
 type OrgUser struct {
-	OrgUserID       int           `json:"OrgUserID"`       // OrgUserID
-	PermissionsCode sql.NullInt64 `json:"PermissionsCode"` // PermissionsCode
-	UserFk          sql.NullInt64 `json:"UserFk"`          // UserFk
-	OrgFk           sql.NullInt64 `json:"OrgFk"`           // OrgFk
+	OrgUserID       int `json:"OrgUserID"`       // OrgUserID
+	PermissionsCode int `json:"PermissionsCode"` // PermissionsCode
+	UserFk          int `json:"UserFk"`          // UserFk
+	OrgFk           int `json:"OrgFk"`           // OrgFk
 	// xo fields
 	_exists, _deleted bool
 }
@@ -150,12 +149,12 @@ func OrgUserByOrgUserID(ctx context.Context, db DB, orgUserID int) (*OrgUser, er
 //
 // Generated from foreign key 'OrgUsers_OrgFk_fkey'.
 func (ou *OrgUser) Organization(ctx context.Context, db DB) (*Organization, error) {
-	return OrganizationByOrganizationID(ctx, db, int(ou.OrgFk.Int64))
+	return OrganizationByOrganizationID(ctx, db, ou.OrgFk)
 }
 
 // User returns the User associated with the OrgUser's (UserFk).
 //
 // Generated from foreign key 'OrgUsers_UserFk_fkey'.
 func (ou *OrgUser) User(ctx context.Context, db DB) (*User, error) {
-	return UserByUserID(ctx, db, int(ou.UserFk.Int64))
+	return UserByUserID(ctx, db, ou.UserFk)
 }

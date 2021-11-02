@@ -9,7 +9,8 @@ import (
 )
 
 func GetBootstrapData(c echo.Context) error {
-	uuid := c.Get("_id").(string)
+	gc := core.GetGammaClaims(c)
+	uuid := gc.Uuid.String()
 	user, err := event.EventRepo().GetUserByUUID(c.Request().Context(), uuid)
 
 	if err != nil {
@@ -28,7 +29,8 @@ func GetBootstrapData(c echo.Context) error {
 }
 
 func GetAttendingEvents(c echo.Context) error {
-	uuid := c.Get("_id").(string)
+	gc := core.GetGammaClaims(c)
+	uuid := gc.Uuid.String()
 	user, err := event.EventRepo().GetUserByUUID(c.Request().Context(), uuid)
 
 	if err != nil {
@@ -47,7 +49,8 @@ func GetAttendingEvents(c echo.Context) error {
 }
 
 func GetEventApplications(c echo.Context) error {
-	uuid := c.Get("_id").(string)
+	gc := core.GetGammaClaims(c)
+	uuid := gc.Uuid.String()
 	user, err := event.EventRepo().GetUserByUUID(c.Request().Context(), uuid)
 
 	if err != nil {

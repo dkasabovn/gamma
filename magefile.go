@@ -73,3 +73,30 @@ func (Generate) EventModelQueries() error {
 	}
 	return nil
 }
+
+func (Generate) PrivatePublicKeys() error {
+	err := sh.RunV(
+		"openssl",
+		"ecparam",
+		"-name",
+		"prime256v1",
+		"-genkey",
+		"-noout",
+		"-out",
+		"private-key.pem",
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return sh.RunV(
+		"openssl",
+		"ec",
+		"-in",
+		"private-key.pem",
+		"-pubout",
+		"-out",
+		"public-key.pem",
+	)
+}

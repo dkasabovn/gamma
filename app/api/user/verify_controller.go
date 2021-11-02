@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	refresh "gamma/app/api/core"
+	"gamma/app/api/core"
 	userDB "gamma/app/datastore/user"
-	jwt "gamma/app/system/auth"
 	"gamma/app/system/auth/argon"
+	"gamma/app/system/auth/ecJwt"
 
 	"github.com/labstack/echo/v4"
 	"go.mongodb.org/mongo-driver/bson"
@@ -17,18 +17,15 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type(
+type (
 	userids struct {
 		IDs []primitive.ObjectID `bson:"ids"`
 	}
-
 )
 
 var (
 	displayData = bson.M{"hashedPassword": 0, "device": 0}
 )
-
-
 
 func validateNewUser(user *userDB.User) error {
 	if user.HashedPassword == "" {
@@ -39,7 +36,7 @@ func validateNewUser(user *userDB.User) error {
 		fmt.Println("email")
 
 		return errors.New("missing email")
-	} 
+	}
 	if user.FirstName == "" {
 		fmt.Println("firstname")
 
@@ -62,14 +59,14 @@ func validateNewUser(user *userDB.User) error {
 
 func getUsers(c echo.Context) error {
 	ids := new(userids)
-	
+
 	if err := c.Bind(ids); err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	filter := bson.M{"_id": bson.M{"$in": ids.IDs}}
 	opts := options.Find().SetProjection(displayData)
-	
+
 	cursor, err := userDB.MongoUsers().Find(c.Request().Context(), filter, opts)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
@@ -84,15 +81,13 @@ func getUsers(c echo.Context) error {
 }
 
 func getUser(c echo.Context) error {
-	
-	email, err := getEmail(c)
-	if err != nil {
-		return c.JSON(http.StatusServiceUnavailable, err.Error())
-	}
+
+	gc := core.GetGammaClaims(c)
+	email := gc.Email
 
 	filter := bson.M{"email": email}
 	opts := options.FindOne().SetProjection(displayData)
-	
+
 	var dbUser userDB.User
 	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter, opts).Decode(&dbUser); err != nil {
 		return c.JSON(http.StatusServiceUnavailable, err.Error())
@@ -104,7 +99,7 @@ func getUser(c echo.Context) error {
 func createUser(c echo.Context) error {
 
 	user := new(userDB.User)
-	
+
 	if err := c.Bind(user); err != nil {
 		return c.JSON(http.StatusBadRequest, "binding issue")
 	}
@@ -123,19 +118,18 @@ func createUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, err.Error())
 	}
-	
+
 	fmt.Printf("[+] inserted: %s", result.InsertedID)
-	return c.JSON(http.StatusAccepted,  result.InsertedID)
+	return c.JSON(http.StatusAccepted, result.InsertedID)
 }
 
 func login(c echo.Context) error {
 
 	var user userDB.User
-	
+
 	if err := c.Bind(&user); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
 	}
-
 
 	var dbUser userDB.User
 	filter := bson.M{"email": user.Email}
@@ -143,8 +137,6 @@ func login(c echo.Context) error {
 	if err := userDB.MongoUsers().FindOne(c.Request().Context(), filter).Decode(&dbUser); err != nil {
 		return c.JSON(http.StatusServiceUnavailable, err)
 	}
-
-	
 
 	match, err := argon.PasswordIsMatch(user.HashedPassword, dbUser.HashedPassword)
 	if !match {
@@ -154,60 +146,63 @@ func login(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "HASHING error")
 	}
-	
-	claims := &jwt.UserClaims{
-		Email:  dbUser.Email,
-		UUID: dbUser.ID,
+
+	claims := &ecJwt.GammaClaims{
+		Email: dbUser.Email,
+		Uuid:  dbUser.ID,
 	}
 
-	if err := refresh.UpdateTokens(*claims, c); err != nil {
-		return c.JSON(http.StatusUnauthorized, "Token is invalid")
-	}
+	accessToken, refreshToken := ecJwt.ECDSASign(claims)
+	c.Response().Header().Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	c.SetCookie(&http.Cookie{
+		Name:  "refresh_token",
+		Value: refreshToken,
+	})
 
-	return c.JSON(http.StatusAccepted, "Logged in")
+	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
+		"auth_status": "LOGGED_IN",
+	}))
 }
 
-// TODO now needs to update based on email
-func updateUser(c echo.Context) error {
+// // TODO now needs to update based on email
+// func updateUser(c echo.Context) error {
 
-	userCookie, _ := c.Cookie(jwt.RefreshName)
-	email, _ := jwt.GetEmail(*userCookie)
+// 	userCookie, _ := c.Cookie(jwt.RefreshName)
+// 	email, _ := jwt.GetEmail(*userCookie)
 
-	updateData := new(userDB.User)
-	if err := c.Bind(updateData); err != nil {
-		return c.JSON(http.StatusBadRequest, err.Error())
-	}
+// 	updateData := new(userDB.User)
+// 	if err := c.Bind(updateData); err != nil {
+// 		return c.JSON(http.StatusBadRequest, err.Error())
+// 	}
 
-	updates := bson.M{
-		"$set":  bson.M{
-        	"imageLinks":  updateData.ImageLinks,
-        	"bio": updateData.Bio,
-    }}
+// 	updates := bson.M{
+// 		"$set": bson.M{
+// 			"imageLinks": updateData.ImageLinks,
+// 			"bio":        updateData.Bio,
+// 		}}
 
-	result, err := userDB.MongoUsers().UpdateByID(c.Request().Context(), email, updates)
-	if err != nil {
-		return c.JSON(http.StatusServiceUnavailable, err.Error())
-	}
-	if result.ModifiedCount == 0 {
-		return c.JSON(http.StatusBadRequest, "User does not exist")
-	}
+// 	result, err := userDB.MongoUsers().UpdateByID(c.Request().Context(), email, updates)
+// 	if err != nil {
+// 		return c.JSON(http.StatusServiceUnavailable, err.Error())
+// 	}
+// 	if result.ModifiedCount == 0 {
+// 		return c.JSON(http.StatusBadRequest, "User does not exist")
+// 	}
 
-	return c.JSON(http.StatusAccepted, "updated")
-}
+// 	return c.JSON(http.StatusAccepted, "updated")
+// }
 
-func getEmail(c echo.Context) (string, error) {
-	accessCookie, err := c.Cookie(jwt.AccessName)
-	if err != nil {
-		return "", err
-	}
+// func getEmail(c echo.Context) (string, error) {
+// 	accessCookie, err := c.Cookie(jwt.AccessName)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	claims, err := jwt.GetClaims(accessCookie)
-	if err != nil {
-		return "", err
-	}
+// 	claims, err := jwt.GetClaims(accessCookie)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	return claims.Email, nil
+// 	return claims.Email, nil
 
-
-	
-}
+// }

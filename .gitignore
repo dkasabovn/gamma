@@ -4,3 +4,4 @@ app/cmd/usersvc/.env
 .gitignore
 .keys
 .vscode
+.vscode/settings.json

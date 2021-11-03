@@ -6,3 +6,4 @@ app/cmd/usersvc/.env
 .vscode
 .vscode/settings.json
 *.pem
+.env

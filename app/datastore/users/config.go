@@ -1,4 +1,4 @@
-package user
+package users
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 const (
 	
 	db = "gamma"
-	userCollection = "users"
+	UserCollectionName = "users"
 
 
 )
 
 var (
 	mongoClient *mongo.Client
-	collectionUsers *mongo.Collection
+	mongoDB *mongo.Database
 	clientSingleton sync.Once
 )
 
@@ -37,14 +37,14 @@ func EnvVariable(key string) string {
   return os.Getenv(key)
 }
 
-func MongoUsers() *mongo.Collection {
+func MongoDB() *mongo.Database {
 	clientSingleton.Do(func () {
 		mongoClient = createConnection()
-		collectionUsers = mongoClient.Database(db).Collection(userCollection)
+		mongoDB = mongoClient.Database(db)
 		
 	})
 
-	return collectionUsers
+	return mongoDB
 }
 
 func createConnection() *mongo.Client {

@@ -3,24 +3,18 @@ package main
 import (
 	"fmt"
 	"gamma/app/api/user"
-
-	userDB "gamma/app/datastore/user"
+	"gamma/app/datastore/users"
+	"gamma/app/system"
 
 	"github.com/labstack/echo/v4"
 )
 
+
 func main() {
-
-	// privateKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-    // publicKey := &privateKey.PublicKey
-
-    // encPriv, encPub := jwt.EncodeECDSA(privateKey, publicKey)
-	// fmt.Println(encPriv)
-	// fmt.Println(encPub)
-
+	
+	system.Initialize()
+	users.MongoDB()
 	e := echo.New()
-
-	userDB.MongoUsers()
 
 	e.GET("", func(c echo.Context) error {
 		fmt.Println("Printing Cookies")

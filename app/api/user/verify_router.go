@@ -29,7 +29,7 @@ func JwtRoutes(e *echo.Echo) {
 	{
 		authRequired.GET("/users", getUsers)
 		authRequired.GET("", getUser)
-		// authRequired.POST("", updateUser)
+		authRequired.POST("", updateUser)
 	}
 
 }

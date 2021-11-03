@@ -2,6 +2,8 @@ package core
 
 import (
 	"errors"
+	"fmt"
+	"gamma/app/datastore/users"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
 
@@ -29,4 +31,18 @@ func JwtParserFunction(auth string, c echo.Context) (interface{}, error) {
 		return nil, errors.New("token is invalid")
 	}
 	return token, nil
+}
+
+func AddTokens(c echo.Context, user users.User) {
+	claims := &ecJwt.GammaClaims{
+		Email: user.Email,
+		Uuid:  user.ID,
+	}
+
+	accessToken, refreshToken := ecJwt.ECDSASign(claims)
+	c.Response().Header().Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+	c.SetCookie(&http.Cookie{
+		Name:  "refresh_token",
+		Value: refreshToken,
+	})
 }

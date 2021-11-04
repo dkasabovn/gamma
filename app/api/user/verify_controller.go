@@ -63,7 +63,9 @@ func createUser(c echo.Context) error {
 	}
 
 	if err := newUser.ValidNewUser(); err != nil {
-		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+		return c.JSON(http.StatusBadRequest, core.ApiConverter(map[string]interface{}{
+			"error" : err.Error(),
+		},0))
 	}
 
 	var err error
@@ -74,7 +76,9 @@ func createUser(c echo.Context) error {
 
 	result, err := user.UserRepo().CreateUser(c.Request().Context(), *newUser)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+		return c.JSON(http.StatusBadRequest, core.ApiConverter(map[string]interface{}{
+			"error" : err.Error(),
+		},0))
 	}
 
 	newUser.ID = result.(primitive.ObjectID)

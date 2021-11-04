@@ -59,6 +59,18 @@ func (u *User) ValidNewUser() error {
 
 		return errors.New("missing bio")
 	}
+	if len(u.ImageLinks) == 0 {
+		return errors.New("missing images")
+	}
+	if u.Device == "" {
+		return errors.New("missing device")
+	}
+
+	if u.Gender != "" {
+		if u.Gender != "M" && u.Gender != "F" && u.Gender != "O" &&  u.Gender != "N" {
+			return errors.New("Not valid gender has to be M,F,O,N")
+		}
+	}
 
 	return nil
 

@@ -6,12 +6,12 @@ import (
 	"context"
 )
 
-// Organization represents a row from 'public.Organizations'.
+// Organization represents a row from 'public.organizations'.
 type Organization struct {
-	OrganizationID   int    `json:"OrganizationID"`   // OrganizationID
-	Name             string `json:"Name"`             // Name
-	Description      string `json:"Description"`      // Description
-	OrganizationUUID string `json:"OrganizationUuid"` // OrganizationUuid
+	Organizationid   int    `json:"organizationid"`   // organizationid
+	Name             string `json:"name"`             // name
+	Description      string `json:"description"`      // description
+	Organizationuuid string `json:"organizationuuid"` // organizationuuid
 	// xo fields
 	_exists, _deleted bool
 }
@@ -36,14 +36,14 @@ func (o *Organization) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO public.Organizations (` +
-		`Name, Description, OrganizationUuid` +
+	const sqlstr = `INSERT INTO public.organizations (` +
+		`name, description, organizationuuid` +
 		`) VALUES (` +
 		`$1, $2, $3` +
-		`) RETURNING OrganizationID`
+		`) RETURNING organizationid`
 	// run
-	logf(sqlstr, o.Name, o.Description, o.OrganizationUUID)
-	if err := db.QueryRowContext(ctx, sqlstr, o.Name, o.Description, o.OrganizationUUID).Scan(&o.OrganizationID); err != nil {
+	logf(sqlstr, o.Name, o.Description, o.Organizationuuid)
+	if err := db.QueryRowContext(ctx, sqlstr, o.Name, o.Description, o.Organizationuuid).Scan(&o.Organizationid); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -60,12 +60,12 @@ func (o *Organization) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with composite primary key
-	const sqlstr = `UPDATE public.Organizations SET ` +
-		`Name = $1, Description = $2, OrganizationUuid = $3 ` +
-		`WHERE OrganizationID = $4`
+	const sqlstr = `UPDATE public.organizations SET ` +
+		`name = $1, description = $2, organizationuuid = $3 ` +
+		`WHERE organizationid = $4`
 	// run
-	logf(sqlstr, o.Name, o.Description, o.OrganizationUUID, o.OrganizationID)
-	if _, err := db.ExecContext(ctx, sqlstr, o.Name, o.Description, o.OrganizationUUID, o.OrganizationID); err != nil {
+	logf(sqlstr, o.Name, o.Description, o.Organizationuuid, o.Organizationid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Name, o.Description, o.Organizationuuid, o.Organizationid); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -86,17 +86,17 @@ func (o *Organization) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO public.Organizations (` +
-		`OrganizationID, Name, Description, OrganizationUuid` +
+	const sqlstr = `INSERT INTO public.organizations (` +
+		`organizationid, name, description, organizationuuid` +
 		`) VALUES (` +
 		`$1, $2, $3, $4` +
 		`)` +
-		` ON CONFLICT (OrganizationID) DO ` +
+		` ON CONFLICT (organizationid) DO ` +
 		`UPDATE SET ` +
-		`Name = EXCLUDED.Name, Description = EXCLUDED.Description, OrganizationUuid = EXCLUDED.OrganizationUuid `
+		`name = EXCLUDED.name, description = EXCLUDED.description, organizationuuid = EXCLUDED.organizationuuid `
 	// run
-	logf(sqlstr, o.OrganizationID, o.Name, o.Description, o.OrganizationUUID)
-	if _, err := db.ExecContext(ctx, sqlstr, o.OrganizationID, o.Name, o.Description, o.OrganizationUUID); err != nil {
+	logf(sqlstr, o.Organizationid, o.Name, o.Description, o.Organizationuuid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Organizationid, o.Name, o.Description, o.Organizationuuid); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -113,11 +113,11 @@ func (o *Organization) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM public.Organizations ` +
-		`WHERE OrganizationID = $1`
+	const sqlstr = `DELETE FROM public.organizations ` +
+		`WHERE organizationid = $1`
 	// run
-	logf(sqlstr, o.OrganizationID)
-	if _, err := db.ExecContext(ctx, sqlstr, o.OrganizationID); err != nil {
+	logf(sqlstr, o.Organizationid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Organizationid); err != nil {
 		return logerror(err)
 	}
 	// set deleted
@@ -125,21 +125,21 @@ func (o *Organization) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// OrganizationByOrganizationID retrieves a row from 'public.Organizations' as a Organization.
+// OrganizationByOrganizationid retrieves a row from 'public.organizations' as a Organization.
 //
-// Generated from index 'Organizations_pkey'.
-func OrganizationByOrganizationID(ctx context.Context, db DB, organizationID int) (*Organization, error) {
+// Generated from index 'organizations_pkey'.
+func OrganizationByOrganizationid(ctx context.Context, db DB, organizationid int) (*Organization, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`OrganizationID, Name, Description, OrganizationUuid ` +
-		`FROM public.Organizations ` +
-		`WHERE OrganizationID = $1`
+		`organizationid, name, description, organizationuuid ` +
+		`FROM public.organizations ` +
+		`WHERE organizationid = $1`
 	// run
-	logf(sqlstr, organizationID)
+	logf(sqlstr, organizationid)
 	o := Organization{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, organizationID).Scan(&o.OrganizationID, &o.Name, &o.Description, &o.OrganizationUUID); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, organizationid).Scan(&o.Organizationid, &o.Name, &o.Description, &o.Organizationuuid); err != nil {
 		return nil, logerror(err)
 	}
 	return &o, nil

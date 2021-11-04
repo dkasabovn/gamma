@@ -6,151 +6,171 @@ import (
 	"context"
 )
 
-// UserEvent represents a row from 'public.UserEvents'.
-type UserEvent struct {
-	UserEventID int `json:"UserEventID"` // UserEventID
-	OrgEventFk  int `json:"OrgEventFk"`  // OrgEventFk
-	UserFk      int `json:"UserFk"`      // UserFk
+// Userevent represents a row from 'public.userevents'.
+type Userevent struct {
+	Usereventid int `json:"usereventid"` // usereventid
+	Orgeventfk  int `json:"orgeventfk"`  // orgeventfk
+	Userfk      int `json:"userfk"`      // userfk
 	// xo fields
 	_exists, _deleted bool
 }
 
-// Exists returns true when the UserEvent exists in the database.
-func (ue *UserEvent) Exists() bool {
-	return ue._exists
+// Exists returns true when the Userevent exists in the database.
+func (u *Userevent) Exists() bool {
+	return u._exists
 }
 
-// Deleted returns true when the UserEvent has been marked for deletion from
+// Deleted returns true when the Userevent has been marked for deletion from
 // the database.
-func (ue *UserEvent) Deleted() bool {
-	return ue._deleted
+func (u *Userevent) Deleted() bool {
+	return u._deleted
 }
 
-// Insert inserts the UserEvent to the database.
-func (ue *UserEvent) Insert(ctx context.Context, db DB) error {
+// Insert inserts the Userevent to the database.
+func (u *Userevent) Insert(ctx context.Context, db DB) error {
 	switch {
-	case ue._exists: // already exists
+	case u._exists: // already exists
 		return logerror(&ErrInsertFailed{ErrAlreadyExists})
-	case ue._deleted: // deleted
+	case u._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO public.UserEvents (` +
-		`OrgEventFk, UserFk` +
+	const sqlstr = `INSERT INTO public.userevents (` +
+		`orgeventfk, userfk` +
 		`) VALUES (` +
 		`$1, $2` +
-		`) RETURNING UserEventID`
+		`) RETURNING usereventid`
 	// run
-	logf(sqlstr, ue.OrgEventFk, ue.UserFk)
-	if err := db.QueryRowContext(ctx, sqlstr, ue.OrgEventFk, ue.UserFk).Scan(&ue.UserEventID); err != nil {
+	logf(sqlstr, u.Orgeventfk, u.Userfk)
+	if err := db.QueryRowContext(ctx, sqlstr, u.Orgeventfk, u.Userfk).Scan(&u.Usereventid); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	ue._exists = true
+	u._exists = true
 	return nil
 }
 
-// Update updates a UserEvent in the database.
-func (ue *UserEvent) Update(ctx context.Context, db DB) error {
+// Update updates a Userevent in the database.
+func (u *Userevent) Update(ctx context.Context, db DB) error {
 	switch {
-	case !ue._exists: // doesn't exist
+	case !u._exists: // doesn't exist
 		return logerror(&ErrUpdateFailed{ErrDoesNotExist})
-	case ue._deleted: // deleted
+	case u._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with composite primary key
-	const sqlstr = `UPDATE public.UserEvents SET ` +
-		`OrgEventFk = $1, UserFk = $2 ` +
-		`WHERE UserEventID = $3`
+	const sqlstr = `UPDATE public.userevents SET ` +
+		`orgeventfk = $1, userfk = $2 ` +
+		`WHERE usereventid = $3`
 	// run
-	logf(sqlstr, ue.OrgEventFk, ue.UserFk, ue.UserEventID)
-	if _, err := db.ExecContext(ctx, sqlstr, ue.OrgEventFk, ue.UserFk, ue.UserEventID); err != nil {
+	logf(sqlstr, u.Orgeventfk, u.Userfk, u.Usereventid)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Orgeventfk, u.Userfk, u.Usereventid); err != nil {
 		return logerror(err)
 	}
 	return nil
 }
 
-// Save saves the UserEvent to the database.
-func (ue *UserEvent) Save(ctx context.Context, db DB) error {
-	if ue.Exists() {
-		return ue.Update(ctx, db)
+// Save saves the Userevent to the database.
+func (u *Userevent) Save(ctx context.Context, db DB) error {
+	if u.Exists() {
+		return u.Update(ctx, db)
 	}
-	return ue.Insert(ctx, db)
+	return u.Insert(ctx, db)
 }
 
-// Upsert performs an upsert for UserEvent.
-func (ue *UserEvent) Upsert(ctx context.Context, db DB) error {
+// Upsert performs an upsert for Userevent.
+func (u *Userevent) Upsert(ctx context.Context, db DB) error {
 	switch {
-	case ue._deleted: // deleted
+	case u._deleted: // deleted
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO public.UserEvents (` +
-		`UserEventID, OrgEventFk, UserFk` +
+	const sqlstr = `INSERT INTO public.userevents (` +
+		`usereventid, orgeventfk, userfk` +
 		`) VALUES (` +
 		`$1, $2, $3` +
 		`)` +
-		` ON CONFLICT (UserEventID) DO ` +
+		` ON CONFLICT (usereventid) DO ` +
 		`UPDATE SET ` +
-		`OrgEventFk = EXCLUDED.OrgEventFk, UserFk = EXCLUDED.UserFk `
+		`orgeventfk = EXCLUDED.orgeventfk, userfk = EXCLUDED.userfk `
 	// run
-	logf(sqlstr, ue.UserEventID, ue.OrgEventFk, ue.UserFk)
-	if _, err := db.ExecContext(ctx, sqlstr, ue.UserEventID, ue.OrgEventFk, ue.UserFk); err != nil {
+	logf(sqlstr, u.Usereventid, u.Orgeventfk, u.Userfk)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Usereventid, u.Orgeventfk, u.Userfk); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	ue._exists = true
+	u._exists = true
 	return nil
 }
 
-// Delete deletes the UserEvent from the database.
-func (ue *UserEvent) Delete(ctx context.Context, db DB) error {
+// Delete deletes the Userevent from the database.
+func (u *Userevent) Delete(ctx context.Context, db DB) error {
 	switch {
-	case !ue._exists: // doesn't exist
+	case !u._exists: // doesn't exist
 		return nil
-	case ue._deleted: // deleted
+	case u._deleted: // deleted
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM public.UserEvents ` +
-		`WHERE UserEventID = $1`
+	const sqlstr = `DELETE FROM public.userevents ` +
+		`WHERE usereventid = $1`
 	// run
-	logf(sqlstr, ue.UserEventID)
-	if _, err := db.ExecContext(ctx, sqlstr, ue.UserEventID); err != nil {
+	logf(sqlstr, u.Usereventid)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Usereventid); err != nil {
 		return logerror(err)
 	}
 	// set deleted
-	ue._deleted = true
+	u._deleted = true
 	return nil
 }
 
-// UserEventsByUserFk retrieves a row from 'public.UserEvents' as a UserEvent.
+// UsereventByUsereventid retrieves a row from 'public.userevents' as a Userevent.
 //
-// Generated from index 'UserEventsIndex'.
-func UserEventsByUserFk(ctx context.Context, db DB, userFk int) ([]*UserEvent, error) {
+// Generated from index 'userevents_pkey'.
+func UsereventByUsereventid(ctx context.Context, db DB, usereventid int) (*Userevent, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`UserEventID, OrgEventFk, UserFk ` +
-		`FROM public.UserEvents ` +
-		`WHERE UserFk = $1`
+		`usereventid, orgeventfk, userfk ` +
+		`FROM public.userevents ` +
+		`WHERE usereventid = $1`
 	// run
-	logf(sqlstr, userFk)
-	rows, err := db.QueryContext(ctx, sqlstr, userFk)
+	logf(sqlstr, usereventid)
+	u := Userevent{
+		_exists: true,
+	}
+	if err := db.QueryRowContext(ctx, sqlstr, usereventid).Scan(&u.Usereventid, &u.Orgeventfk, &u.Userfk); err != nil {
+		return nil, logerror(err)
+	}
+	return &u, nil
+}
+
+// UsereventsByUserfk retrieves a row from 'public.userevents' as a Userevent.
+//
+// Generated from index 'usereventsindex'.
+func UsereventsByUserfk(ctx context.Context, db DB, userfk int) ([]*Userevent, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`usereventid, orgeventfk, userfk ` +
+		`FROM public.userevents ` +
+		`WHERE userfk = $1`
+	// run
+	logf(sqlstr, userfk)
+	rows, err := db.QueryContext(ctx, sqlstr, userfk)
 	if err != nil {
 		return nil, logerror(err)
 	}
 	defer rows.Close()
 	// process
-	var res []*UserEvent
+	var res []*Userevent
 	for rows.Next() {
-		ue := UserEvent{
+		u := Userevent{
 			_exists: true,
 		}
 		// scan
-		if err := rows.Scan(&ue.UserEventID, &ue.OrgEventFk, &ue.UserFk); err != nil {
+		if err := rows.Scan(&u.Usereventid, &u.Orgeventfk, &u.Userfk); err != nil {
 			return nil, logerror(err)
 		}
-		res = append(res, &ue)
+		res = append(res, &u)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, logerror(err)
@@ -158,36 +178,16 @@ func UserEventsByUserFk(ctx context.Context, db DB, userFk int) ([]*UserEvent, e
 	return res, nil
 }
 
-// UserEventByUserEventID retrieves a row from 'public.UserEvents' as a UserEvent.
+// Organizationevent returns the Organizationevent associated with the Userevent's (Orgeventfk).
 //
-// Generated from index 'UserEvents_pkey'.
-func UserEventByUserEventID(ctx context.Context, db DB, userEventID int) (*UserEvent, error) {
-	// query
-	const sqlstr = `SELECT ` +
-		`UserEventID, OrgEventFk, UserFk ` +
-		`FROM public.UserEvents ` +
-		`WHERE UserEventID = $1`
-	// run
-	logf(sqlstr, userEventID)
-	ue := UserEvent{
-		_exists: true,
-	}
-	if err := db.QueryRowContext(ctx, sqlstr, userEventID).Scan(&ue.UserEventID, &ue.OrgEventFk, &ue.UserFk); err != nil {
-		return nil, logerror(err)
-	}
-	return &ue, nil
+// Generated from foreign key 'userevents_orgeventfk_fkey'.
+func (u *Userevent) Organizationevent(ctx context.Context, db DB) (*Organizationevent, error) {
+	return OrganizationeventByOrganizationeventid(ctx, db, u.Orgeventfk)
 }
 
-// OrganizationEvent returns the OrganizationEvent associated with the UserEvent's (OrgEventFk).
+// User returns the User associated with the Userevent's (Userfk).
 //
-// Generated from foreign key 'UserEvents_OrgEventFk_fkey'.
-func (ue *UserEvent) OrganizationEvent(ctx context.Context, db DB) (*OrganizationEvent, error) {
-	return OrganizationEventByOrganizationEventID(ctx, db, ue.OrgEventFk)
-}
-
-// User returns the User associated with the UserEvent's (UserFk).
-//
-// Generated from foreign key 'UserEvents_UserFk_fkey'.
-func (ue *UserEvent) User(ctx context.Context, db DB) (*User, error) {
-	return UserByUserID(ctx, db, ue.UserFk)
+// Generated from foreign key 'userevents_userfk_fkey'.
+func (u *Userevent) User(ctx context.Context, db DB) (*User, error) {
+	return UserByUserid(ctx, db, u.Userfk)
 }

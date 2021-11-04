@@ -45,7 +45,7 @@ func (Generate) EventModels() error {
 		return errors.New("Couldn't connect to database")
 	}
 	eventdb.Close()
-	err := sh.RunV("xo", "schema", fmt.Sprintf("pgsql://%s:%s@localhost:%d/%s?sslmode=disable", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB), "-o", "./app/datastore/event/models")
+	err := sh.RunV("xo", "schema", fmt.Sprintf("pgsql://%s:%s@localhost:%d/%s?sslmode=disable", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB), "-o", "./app/datastore/events/models")
 	return err
 }
 
@@ -58,7 +58,7 @@ func (Generate) EventModelQueries() error {
 			"query",
 			fmt.Sprintf("pg://%s:%s@localhost:%d/%s?sslmode=disable", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB),
 			"-o",
-			"./app/datastore/event/models",
+			"./app/datastore/events/models",
 			"-M",
 			"-B",
 			"-2",

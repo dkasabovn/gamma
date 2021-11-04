@@ -6,10 +6,10 @@ import (
 	"context"
 )
 
-// User represents a row from 'public.Users'.
+// User represents a row from 'public.users'.
 type User struct {
-	UserID   int    `json:"UserID"`   // UserID
-	UserUUID string `json:"UserUuid"` // UserUuid
+	Userid   int    `json:"userid"`   // userid
+	Useruuid string `json:"useruuid"` // useruuid
 	// xo fields
 	_exists, _deleted bool
 }
@@ -34,14 +34,14 @@ func (u *User) Insert(ctx context.Context, db DB) error {
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO public.Users (` +
-		`UserUuid` +
+	const sqlstr = `INSERT INTO public.users (` +
+		`useruuid` +
 		`) VALUES (` +
 		`$1` +
-		`) RETURNING UserID`
+		`) RETURNING userid`
 	// run
-	logf(sqlstr, u.UserUUID)
-	if err := db.QueryRowContext(ctx, sqlstr, u.UserUUID).Scan(&u.UserID); err != nil {
+	logf(sqlstr, u.Useruuid)
+	if err := db.QueryRowContext(ctx, sqlstr, u.Useruuid).Scan(&u.Userid); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -58,12 +58,12 @@ func (u *User) Update(ctx context.Context, db DB) error {
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with composite primary key
-	const sqlstr = `UPDATE public.Users SET ` +
-		`UserUuid = $1 ` +
-		`WHERE UserID = $2`
+	const sqlstr = `UPDATE public.users SET ` +
+		`useruuid = $1 ` +
+		`WHERE userid = $2`
 	// run
-	logf(sqlstr, u.UserUUID, u.UserID)
-	if _, err := db.ExecContext(ctx, sqlstr, u.UserUUID, u.UserID); err != nil {
+	logf(sqlstr, u.Useruuid, u.Userid)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Useruuid, u.Userid); err != nil {
 		return logerror(err)
 	}
 	return nil
@@ -84,17 +84,17 @@ func (u *User) Upsert(ctx context.Context, db DB) error {
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO public.Users (` +
-		`UserID, UserUuid` +
+	const sqlstr = `INSERT INTO public.users (` +
+		`userid, useruuid` +
 		`) VALUES (` +
 		`$1, $2` +
 		`)` +
-		` ON CONFLICT (UserID) DO ` +
+		` ON CONFLICT (userid) DO ` +
 		`UPDATE SET ` +
-		`UserUuid = EXCLUDED.UserUuid `
+		`useruuid = EXCLUDED.useruuid `
 	// run
-	logf(sqlstr, u.UserID, u.UserUUID)
-	if _, err := db.ExecContext(ctx, sqlstr, u.UserID, u.UserUUID); err != nil {
+	logf(sqlstr, u.Userid, u.Useruuid)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Userid, u.Useruuid); err != nil {
 		return logerror(err)
 	}
 	// set exists
@@ -111,11 +111,11 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM public.Users ` +
-		`WHERE UserID = $1`
+	const sqlstr = `DELETE FROM public.users ` +
+		`WHERE userid = $1`
 	// run
-	logf(sqlstr, u.UserID)
-	if _, err := db.ExecContext(ctx, sqlstr, u.UserID); err != nil {
+	logf(sqlstr, u.Userid)
+	if _, err := db.ExecContext(ctx, sqlstr, u.Userid); err != nil {
 		return logerror(err)
 	}
 	// set deleted
@@ -123,41 +123,41 @@ func (u *User) Delete(ctx context.Context, db DB) error {
 	return nil
 }
 
-// UserByUserUUID retrieves a row from 'public.Users' as a User.
+// UserByUserid retrieves a row from 'public.users' as a User.
 //
-// Generated from index 'UserUuidIndex'.
-func UserByUserUUID(ctx context.Context, db DB, userUUID string) (*User, error) {
+// Generated from index 'users_pkey'.
+func UserByUserid(ctx context.Context, db DB, userid int) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`UserID, UserUuid ` +
-		`FROM public.Users ` +
-		`WHERE UserUuid = $1`
+		`userid, useruuid ` +
+		`FROM public.users ` +
+		`WHERE userid = $1`
 	// run
-	logf(sqlstr, userUUID)
+	logf(sqlstr, userid)
 	u := User{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, userUUID).Scan(&u.UserID, &u.UserUUID); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, userid).Scan(&u.Userid, &u.Useruuid); err != nil {
 		return nil, logerror(err)
 	}
 	return &u, nil
 }
 
-// UserByUserID retrieves a row from 'public.Users' as a User.
+// UserByUseruuid retrieves a row from 'public.users' as a User.
 //
-// Generated from index 'Users_pkey'.
-func UserByUserID(ctx context.Context, db DB, userID int) (*User, error) {
+// Generated from index 'useruuidindex'.
+func UserByUseruuid(ctx context.Context, db DB, useruuid string) (*User, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`UserID, UserUuid ` +
-		`FROM public.Users ` +
-		`WHERE UserID = $1`
+		`userid, useruuid ` +
+		`FROM public.users ` +
+		`WHERE useruuid = $1`
 	// run
-	logf(sqlstr, userID)
+	logf(sqlstr, useruuid)
 	u := User{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, userID).Scan(&u.UserID, &u.UserUUID); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, useruuid).Scan(&u.Userid, &u.Useruuid); err != nil {
 		return nil, logerror(err)
 	}
 	return &u, nil

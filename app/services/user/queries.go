@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"gamma/app/datastore/users"
+	"log"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -22,6 +23,7 @@ func (u *UserRepository) GetUsersByUUIDs(ctx context.Context, uuids []primitive.
 func (u *UserRepository) CreateUser(ctx context.Context, user users.User) (interface{}, error) {
 	res, err := users.NewUser(ctx, u.db, user)
 	if err != nil {
+		log.Printf("%+v", err)
 		return primitive.NilObjectID, err
 	}
 	return res.InsertedID, err

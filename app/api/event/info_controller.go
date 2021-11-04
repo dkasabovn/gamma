@@ -10,15 +10,14 @@ import (
 
 func GetBootstrapData(c echo.Context) error {
 	gc := core.GetGammaClaims(c)
-	uuid := gc.Uuid.String()
+	uuid := gc.Uuid.Hex()
 	user, err := event.EventRepo().GetUserByUUID(c.Request().Context(), uuid)
 
 	if err != nil {
-		panic("Bootstrap < Tailwind")
+		panic(err)
 	}
 
-	join, err := event.EventRepo().GetOrganizationsByUserID(c.Request().Context(), user.UserID)
-
+	join, err := event.EventRepo().GetOrganizationsByUserID(c.Request().Context(), user.Userid)
 	if err != nil {
 		panic("Uh oh spaghetti-o's")
 	}
@@ -37,7 +36,7 @@ func GetAttendingEvents(c echo.Context) error {
 		panic("Yeah idk how this is messing up lol")
 	}
 
-	attendingEvents, err := event.EventRepo().GetUserAttendingEvents(c.Request().Context(), user.UserID)
+	attendingEvents, err := event.EventRepo().GetUserAttendingEvents(c.Request().Context(), user.Userid)
 
 	if err != nil {
 		panic("Dude I'm really struggling to understand how this is an error")
@@ -57,7 +56,7 @@ func GetEventApplications(c echo.Context) error {
 		panic("Y'know writing these panics is really annoying")
 	}
 
-	eventApplications, err := event.EventRepo().GetUserEventApplications(c.Request().Context(), user.UserID)
+	eventApplications, err := event.EventRepo().GetUserEventApplications(c.Request().Context(), user.Userid)
 
 	if err != nil {
 		panic("Damn! Even this is panicking???")

@@ -30,14 +30,14 @@ func getUsers(c echo.Context) error {
 		fmt.Println("Could not prrint")
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
-	
+
 	users, err := coll.GetUsersByUUIDs(c.Request().Context(), uuids.IDs)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-		"users" : users,
+		"users": users,
 	}))
 }
 
@@ -51,7 +51,7 @@ func getUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-		"user" : user,
+		"user": user,
 	}))
 }
 
@@ -72,7 +72,7 @@ func createUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 
-	result, err := coll.CreateUser(c.Request().Context() ,*newUser)
+	result, err := user.UserRepo().CreateUser(c.Request().Context(), *newUser)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
@@ -80,7 +80,7 @@ func createUser(c echo.Context) error {
 	newUser.ID = result.(primitive.ObjectID)
 	core.AddTokens(c, *newUser)
 	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
-		"uuid" : result,
+		"uuid": result,
 	}))
 
 }
@@ -120,16 +120,15 @@ func updateUser(c echo.Context) error {
 	if err := c.Bind(updateData); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(1))
 	}
-	
+
 	gc := core.GetGammaClaims(c)
 	updateData.ID = gc.Uuid
 
 	if err := coll.UpdateUserProfile(c.Request().Context(), *updateData); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(2))
 	}
-	
+
 	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
-		"status" : "UPDATED" ,
+		"status": "UPDATED",
 	}))
 }
-

@@ -14,7 +14,6 @@ func Initialize() {
 	}
 	loadPrivatePublicKeyPairs()
 }
-
 func loadPrivatePublicKeyPairs() {
 	private_key, err := ioutil.ReadFile("private-key.pem")
 	if err != nil {

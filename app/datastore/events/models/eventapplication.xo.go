@@ -7,152 +7,172 @@ import (
 	"time"
 )
 
-// EventApplication represents a row from 'public.EventApplications'.
-type EventApplication struct {
-	EventApplicationID int       `json:"EventApplicationID"` // EventApplicationID
-	UserFk             int       `json:"UserFk"`             // UserFk
-	DateCreated        time.Time `json:"DateCreated"`        // DateCreated
-	OrgEventFk         int       `json:"OrgEventFk"`         // OrgEventFk
+// Eventapplication represents a row from 'public.eventapplications'.
+type Eventapplication struct {
+	Eventapplicationid int       `json:"eventapplicationid"` // eventapplicationid
+	Userfk             int       `json:"userfk"`             // userfk
+	Datecreated        time.Time `json:"datecreated"`        // datecreated
+	Orgeventfk         int       `json:"orgeventfk"`         // orgeventfk
 	// xo fields
 	_exists, _deleted bool
 }
 
-// Exists returns true when the EventApplication exists in the database.
-func (ea *EventApplication) Exists() bool {
-	return ea._exists
+// Exists returns true when the Eventapplication exists in the database.
+func (e *Eventapplication) Exists() bool {
+	return e._exists
 }
 
-// Deleted returns true when the EventApplication has been marked for deletion from
+// Deleted returns true when the Eventapplication has been marked for deletion from
 // the database.
-func (ea *EventApplication) Deleted() bool {
-	return ea._deleted
+func (e *Eventapplication) Deleted() bool {
+	return e._deleted
 }
 
-// Insert inserts the EventApplication to the database.
-func (ea *EventApplication) Insert(ctx context.Context, db DB) error {
+// Insert inserts the Eventapplication to the database.
+func (e *Eventapplication) Insert(ctx context.Context, db DB) error {
 	switch {
-	case ea._exists: // already exists
+	case e._exists: // already exists
 		return logerror(&ErrInsertFailed{ErrAlreadyExists})
-	case ea._deleted: // deleted
+	case e._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO public.EventApplications (` +
-		`UserFk, DateCreated, OrgEventFk` +
+	const sqlstr = `INSERT INTO public.eventapplications (` +
+		`userfk, datecreated, orgeventfk` +
 		`) VALUES (` +
 		`$1, $2, $3` +
-		`) RETURNING EventApplicationID`
+		`) RETURNING eventapplicationid`
 	// run
-	logf(sqlstr, ea.UserFk, ea.DateCreated, ea.OrgEventFk)
-	if err := db.QueryRowContext(ctx, sqlstr, ea.UserFk, ea.DateCreated, ea.OrgEventFk).Scan(&ea.EventApplicationID); err != nil {
+	logf(sqlstr, e.Userfk, e.Datecreated, e.Orgeventfk)
+	if err := db.QueryRowContext(ctx, sqlstr, e.Userfk, e.Datecreated, e.Orgeventfk).Scan(&e.Eventapplicationid); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	ea._exists = true
+	e._exists = true
 	return nil
 }
 
-// Update updates a EventApplication in the database.
-func (ea *EventApplication) Update(ctx context.Context, db DB) error {
+// Update updates a Eventapplication in the database.
+func (e *Eventapplication) Update(ctx context.Context, db DB) error {
 	switch {
-	case !ea._exists: // doesn't exist
+	case !e._exists: // doesn't exist
 		return logerror(&ErrUpdateFailed{ErrDoesNotExist})
-	case ea._deleted: // deleted
+	case e._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with composite primary key
-	const sqlstr = `UPDATE public.EventApplications SET ` +
-		`UserFk = $1, DateCreated = $2, OrgEventFk = $3 ` +
-		`WHERE EventApplicationID = $4`
+	const sqlstr = `UPDATE public.eventapplications SET ` +
+		`userfk = $1, datecreated = $2, orgeventfk = $3 ` +
+		`WHERE eventapplicationid = $4`
 	// run
-	logf(sqlstr, ea.UserFk, ea.DateCreated, ea.OrgEventFk, ea.EventApplicationID)
-	if _, err := db.ExecContext(ctx, sqlstr, ea.UserFk, ea.DateCreated, ea.OrgEventFk, ea.EventApplicationID); err != nil {
+	logf(sqlstr, e.Userfk, e.Datecreated, e.Orgeventfk, e.Eventapplicationid)
+	if _, err := db.ExecContext(ctx, sqlstr, e.Userfk, e.Datecreated, e.Orgeventfk, e.Eventapplicationid); err != nil {
 		return logerror(err)
 	}
 	return nil
 }
 
-// Save saves the EventApplication to the database.
-func (ea *EventApplication) Save(ctx context.Context, db DB) error {
-	if ea.Exists() {
-		return ea.Update(ctx, db)
+// Save saves the Eventapplication to the database.
+func (e *Eventapplication) Save(ctx context.Context, db DB) error {
+	if e.Exists() {
+		return e.Update(ctx, db)
 	}
-	return ea.Insert(ctx, db)
+	return e.Insert(ctx, db)
 }
 
-// Upsert performs an upsert for EventApplication.
-func (ea *EventApplication) Upsert(ctx context.Context, db DB) error {
+// Upsert performs an upsert for Eventapplication.
+func (e *Eventapplication) Upsert(ctx context.Context, db DB) error {
 	switch {
-	case ea._deleted: // deleted
+	case e._deleted: // deleted
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO public.EventApplications (` +
-		`EventApplicationID, UserFk, DateCreated, OrgEventFk` +
+	const sqlstr = `INSERT INTO public.eventapplications (` +
+		`eventapplicationid, userfk, datecreated, orgeventfk` +
 		`) VALUES (` +
 		`$1, $2, $3, $4` +
 		`)` +
-		` ON CONFLICT (EventApplicationID) DO ` +
+		` ON CONFLICT (eventapplicationid) DO ` +
 		`UPDATE SET ` +
-		`UserFk = EXCLUDED.UserFk, DateCreated = EXCLUDED.DateCreated, OrgEventFk = EXCLUDED.OrgEventFk `
+		`userfk = EXCLUDED.userfk, datecreated = EXCLUDED.datecreated, orgeventfk = EXCLUDED.orgeventfk `
 	// run
-	logf(sqlstr, ea.EventApplicationID, ea.UserFk, ea.DateCreated, ea.OrgEventFk)
-	if _, err := db.ExecContext(ctx, sqlstr, ea.EventApplicationID, ea.UserFk, ea.DateCreated, ea.OrgEventFk); err != nil {
+	logf(sqlstr, e.Eventapplicationid, e.Userfk, e.Datecreated, e.Orgeventfk)
+	if _, err := db.ExecContext(ctx, sqlstr, e.Eventapplicationid, e.Userfk, e.Datecreated, e.Orgeventfk); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	ea._exists = true
+	e._exists = true
 	return nil
 }
 
-// Delete deletes the EventApplication from the database.
-func (ea *EventApplication) Delete(ctx context.Context, db DB) error {
+// Delete deletes the Eventapplication from the database.
+func (e *Eventapplication) Delete(ctx context.Context, db DB) error {
 	switch {
-	case !ea._exists: // doesn't exist
+	case !e._exists: // doesn't exist
 		return nil
-	case ea._deleted: // deleted
+	case e._deleted: // deleted
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM public.EventApplications ` +
-		`WHERE EventApplicationID = $1`
+	const sqlstr = `DELETE FROM public.eventapplications ` +
+		`WHERE eventapplicationid = $1`
 	// run
-	logf(sqlstr, ea.EventApplicationID)
-	if _, err := db.ExecContext(ctx, sqlstr, ea.EventApplicationID); err != nil {
+	logf(sqlstr, e.Eventapplicationid)
+	if _, err := db.ExecContext(ctx, sqlstr, e.Eventapplicationid); err != nil {
 		return logerror(err)
 	}
 	// set deleted
-	ea._deleted = true
+	e._deleted = true
 	return nil
 }
 
-// EventApplicationsByUserFk retrieves a row from 'public.EventApplications' as a EventApplication.
+// EventapplicationByEventapplicationid retrieves a row from 'public.eventapplications' as a Eventapplication.
 //
-// Generated from index 'EventApplicationsIndex'.
-func EventApplicationsByUserFk(ctx context.Context, db DB, userFk int) ([]*EventApplication, error) {
+// Generated from index 'eventapplications_pkey'.
+func EventapplicationByEventapplicationid(ctx context.Context, db DB, eventapplicationid int) (*Eventapplication, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`EventApplicationID, UserFk, DateCreated, OrgEventFk ` +
-		`FROM public.EventApplications ` +
-		`WHERE UserFk = $1`
+		`eventapplicationid, userfk, datecreated, orgeventfk ` +
+		`FROM public.eventapplications ` +
+		`WHERE eventapplicationid = $1`
 	// run
-	logf(sqlstr, userFk)
-	rows, err := db.QueryContext(ctx, sqlstr, userFk)
+	logf(sqlstr, eventapplicationid)
+	e := Eventapplication{
+		_exists: true,
+	}
+	if err := db.QueryRowContext(ctx, sqlstr, eventapplicationid).Scan(&e.Eventapplicationid, &e.Userfk, &e.Datecreated, &e.Orgeventfk); err != nil {
+		return nil, logerror(err)
+	}
+	return &e, nil
+}
+
+// EventapplicationsByUserfk retrieves a row from 'public.eventapplications' as a Eventapplication.
+//
+// Generated from index 'eventapplicationsindex'.
+func EventapplicationsByUserfk(ctx context.Context, db DB, userfk int) ([]*Eventapplication, error) {
+	// query
+	const sqlstr = `SELECT ` +
+		`eventapplicationid, userfk, datecreated, orgeventfk ` +
+		`FROM public.eventapplications ` +
+		`WHERE userfk = $1`
+	// run
+	logf(sqlstr, userfk)
+	rows, err := db.QueryContext(ctx, sqlstr, userfk)
 	if err != nil {
 		return nil, logerror(err)
 	}
 	defer rows.Close()
 	// process
-	var res []*EventApplication
+	var res []*Eventapplication
 	for rows.Next() {
-		ea := EventApplication{
+		e := Eventapplication{
 			_exists: true,
 		}
 		// scan
-		if err := rows.Scan(&ea.EventApplicationID, &ea.UserFk, &ea.DateCreated, &ea.OrgEventFk); err != nil {
+		if err := rows.Scan(&e.Eventapplicationid, &e.Userfk, &e.Datecreated, &e.Orgeventfk); err != nil {
 			return nil, logerror(err)
 		}
-		res = append(res, &ea)
+		res = append(res, &e)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, logerror(err)
@@ -160,36 +180,16 @@ func EventApplicationsByUserFk(ctx context.Context, db DB, userFk int) ([]*Event
 	return res, nil
 }
 
-// EventApplicationByEventApplicationID retrieves a row from 'public.EventApplications' as a EventApplication.
+// Organizationevent returns the Organizationevent associated with the Eventapplication's (Orgeventfk).
 //
-// Generated from index 'EventApplications_pkey'.
-func EventApplicationByEventApplicationID(ctx context.Context, db DB, eventApplicationID int) (*EventApplication, error) {
-	// query
-	const sqlstr = `SELECT ` +
-		`EventApplicationID, UserFk, DateCreated, OrgEventFk ` +
-		`FROM public.EventApplications ` +
-		`WHERE EventApplicationID = $1`
-	// run
-	logf(sqlstr, eventApplicationID)
-	ea := EventApplication{
-		_exists: true,
-	}
-	if err := db.QueryRowContext(ctx, sqlstr, eventApplicationID).Scan(&ea.EventApplicationID, &ea.UserFk, &ea.DateCreated, &ea.OrgEventFk); err != nil {
-		return nil, logerror(err)
-	}
-	return &ea, nil
+// Generated from foreign key 'eventapplications_orgeventfk_fkey'.
+func (e *Eventapplication) Organizationevent(ctx context.Context, db DB) (*Organizationevent, error) {
+	return OrganizationeventByOrganizationeventid(ctx, db, e.Orgeventfk)
 }
 
-// OrganizationEvent returns the OrganizationEvent associated with the EventApplication's (OrgEventFk).
+// User returns the User associated with the Eventapplication's (Userfk).
 //
-// Generated from foreign key 'EventApplications_OrgEventFk_fkey'.
-func (ea *EventApplication) OrganizationEvent(ctx context.Context, db DB) (*OrganizationEvent, error) {
-	return OrganizationEventByOrganizationEventID(ctx, db, ea.OrgEventFk)
-}
-
-// User returns the User associated with the EventApplication's (UserFk).
-//
-// Generated from foreign key 'EventApplications_UserFk_fkey'.
-func (ea *EventApplication) User(ctx context.Context, db DB) (*User, error) {
-	return UserByUserID(ctx, db, ea.UserFk)
+// Generated from foreign key 'eventapplications_userfk_fkey'.
+func (e *Eventapplication) User(ctx context.Context, db DB) (*User, error) {
+	return UserByUserid(ctx, db, e.Userfk)
 }

@@ -6,174 +6,174 @@ import (
 	"context"
 )
 
-// OrganizationEvent represents a row from 'public.OrganizationEvents'.
-type OrganizationEvent struct {
-	OrganizationEventID int     `json:"OrganizationEventID"` // OrganizationEventID
-	Name                string  `json:"Name"`                // Name
-	Latitude            float64 `json:"Latitude"`            // Latitude
-	Longitude           float64 `json:"Longitude"`           // Longitude
-	City                string  `json:"City"`                // City
-	State               string  `json:"State"`               // State
-	OrgFk               int     `json:"OrgFk"`               // OrgFk
-	Capacity            int     `json:"Capacity"`            // Capacity
-	Attending           int     `json:"Attending"`           // Attending
-	EventUUID           string  `json:"EventUuid"`           // EventUuid
+// Organizationevent represents a row from 'public.organizationevents'.
+type Organizationevent struct {
+	Organizationeventid int     `json:"organizationeventid"` // organizationeventid
+	Name                string  `json:"name"`                // name
+	Latitude            float64 `json:"latitude"`            // latitude
+	Longitude           float64 `json:"longitude"`           // longitude
+	City                string  `json:"city"`                // city
+	State               string  `json:"state"`               // state
+	Orgfk               int     `json:"orgfk"`               // orgfk
+	Capacity            int     `json:"capacity"`            // capacity
+	Attending           int     `json:"attending"`           // attending
+	Eventuuid           string  `json:"eventuuid"`           // eventuuid
 	// xo fields
 	_exists, _deleted bool
 }
 
-// Exists returns true when the OrganizationEvent exists in the database.
-func (oe *OrganizationEvent) Exists() bool {
-	return oe._exists
+// Exists returns true when the Organizationevent exists in the database.
+func (o *Organizationevent) Exists() bool {
+	return o._exists
 }
 
-// Deleted returns true when the OrganizationEvent has been marked for deletion from
+// Deleted returns true when the Organizationevent has been marked for deletion from
 // the database.
-func (oe *OrganizationEvent) Deleted() bool {
-	return oe._deleted
+func (o *Organizationevent) Deleted() bool {
+	return o._deleted
 }
 
-// Insert inserts the OrganizationEvent to the database.
-func (oe *OrganizationEvent) Insert(ctx context.Context, db DB) error {
+// Insert inserts the Organizationevent to the database.
+func (o *Organizationevent) Insert(ctx context.Context, db DB) error {
 	switch {
-	case oe._exists: // already exists
+	case o._exists: // already exists
 		return logerror(&ErrInsertFailed{ErrAlreadyExists})
-	case oe._deleted: // deleted
+	case o._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO public.OrganizationEvents (` +
-		`Name, Latitude, Longitude, City, State, OrgFk, Capacity, Attending, EventUuid` +
+	const sqlstr = `INSERT INTO public.organizationevents (` +
+		`name, latitude, longitude, city, state, orgfk, capacity, attending, eventuuid` +
 		`) VALUES (` +
 		`$1, $2, $3, $4, $5, $6, $7, $8, $9` +
-		`) RETURNING OrganizationEventID`
+		`) RETURNING organizationeventid`
 	// run
-	logf(sqlstr, oe.Name, oe.Latitude, oe.Longitude, oe.City, oe.State, oe.OrgFk, oe.Capacity, oe.Attending, oe.EventUUID)
-	if err := db.QueryRowContext(ctx, sqlstr, oe.Name, oe.Latitude, oe.Longitude, oe.City, oe.State, oe.OrgFk, oe.Capacity, oe.Attending, oe.EventUUID).Scan(&oe.OrganizationEventID); err != nil {
+	logf(sqlstr, o.Name, o.Latitude, o.Longitude, o.City, o.State, o.Orgfk, o.Capacity, o.Attending, o.Eventuuid)
+	if err := db.QueryRowContext(ctx, sqlstr, o.Name, o.Latitude, o.Longitude, o.City, o.State, o.Orgfk, o.Capacity, o.Attending, o.Eventuuid).Scan(&o.Organizationeventid); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	oe._exists = true
+	o._exists = true
 	return nil
 }
 
-// Update updates a OrganizationEvent in the database.
-func (oe *OrganizationEvent) Update(ctx context.Context, db DB) error {
+// Update updates a Organizationevent in the database.
+func (o *Organizationevent) Update(ctx context.Context, db DB) error {
 	switch {
-	case !oe._exists: // doesn't exist
+	case !o._exists: // doesn't exist
 		return logerror(&ErrUpdateFailed{ErrDoesNotExist})
-	case oe._deleted: // deleted
+	case o._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with composite primary key
-	const sqlstr = `UPDATE public.OrganizationEvents SET ` +
-		`Name = $1, Latitude = $2, Longitude = $3, City = $4, State = $5, OrgFk = $6, Capacity = $7, Attending = $8, EventUuid = $9 ` +
-		`WHERE OrganizationEventID = $10`
+	const sqlstr = `UPDATE public.organizationevents SET ` +
+		`name = $1, latitude = $2, longitude = $3, city = $4, state = $5, orgfk = $6, capacity = $7, attending = $8, eventuuid = $9 ` +
+		`WHERE organizationeventid = $10`
 	// run
-	logf(sqlstr, oe.Name, oe.Latitude, oe.Longitude, oe.City, oe.State, oe.OrgFk, oe.Capacity, oe.Attending, oe.EventUUID, oe.OrganizationEventID)
-	if _, err := db.ExecContext(ctx, sqlstr, oe.Name, oe.Latitude, oe.Longitude, oe.City, oe.State, oe.OrgFk, oe.Capacity, oe.Attending, oe.EventUUID, oe.OrganizationEventID); err != nil {
+	logf(sqlstr, o.Name, o.Latitude, o.Longitude, o.City, o.State, o.Orgfk, o.Capacity, o.Attending, o.Eventuuid, o.Organizationeventid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Name, o.Latitude, o.Longitude, o.City, o.State, o.Orgfk, o.Capacity, o.Attending, o.Eventuuid, o.Organizationeventid); err != nil {
 		return logerror(err)
 	}
 	return nil
 }
 
-// Save saves the OrganizationEvent to the database.
-func (oe *OrganizationEvent) Save(ctx context.Context, db DB) error {
-	if oe.Exists() {
-		return oe.Update(ctx, db)
+// Save saves the Organizationevent to the database.
+func (o *Organizationevent) Save(ctx context.Context, db DB) error {
+	if o.Exists() {
+		return o.Update(ctx, db)
 	}
-	return oe.Insert(ctx, db)
+	return o.Insert(ctx, db)
 }
 
-// Upsert performs an upsert for OrganizationEvent.
-func (oe *OrganizationEvent) Upsert(ctx context.Context, db DB) error {
+// Upsert performs an upsert for Organizationevent.
+func (o *Organizationevent) Upsert(ctx context.Context, db DB) error {
 	switch {
-	case oe._deleted: // deleted
+	case o._deleted: // deleted
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO public.OrganizationEvents (` +
-		`OrganizationEventID, Name, Latitude, Longitude, City, State, OrgFk, Capacity, Attending, EventUuid` +
+	const sqlstr = `INSERT INTO public.organizationevents (` +
+		`organizationeventid, name, latitude, longitude, city, state, orgfk, capacity, attending, eventuuid` +
 		`) VALUES (` +
 		`$1, $2, $3, $4, $5, $6, $7, $8, $9, $10` +
 		`)` +
-		` ON CONFLICT (OrganizationEventID) DO ` +
+		` ON CONFLICT (organizationeventid) DO ` +
 		`UPDATE SET ` +
-		`Name = EXCLUDED.Name, Latitude = EXCLUDED.Latitude, Longitude = EXCLUDED.Longitude, City = EXCLUDED.City, State = EXCLUDED.State, OrgFk = EXCLUDED.OrgFk, Capacity = EXCLUDED.Capacity, Attending = EXCLUDED.Attending, EventUuid = EXCLUDED.EventUuid `
+		`name = EXCLUDED.name, latitude = EXCLUDED.latitude, longitude = EXCLUDED.longitude, city = EXCLUDED.city, state = EXCLUDED.state, orgfk = EXCLUDED.orgfk, capacity = EXCLUDED.capacity, attending = EXCLUDED.attending, eventuuid = EXCLUDED.eventuuid `
 	// run
-	logf(sqlstr, oe.OrganizationEventID, oe.Name, oe.Latitude, oe.Longitude, oe.City, oe.State, oe.OrgFk, oe.Capacity, oe.Attending, oe.EventUUID)
-	if _, err := db.ExecContext(ctx, sqlstr, oe.OrganizationEventID, oe.Name, oe.Latitude, oe.Longitude, oe.City, oe.State, oe.OrgFk, oe.Capacity, oe.Attending, oe.EventUUID); err != nil {
+	logf(sqlstr, o.Organizationeventid, o.Name, o.Latitude, o.Longitude, o.City, o.State, o.Orgfk, o.Capacity, o.Attending, o.Eventuuid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Organizationeventid, o.Name, o.Latitude, o.Longitude, o.City, o.State, o.Orgfk, o.Capacity, o.Attending, o.Eventuuid); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	oe._exists = true
+	o._exists = true
 	return nil
 }
 
-// Delete deletes the OrganizationEvent from the database.
-func (oe *OrganizationEvent) Delete(ctx context.Context, db DB) error {
+// Delete deletes the Organizationevent from the database.
+func (o *Organizationevent) Delete(ctx context.Context, db DB) error {
 	switch {
-	case !oe._exists: // doesn't exist
+	case !o._exists: // doesn't exist
 		return nil
-	case oe._deleted: // deleted
+	case o._deleted: // deleted
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM public.OrganizationEvents ` +
-		`WHERE OrganizationEventID = $1`
+	const sqlstr = `DELETE FROM public.organizationevents ` +
+		`WHERE organizationeventid = $1`
 	// run
-	logf(sqlstr, oe.OrganizationEventID)
-	if _, err := db.ExecContext(ctx, sqlstr, oe.OrganizationEventID); err != nil {
+	logf(sqlstr, o.Organizationeventid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Organizationeventid); err != nil {
 		return logerror(err)
 	}
 	// set deleted
-	oe._deleted = true
+	o._deleted = true
 	return nil
 }
 
-// OrganizationEventByEventUUID retrieves a row from 'public.OrganizationEvents' as a OrganizationEvent.
+// OrganizationeventByEventuuid retrieves a row from 'public.organizationevents' as a Organizationevent.
 //
-// Generated from index 'OrganizationEventIndex'.
-func OrganizationEventByEventUUID(ctx context.Context, db DB, eventUUID string) (*OrganizationEvent, error) {
+// Generated from index 'organizationeventindex'.
+func OrganizationeventByEventuuid(ctx context.Context, db DB, eventuuid string) (*Organizationevent, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`OrganizationEventID, Name, Latitude, Longitude, City, State, OrgFk, Capacity, Attending, EventUuid ` +
-		`FROM public.OrganizationEvents ` +
-		`WHERE EventUuid = $1`
+		`organizationeventid, name, latitude, longitude, city, state, orgfk, capacity, attending, eventuuid ` +
+		`FROM public.organizationevents ` +
+		`WHERE eventuuid = $1`
 	// run
-	logf(sqlstr, eventUUID)
-	oe := OrganizationEvent{
+	logf(sqlstr, eventuuid)
+	o := Organizationevent{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, eventUUID).Scan(&oe.OrganizationEventID, &oe.Name, &oe.Latitude, &oe.Longitude, &oe.City, &oe.State, &oe.OrgFk, &oe.Capacity, &oe.Attending, &oe.EventUUID); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, eventuuid).Scan(&o.Organizationeventid, &o.Name, &o.Latitude, &o.Longitude, &o.City, &o.State, &o.Orgfk, &o.Capacity, &o.Attending, &o.Eventuuid); err != nil {
 		return nil, logerror(err)
 	}
-	return &oe, nil
+	return &o, nil
 }
 
-// OrganizationEventByOrganizationEventID retrieves a row from 'public.OrganizationEvents' as a OrganizationEvent.
+// OrganizationeventByOrganizationeventid retrieves a row from 'public.organizationevents' as a Organizationevent.
 //
-// Generated from index 'OrganizationEvents_pkey'.
-func OrganizationEventByOrganizationEventID(ctx context.Context, db DB, organizationEventID int) (*OrganizationEvent, error) {
+// Generated from index 'organizationevents_pkey'.
+func OrganizationeventByOrganizationeventid(ctx context.Context, db DB, organizationeventid int) (*Organizationevent, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`OrganizationEventID, Name, Latitude, Longitude, City, State, OrgFk, Capacity, Attending, EventUuid ` +
-		`FROM public.OrganizationEvents ` +
-		`WHERE OrganizationEventID = $1`
+		`organizationeventid, name, latitude, longitude, city, state, orgfk, capacity, attending, eventuuid ` +
+		`FROM public.organizationevents ` +
+		`WHERE organizationeventid = $1`
 	// run
-	logf(sqlstr, organizationEventID)
-	oe := OrganizationEvent{
+	logf(sqlstr, organizationeventid)
+	o := Organizationevent{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, organizationEventID).Scan(&oe.OrganizationEventID, &oe.Name, &oe.Latitude, &oe.Longitude, &oe.City, &oe.State, &oe.OrgFk, &oe.Capacity, &oe.Attending, &oe.EventUUID); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, organizationeventid).Scan(&o.Organizationeventid, &o.Name, &o.Latitude, &o.Longitude, &o.City, &o.State, &o.Orgfk, &o.Capacity, &o.Attending, &o.Eventuuid); err != nil {
 		return nil, logerror(err)
 	}
-	return &oe, nil
+	return &o, nil
 }
 
-// Organization returns the Organization associated with the OrganizationEvent's (OrgFk).
+// Organization returns the Organization associated with the Organizationevent's (Orgfk).
 //
-// Generated from foreign key 'OrganizationEvents_OrgFk_fkey'.
-func (oe *OrganizationEvent) Organization(ctx context.Context, db DB) (*Organization, error) {
-	return OrganizationByOrganizationID(ctx, db, oe.OrgFk)
+// Generated from foreign key 'organizationevents_orgfk_fkey'.
+func (o *Organizationevent) Organization(ctx context.Context, db DB) (*Organization, error) {
+	return OrganizationByOrganizationid(ctx, db, o.Orgfk)
 }

@@ -6,155 +6,155 @@ import (
 	"context"
 )
 
-// OrgUser represents a row from 'public.OrgUsers'.
-type OrgUser struct {
-	OrgUserID       int `json:"OrgUserID"`       // OrgUserID
-	PermissionsCode int `json:"PermissionsCode"` // PermissionsCode
-	UserFk          int `json:"UserFk"`          // UserFk
-	OrgFk           int `json:"OrgFk"`           // OrgFk
+// Orguser represents a row from 'public.orgusers'.
+type Orguser struct {
+	Orguserid       int `json:"orguserid"`       // orguserid
+	Permissionscode int `json:"permissionscode"` // permissionscode
+	Userfk          int `json:"userfk"`          // userfk
+	Orgfk           int `json:"orgfk"`           // orgfk
 	// xo fields
 	_exists, _deleted bool
 }
 
-// Exists returns true when the OrgUser exists in the database.
-func (ou *OrgUser) Exists() bool {
-	return ou._exists
+// Exists returns true when the Orguser exists in the database.
+func (o *Orguser) Exists() bool {
+	return o._exists
 }
 
-// Deleted returns true when the OrgUser has been marked for deletion from
+// Deleted returns true when the Orguser has been marked for deletion from
 // the database.
-func (ou *OrgUser) Deleted() bool {
-	return ou._deleted
+func (o *Orguser) Deleted() bool {
+	return o._deleted
 }
 
-// Insert inserts the OrgUser to the database.
-func (ou *OrgUser) Insert(ctx context.Context, db DB) error {
+// Insert inserts the Orguser to the database.
+func (o *Orguser) Insert(ctx context.Context, db DB) error {
 	switch {
-	case ou._exists: // already exists
+	case o._exists: // already exists
 		return logerror(&ErrInsertFailed{ErrAlreadyExists})
-	case ou._deleted: // deleted
+	case o._deleted: // deleted
 		return logerror(&ErrInsertFailed{ErrMarkedForDeletion})
 	}
 	// insert (primary key generated and returned by database)
-	const sqlstr = `INSERT INTO public.OrgUsers (` +
-		`PermissionsCode, UserFk, OrgFk` +
+	const sqlstr = `INSERT INTO public.orgusers (` +
+		`permissionscode, userfk, orgfk` +
 		`) VALUES (` +
 		`$1, $2, $3` +
-		`) RETURNING OrgUserID`
+		`) RETURNING orguserid`
 	// run
-	logf(sqlstr, ou.PermissionsCode, ou.UserFk, ou.OrgFk)
-	if err := db.QueryRowContext(ctx, sqlstr, ou.PermissionsCode, ou.UserFk, ou.OrgFk).Scan(&ou.OrgUserID); err != nil {
+	logf(sqlstr, o.Permissionscode, o.Userfk, o.Orgfk)
+	if err := db.QueryRowContext(ctx, sqlstr, o.Permissionscode, o.Userfk, o.Orgfk).Scan(&o.Orguserid); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	ou._exists = true
+	o._exists = true
 	return nil
 }
 
-// Update updates a OrgUser in the database.
-func (ou *OrgUser) Update(ctx context.Context, db DB) error {
+// Update updates a Orguser in the database.
+func (o *Orguser) Update(ctx context.Context, db DB) error {
 	switch {
-	case !ou._exists: // doesn't exist
+	case !o._exists: // doesn't exist
 		return logerror(&ErrUpdateFailed{ErrDoesNotExist})
-	case ou._deleted: // deleted
+	case o._deleted: // deleted
 		return logerror(&ErrUpdateFailed{ErrMarkedForDeletion})
 	}
 	// update with composite primary key
-	const sqlstr = `UPDATE public.OrgUsers SET ` +
-		`PermissionsCode = $1, UserFk = $2, OrgFk = $3 ` +
-		`WHERE OrgUserID = $4`
+	const sqlstr = `UPDATE public.orgusers SET ` +
+		`permissionscode = $1, userfk = $2, orgfk = $3 ` +
+		`WHERE orguserid = $4`
 	// run
-	logf(sqlstr, ou.PermissionsCode, ou.UserFk, ou.OrgFk, ou.OrgUserID)
-	if _, err := db.ExecContext(ctx, sqlstr, ou.PermissionsCode, ou.UserFk, ou.OrgFk, ou.OrgUserID); err != nil {
+	logf(sqlstr, o.Permissionscode, o.Userfk, o.Orgfk, o.Orguserid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Permissionscode, o.Userfk, o.Orgfk, o.Orguserid); err != nil {
 		return logerror(err)
 	}
 	return nil
 }
 
-// Save saves the OrgUser to the database.
-func (ou *OrgUser) Save(ctx context.Context, db DB) error {
-	if ou.Exists() {
-		return ou.Update(ctx, db)
+// Save saves the Orguser to the database.
+func (o *Orguser) Save(ctx context.Context, db DB) error {
+	if o.Exists() {
+		return o.Update(ctx, db)
 	}
-	return ou.Insert(ctx, db)
+	return o.Insert(ctx, db)
 }
 
-// Upsert performs an upsert for OrgUser.
-func (ou *OrgUser) Upsert(ctx context.Context, db DB) error {
+// Upsert performs an upsert for Orguser.
+func (o *Orguser) Upsert(ctx context.Context, db DB) error {
 	switch {
-	case ou._deleted: // deleted
+	case o._deleted: // deleted
 		return logerror(&ErrUpsertFailed{ErrMarkedForDeletion})
 	}
 	// upsert
-	const sqlstr = `INSERT INTO public.OrgUsers (` +
-		`OrgUserID, PermissionsCode, UserFk, OrgFk` +
+	const sqlstr = `INSERT INTO public.orgusers (` +
+		`orguserid, permissionscode, userfk, orgfk` +
 		`) VALUES (` +
 		`$1, $2, $3, $4` +
 		`)` +
-		` ON CONFLICT (OrgUserID) DO ` +
+		` ON CONFLICT (orguserid) DO ` +
 		`UPDATE SET ` +
-		`PermissionsCode = EXCLUDED.PermissionsCode, UserFk = EXCLUDED.UserFk, OrgFk = EXCLUDED.OrgFk `
+		`permissionscode = EXCLUDED.permissionscode, userfk = EXCLUDED.userfk, orgfk = EXCLUDED.orgfk `
 	// run
-	logf(sqlstr, ou.OrgUserID, ou.PermissionsCode, ou.UserFk, ou.OrgFk)
-	if _, err := db.ExecContext(ctx, sqlstr, ou.OrgUserID, ou.PermissionsCode, ou.UserFk, ou.OrgFk); err != nil {
+	logf(sqlstr, o.Orguserid, o.Permissionscode, o.Userfk, o.Orgfk)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Orguserid, o.Permissionscode, o.Userfk, o.Orgfk); err != nil {
 		return logerror(err)
 	}
 	// set exists
-	ou._exists = true
+	o._exists = true
 	return nil
 }
 
-// Delete deletes the OrgUser from the database.
-func (ou *OrgUser) Delete(ctx context.Context, db DB) error {
+// Delete deletes the Orguser from the database.
+func (o *Orguser) Delete(ctx context.Context, db DB) error {
 	switch {
-	case !ou._exists: // doesn't exist
+	case !o._exists: // doesn't exist
 		return nil
-	case ou._deleted: // deleted
+	case o._deleted: // deleted
 		return nil
 	}
 	// delete with single primary key
-	const sqlstr = `DELETE FROM public.OrgUsers ` +
-		`WHERE OrgUserID = $1`
+	const sqlstr = `DELETE FROM public.orgusers ` +
+		`WHERE orguserid = $1`
 	// run
-	logf(sqlstr, ou.OrgUserID)
-	if _, err := db.ExecContext(ctx, sqlstr, ou.OrgUserID); err != nil {
+	logf(sqlstr, o.Orguserid)
+	if _, err := db.ExecContext(ctx, sqlstr, o.Orguserid); err != nil {
 		return logerror(err)
 	}
 	// set deleted
-	ou._deleted = true
+	o._deleted = true
 	return nil
 }
 
-// OrgUserByOrgUserID retrieves a row from 'public.OrgUsers' as a OrgUser.
+// OrguserByOrguserid retrieves a row from 'public.orgusers' as a Orguser.
 //
-// Generated from index 'OrgUsers_pkey'.
-func OrgUserByOrgUserID(ctx context.Context, db DB, orgUserID int) (*OrgUser, error) {
+// Generated from index 'orgusers_pkey'.
+func OrguserByOrguserid(ctx context.Context, db DB, orguserid int) (*Orguser, error) {
 	// query
 	const sqlstr = `SELECT ` +
-		`OrgUserID, PermissionsCode, UserFk, OrgFk ` +
-		`FROM public.OrgUsers ` +
-		`WHERE OrgUserID = $1`
+		`orguserid, permissionscode, userfk, orgfk ` +
+		`FROM public.orgusers ` +
+		`WHERE orguserid = $1`
 	// run
-	logf(sqlstr, orgUserID)
-	ou := OrgUser{
+	logf(sqlstr, orguserid)
+	o := Orguser{
 		_exists: true,
 	}
-	if err := db.QueryRowContext(ctx, sqlstr, orgUserID).Scan(&ou.OrgUserID, &ou.PermissionsCode, &ou.UserFk, &ou.OrgFk); err != nil {
+	if err := db.QueryRowContext(ctx, sqlstr, orguserid).Scan(&o.Orguserid, &o.Permissionscode, &o.Userfk, &o.Orgfk); err != nil {
 		return nil, logerror(err)
 	}
-	return &ou, nil
+	return &o, nil
 }
 
-// Organization returns the Organization associated with the OrgUser's (OrgFk).
+// Organization returns the Organization associated with the Orguser's (Orgfk).
 //
-// Generated from foreign key 'OrgUsers_OrgFk_fkey'.
-func (ou *OrgUser) Organization(ctx context.Context, db DB) (*Organization, error) {
-	return OrganizationByOrganizationID(ctx, db, ou.OrgFk)
+// Generated from foreign key 'orgusers_orgfk_fkey'.
+func (o *Orguser) Organization(ctx context.Context, db DB) (*Organization, error) {
+	return OrganizationByOrganizationid(ctx, db, o.Orgfk)
 }
 
-// User returns the User associated with the OrgUser's (UserFk).
+// User returns the User associated with the Orguser's (Userfk).
 //
-// Generated from foreign key 'OrgUsers_UserFk_fkey'.
-func (ou *OrgUser) User(ctx context.Context, db DB) (*User, error) {
-	return UserByUserID(ctx, db, ou.UserFk)
+// Generated from foreign key 'orgusers_userfk_fkey'.
+func (o *Orguser) User(ctx context.Context, db DB) (*User, error) {
+	return UserByUserid(ctx, db, o.Userfk)
 }

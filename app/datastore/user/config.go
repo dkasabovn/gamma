@@ -12,36 +12,31 @@ import (
 )
 
 const (
-	
-	db = "gamma"
+	db             = "gamma"
 	userCollection = "users"
-
-
 )
 
 var (
-	mongoClient *mongo.Client
+	mongoClient     *mongo.Client
 	collectionUsers *mongo.Collection
 	clientSingleton sync.Once
 )
 
 func EnvVariable(key string) string {
+	err := godotenv.Load(".env")
 
-  // load .env file
-  err := godotenv.Load(".env")
+	if err != nil {
+		panic("no .env")
+	}
 
-  if err != nil {
-    panic("no .env")
-  }
-
-  return os.Getenv(key)
+	return os.Getenv(key)
 }
 
 func MongoUsers() *mongo.Collection {
-	clientSingleton.Do(func () {
+	clientSingleton.Do(func() {
 		mongoClient = createConnection()
 		collectionUsers = mongoClient.Database(db).Collection(userCollection)
-		
+
 	})
 
 	return collectionUsers
@@ -59,6 +54,6 @@ func createConnection() *mongo.Client {
 	if err := client.Ping(context.TODO(), readpref.Primary()); err != nil {
 		panic(err)
 	}
-	
+
 	return client
 }

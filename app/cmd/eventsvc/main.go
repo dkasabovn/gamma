@@ -11,6 +11,7 @@ func main() {
 	system.Initialize()
 	e := echo.New()
 	event.SetUpInfoGroup(e)
+	event.SetUpInternalRouter(e)
 	e.Logger.Fatal(e.Start(":8080"))
 	// gclaims := &ecJwt.GammaClaims{
 	// 	Email: "goober",

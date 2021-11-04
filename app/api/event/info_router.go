@@ -17,10 +17,12 @@ func SetUpInfoGroup(e *echo.Echo) {
 		Claims:         &ecJwt.GammaClaims{},
 		ParseTokenFunc: core.JwtParserFunction,
 	}))
-	getApplications(g)
-	getUserEvents(g)
-	getOrgs(g)
-	getTest(g)
+	{
+		getApplications(g)
+		getUserEvents(g)
+		getOrgs(g)
+		getTest(g)
+	}
 }
 
 func getTest(g *echo.Group) {

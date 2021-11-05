@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"gamma/app/api/core"
-	"gamma/app/datastore/users"
+	"gamma/app/datastore/mongodb/models"
 	"gamma/app/services/user"
 	"gamma/app/system/auth/argon"
 
@@ -57,7 +57,7 @@ func getUser(c echo.Context) error {
 
 func createUser(c echo.Context) error {
 
-	newUser := new(users.User)
+	newUser := new(models.User)
 	if err := c.Bind(newUser); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
@@ -91,7 +91,7 @@ func createUser(c echo.Context) error {
 
 func login(c echo.Context) error {
 
-	var loginUser users.User
+	var loginUser models.User
 
 	if err := c.Bind(&loginUser); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
@@ -120,7 +120,7 @@ func login(c echo.Context) error {
 // // TODO now needs to update based on email
 func updateUser(c echo.Context) error {
 
-	updateData := new(users.User)
+	updateData := new(models.User)
 	if err := c.Bind(updateData); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(1))
 	}

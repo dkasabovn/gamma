@@ -3,7 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
-	"gamma/app/datastore/users"
+	"gamma/app/datastore/mongodb/models"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
 
@@ -45,7 +45,7 @@ func InternalJwtParserFunction(auth string, c echo.Context) (interface{}, error)
 	return token, nil
 }
 
-func AddTokens(c echo.Context, user users.User) {
+func AddTokens(c echo.Context, user models.User) {
 	claims := &ecJwt.GammaClaims{
 		Email: user.Email,
 		Uuid:  user.ID,

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"gamma/app/datastore/users"
+	"gamma/app/datastore/mongodb"
 	"sync"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,7 +23,7 @@ type UserRepository struct {
 func UserRepo() *UserRepository {
 	userSingle.Do(func() {
 		userRepo = &UserRepository{
-			db: users.MongoDB().Collection(users.UserCollectionName),
+			db: mongodb.MongoDB().Collection(mongodb.UserCollectionName),
 		}
 	})
 	return userRepo

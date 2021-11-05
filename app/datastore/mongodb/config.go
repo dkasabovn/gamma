@@ -1,4 +1,4 @@
-package users
+package mongodb
 
 import (
 	"context"
@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	db                 = "gamma"
-	UserCollectionName = "users"
+	db                    = "gamma"
+	UserCollectionName    = "users"
+	InvitesCollectionName = "invites"
 )
 
 var (
@@ -36,7 +37,6 @@ func MongoDB() *mongo.Database {
 	clientSingleton.Do(func() {
 		mongoClient = createConnection()
 		mongoDB = mongoClient.Database(db)
-
 	})
 
 	return mongoDB

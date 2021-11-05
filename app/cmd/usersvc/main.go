@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"gamma/app/api/user"
-	"gamma/app/datastore/users"
+	"gamma/app/datastore/mongodb"
 	"gamma/app/system"
 
 	"github.com/labstack/echo/v4"
@@ -13,7 +13,7 @@ import (
 func main() {
 
 	system.Initialize()
-	users.MongoDB()
+	mongodb.MongoDB()
 	e := echo.New()
 	e.Use(middleware.Logger())
 

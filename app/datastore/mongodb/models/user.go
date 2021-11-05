@@ -1,9 +1,10 @@
-package users
+package models
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -31,6 +32,7 @@ type (
 		Password    string             `bson:"hashedPassword,omitempty" json:"password,omitempty"`
 		ImageLinks  []string           `bson:"imageLinks,omitempty" json:"links,omitempty"`
 		Device      string             `bson:"device,omitempty" json:"device,omitempty"`
+		CreatedAt   time.Time 				`bson:"createdAt, omitempty" json:"createdAt"`
 	}
 )
 
@@ -116,6 +118,7 @@ func UsersByUUIDs(ctx context.Context, coll *mongo.Collection, ids []primitive.O
 }
 
 func NewUser(ctx context.Context, coll *mongo.Collection, user User) (*mongo.InsertOneResult, error) {
+	user.CreatedAt = time.Now()
 	result, err := coll.InsertOne(ctx, user)
 	if err != nil {
 		return nil, err

@@ -24,7 +24,7 @@ var _ = Describe("User", func() {
 
 	BeforeEach(func() {
 		pg.ClearAll()
-		err := pg.GetUserRepo().InsertOrganization(context.Background(), "Gabe's E-girl Warehouse", "Translyvania", "asdfasdf")
+		err := pg.GetUserRepo().InsertOrganization(context.Background(), "Gabe's Warehouse", "Translyvania", "asdfasdf")
 		Ω(err).ShouldNot(HaveOccurred())
 		err = pg.GetUserRepo().InsertUser(context.Background(), fakeUser.Uuid, fakeUser.Email, fakeUser.FirstName, fakeUser.LastName)
 		Ω(err).ShouldNot(HaveOccurred())

@@ -3,11 +3,6 @@
 package main
 
 import (
-	"errors"
-	"fmt"
-	"gamma/app/datastore/events"
-	"gamma/build/db"
-
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -15,6 +10,7 @@ import (
 type (
 	Run      mg.Namespace
 	Generate mg.Namespace
+	Test     mg.Namespace
 )
 
 const (
@@ -39,39 +35,8 @@ func (Run) EventDB() error {
 	return err
 }
 
-func (Generate) EventModels() error {
-	eventdb := events.EventDB()
-	if eventdb == nil {
-		return errors.New("Couldn't connect to database")
-	}
-	eventdb.Close()
-	err := sh.RunV("xo", "schema", fmt.Sprintf("pgsql://%s:%s@localhost:%d/%s?sslmode=disable", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB), "-o", "./app/datastore/events/models")
-	return err
-}
-
-func (Generate) EventModelQueries() error {
-	queries := db.FindXOQueries("event")
-
-	for _, query := range queries {
-		err := sh.RunV(
-			"xo",
-			"query",
-			fmt.Sprintf("pg://%s:%s@localhost:%d/%s?sslmode=disable", POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT, POSTGRES_DB),
-			"-o",
-			"./app/datastore/events/models",
-			"-M",
-			"-B",
-			"-2",
-			"-T",
-			query.TypeName,
-			"-Q",
-			fmt.Sprintf("%s", query.Query),
-		)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+func (Test) All() error {
+	return sh.RunV("ginkgo", "./app/...")
 }
 
 func (Generate) PrivatePublicKeys() error {

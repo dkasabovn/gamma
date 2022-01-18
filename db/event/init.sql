@@ -1,66 +1,61 @@
-CREATE TABLE Users (
-  UserID SERIAL PRIMARY KEY,
-  UserUuid varchar(36) NOT NULL
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    uuid TEXT NOT NULL,
+    email TEXT NOT NULL,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    org_user_fk INT
 );
 
-CREATE TABLE OrgUsers (
-  OrgUserID SERIAL PRIMARY KEY,
-  PermissionsCode int NOT NULL,
-  UserFk int NOT NULL,
-  OrgFk int NOT NULL
+CREATE TABLE org_users (
+    id SERIAL PRIMARY KEY,
+    organization_fk INT
 );
 
-CREATE TABLE Organizations (
-  OrganizationID SERIAL PRIMARY KEY,
-  Name varchar(20) NOT NULL,
-  Description varchar(255) NOT NULL,
-  OrganizationUuid varchar(36) NOT NULL
+CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    org_name TEXT NOT NULL,
+    city TEXT NOT NULL,
+    uuid TEXT NOT NULL
 );
 
-CREATE TABLE OrganizationEvents (
-  OrganizationEventID SERIAL PRIMARY KEY,
-  Name varchar(20) NOT NULL,
-  Latitude decimal NOT NULL,
-  Longitude decimal NOT NULL,
-  City varchar(40) NOT NULL,
-  State varchar(20) NOT NULL,
-  OrgFk int NOT NULL,
-  Capacity int NOT NULL,
-  Attending int NOT NULL,
-  EventUuid varchar(36) NOT NULL
+CREATE TABLE events (
+    id SERIAL PRIMARY KEY,
+    event_name TEXT NOT NULL,
+    event_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    event_location TEXT NOT NULL,
+    uuid TEXT NOT NULL,
+    organization_fk INT
 );
 
-CREATE TABLE EventApplications (
-  EventApplicationID SERIAL PRIMARY KEY,
-  UserFk int NOT NULL,
-  DateCreated TIMESTAMP WITH TIME ZONE NOT NULL,
-  OrgEventFk int NOT NULL
+CREATE TABLE user_events (
+    id SERIAL PRIMARY KEY,
+    user_fk INT,
+    event_fk INT
 );
 
-CREATE TABLE UserEvents (
-  UserEventID SERIAL PRIMARY KEY NOT NULL,
-  OrgEventFk int NOT NULL,
-  UserFk int NOT NULL
+CREATE TABLE user_event_invites (
+    id SERIAL PRIMARY KEY,
+    uuid TEXT NOT NULL,
+    valid BOOLEAN NOT NULL,
+    event_uuid TEXT NOT NULL
 );
 
-ALTER TABLE OrgUsers ADD FOREIGN KEY (UserFk) REFERENCES Users (UserID) ON DELETE CASCADE;
+ALTER TABLE users
+    ADD CONSTRAINT fk_users_org_user FOREIGN KEY (org_user_fk) REFERENCES org_users(id) ON DELETE CASCADE;
 
-ALTER TABLE OrgUsers ADD FOREIGN KEY (OrgFk) REFERENCES Organizations (OrganizationID) ON DELETE CASCADE;
+ALTER TABLE org_users
+    ADD CONSTRAINT fk_orgs_users_organization FOREIGN KEY (organization_fk) REFERENCES organizations(id) ON DELETE CASCADE;
 
-ALTER TABLE OrganizationEvents ADD FOREIGN KEY (OrgFk) REFERENCES Organizations (OrganizationID) ON DELETE CASCADE;
+ALTER TABLE events
+    ADD CONSTRAINT fk_events_organization FOREIGN KEY (organization_fk) REFERENCES organizations(id) ON DELETE CASCADE;
 
-ALTER TABLE EventApplications ADD FOREIGN KEY (UserFk) REFERENCES Users (UserID) ON DELETE CASCADE;
+ALTER TABLE user_events
+    ADD CONSTRAINT fk_user_events_user FOREIGN KEY (user_fk) REFERENCES users(id) ON DELETE CASCADE;
 
-ALTER TABLE EventApplications ADD FOREIGN KEY (OrgEventFk) REFERENCES OrganizationEvents (OrganizationEventID) ON DELETE CASCADE;
+ALTER TABLE user_events
+    ADD CONSTRAINT fk_user_events_event FOREIGN KEY (event_fk) REFERENCES events(id) ON DELETE CASCADE;
 
-ALTER TABLE UserEvents ADD FOREIGN KEY (UserFk) REFERENCES Users (UserID) ON DELETE CASCADE;
+CREATE INDEX IF NOT EXISTS index_users_on_uuid ON users USING btree(uuid);
 
-ALTER TABLE UserEvents ADD FOREIGN KEY (OrgEventFk) REFERENCES OrganizationEvents (OrganizationEventID) ON DELETE CASCADE;
-
-CREATE UNIQUE INDEX UserUuidIndex ON Users (UserUuid);
-
-CREATE UNIQUE INDEX OrganizationEventIndex ON OrganizationEvents (EventUuid);
-
-CREATE INDEX UserEventsIndex ON UserEvents (UserFk);
-
-CREATE INDEX EventApplicationsIndex ON EventApplications (UserFk);
+CREATE INDEX IF NOT EXISTS inex_user_invite_on_uuid ON user_event_invites USING btree(uuid);

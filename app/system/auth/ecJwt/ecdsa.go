@@ -7,12 +7,11 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type GammaClaims struct {
-	Uuid  primitive.ObjectID `bson:"_id" json:"uuid"`
-	Email string             `bson:"email" json:"email"`
+	Uuid  string `json:"uuid"`
+	Email string `json:"email"`
 	jwt.StandardClaims
 }
 

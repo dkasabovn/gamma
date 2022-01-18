@@ -3,7 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
-	"gamma/app/datastore/mongodb/models"
+	"gamma/app/domain/bo"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
 
@@ -13,7 +13,7 @@ import (
 func JwtParserFunction(auth string, c echo.Context) (interface{}, error) {
 	token, valid := ecJwt.ECDSAVerify(auth)
 	if !valid {
-		if refreshTokenString, err := c.Cookie("refresh_token"); err != nil {
+		if refreshTokenString, err := c.Cookie("refresh-token"); err == nil {
 			_, refreshValid := ecJwt.ECDSAVerify(refreshTokenString.Value)
 			if refreshValid {
 				claims := token.Claims.(ecJwt.GammaClaims)
@@ -45,10 +45,10 @@ func InternalJwtParserFunction(auth string, c echo.Context) (interface{}, error)
 	return token, nil
 }
 
-func AddTokens(c echo.Context, user models.User) {
+func AddTokens(c echo.Context, user bo.User) {
 	claims := &ecJwt.GammaClaims{
 		Email: user.Email,
-		Uuid:  user.ID,
+		Uuid:  user.Uuid,
 	}
 
 	accessToken, refreshToken := ecJwt.ECDSASign(claims)

@@ -1,4 +1,4 @@
-package events
+package datastore
 
 import (
 	"database/sql"
@@ -19,7 +19,7 @@ const (
 var dbCon *sql.DB
 var DBSingleton sync.Once
 
-func EventDB() *sql.DB {
+func RwInstance() *sql.DB {
 	DBSingleton.Do(func() {
 		dbCon = CreateConnection()
 	})

@@ -18,9 +18,6 @@ func SetUpInfoGroup(e *echo.Echo) {
 		ParseTokenFunc: core.JwtParserFunction,
 	}))
 	{
-		getApplications(g)
-		getUserEvents(g)
-		getOrgs(g)
 		getTest(g)
 	}
 }
@@ -31,16 +28,4 @@ func getTest(g *echo.Group) {
 		claims := user.Claims.(*ecJwt.GammaClaims)
 		return c.String(http.StatusOK, claims.Email)
 	})
-}
-
-func getApplications(g *echo.Group) {
-	g.GET("/applications", GetEventApplications)
-}
-
-func getUserEvents(g *echo.Group) {
-	g.GET("", GetAttendingEvents)
-}
-
-func getOrgs(g *echo.Group) {
-	g.GET("/organizations", GetBootstrapData)
 }

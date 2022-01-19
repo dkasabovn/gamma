@@ -223,8 +223,6 @@ func (u *userRepo) InsertOrganization(ctx context.Context, uuid, name, city stri
 	return nil
 }
 
-func (u *userRepo) GetOrganization(ctx context.Context, )
-
 func (u *userRepo) InsertOrgUser(ctx context.Context, userUuid string, organizationId int) error {
 	statement := `
 		WITH new_org_user AS (
@@ -251,9 +249,9 @@ func (u *userRepo) InsertOrgUser(ctx context.Context, userUuid string, organizat
 	return nil
 }
 
-func (u *userRepo) InsertEvent(ctx context.Context, id int, event_name string, event_date time.Time, event_location string, uuid string, organization int) error {
-	statement := "INSERT INTO events (id, event_name, event_date, event_location, uuid, organization_fk) VALUES ($1, $2, $3, $4)"
-	_, err := u.dbInstance.ExecContext(ctx, statement, id, event_name, event_date, event_location, uuid, organization)
+func (u *userRepo) InsertEvent(ctx context.Context, event_name string, event_date time.Time, event_location string, uuid string) error {
+	statement := "INSERT INTO events (event_name, event_date, event_location, uuid) VALUES ($1, $2, $3, $4)"
+	_, err := u.dbInstance.ExecContext(ctx, statement, event_name, event_date, event_location, uuid, uuid)
 
 	if err != nil {
 		log.Errorf("could not insert into events: %s", err.Error())
@@ -261,5 +259,4 @@ func (u *userRepo) InsertEvent(ctx context.Context, id int, event_name string, e
 	}
 
 	return nil
-
 }

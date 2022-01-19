@@ -16,7 +16,7 @@ type UserRepository interface {
 	GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error)
 	InsertUserEvent(ctx context.Context, userId, eventId int) error
 	GetEvent(ctx context.Context, eventUuid string) (*bo.Event, error)
-	InsertEvent(ctx context.Context, event_name string, event_date time.Time, event_location string, uuid string) error
+	InsertEvent(ctx context.Context, event_name string, event_date time.Time, event_location string, uuid string, orgFk int) error
 	InsertOrganization(ctx context.Context, uuid, name, city string) error
 	InsertOrgUser(ctx context.Context, userUuid string, organizationId int) error
 }

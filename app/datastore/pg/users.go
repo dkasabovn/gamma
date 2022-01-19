@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"sync"
+	"time"
 
 	"gamma/app/datastore"
 	"gamma/app/domain/bo"
@@ -248,4 +249,17 @@ func (u *userRepo) InsertOrgUser(ctx context.Context, userUuid string, organizat
 	}
 
 	return nil
+}
+
+func (u *userRepo) InsertEvent(ctx context.Context, id int, event_name string, event_date time.Time, event_location string, uuid string, organization int) error {
+	statement := "INSERT INTO events (id, event_name, event_date, event_location, uuid, organization_fk) VALUES ($1, $2, $3, $4)"
+	_, err := u.dbInstance.ExecContext(ctx, statement, id, event_name, event_date, event_location, uuid, organization)
+
+	if err != nil {
+		log.Errorf("could not insert into events: %s", err.Error())
+		return err
+	}
+
+	return nil
+
 }

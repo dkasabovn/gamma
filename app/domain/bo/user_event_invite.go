@@ -1,7 +1,7 @@
 package bo
 
 type UserEventInvite struct {
-	Id        string
+	Id        int
 	Uuid      string
 	Valid     bool
 	EventUuid string

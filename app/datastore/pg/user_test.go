@@ -61,8 +61,8 @@ var _ = Describe("User", func() {
 
 	// ORG USERS
 
-	When("inserting an org user", func() {
-		Context("into an org that doesn't exist", func() {
+	Context("inserting an org user", func() {
+		When("into an org that doesn't exist", func() {
 			fakeOrgId := 1
 
 			It("should return an error", func() {
@@ -71,7 +71,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("the user does not exist", func() {
+		When("the user does not exist", func() {
 			fakeUserUuid := "1"
 
 			It("should return an error", func() {
@@ -80,7 +80,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("org and user is valid", func() {
+		When("org and user is valid", func() {
 			It("should insert without error", func() {
 				err := pg.GetUserRepo().InsertOrgUser(context.Background(), testUser.Uuid, testOrg.Id)
 				Ω(err).ShouldNot(HaveOccurred())
@@ -91,11 +91,11 @@ var _ = Describe("User", func() {
 
 	// INVITES
 
-	When("Inviting user", func() {
+	Context("Inviting user", func() {
 
 		eventId := "0"
 
-		Context("user does not exist", func() {
+		When("user does not exist", func() {
 			eventId := "0"
 			fakeUser := bo.User{
 				Id: 1,
@@ -107,7 +107,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("User does exist", func() {
+		When("User does exist", func() {
 			It("Should Insert without issue", func() {
 				err := pg.GetUserRepo().InsertInvite(context.Background(), testUser.Uuid, eventId)
 				Ω(err).ShouldNot(HaveOccurred())
@@ -115,13 +115,13 @@ var _ = Describe("User", func() {
 		})
 	})
 
-	When("Geting Invite", func() {
+	Context("Geting Invite", func() {
 
 		BeforeEach(func() {
 			Expect(pg.GetUserRepo().InsertInvite(context.Background(), testUser.Uuid, testInvite.Uuid)).To(Succeed())
 		})
 
-		Context("Invite does not exist", func() {
+		When("Invite does not exist", func() {
 			fakeInviteId := "1"
 			It("Should return an error", func() {
 				_, err := pg.GetUserRepo().GetInvite(context.Background(), fakeInviteId)
@@ -129,7 +129,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("Invite does exist", func() {
+		When("Invite does exist", func() {
 			It("Should return the proper invite with the status of true", func() {
 				invite, err := pg.GetUserRepo().GetInvite(context.Background(), testInvite.Uuid)
 				Ω(err).ShouldNot(HaveOccurred())
@@ -141,12 +141,12 @@ var _ = Describe("User", func() {
 
 	})
 
-	When("Deleting Invites", func() {
+	Context("Deleting Invites", func() {
 		BeforeEach(func() {
 			Expect(pg.GetUserRepo().InsertInvite(context.Background(), testUser.Uuid, testInvite.Uuid)).To(Succeed())
 		})
 
-		Context("Invite does not exist", func() {
+		When("Invite does not exist", func() {
 			fakeInviteId := 1
 			It("Should return an error", func() {
 				err := pg.GetUserRepo().DeleteInvite(context.Background(), fakeInviteId)
@@ -154,7 +154,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("Invite exists", func() {
+		When("Invite exists", func() {
 			It("Should be deleted", func() {
 				err := pg.GetUserRepo().DeleteInvite(context.Background(), testInvite.Id)
 				Ω(err).ShouldNot(HaveOccurred())
@@ -167,33 +167,33 @@ var _ = Describe("User", func() {
 
 	// EVENTS
 
-	When("Inserting Events", func() {
+	Context("Inserting Events", func() {
 
-		Context("Organization does not exist", func() {
-			fakeOrgId := 1
+		When("Organization does not exist", func() {
+			fakeOrgUuid := 1
 
 			It("Should fail", func() {
-				err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.Id, testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, fakeOrgId)
+				err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, fakeOrgUuid)
 				Ω(err).Should(HaveOccurred())
 			})
 		})
 
-		Context("Organization does exist", func() {
+		When("Organization does exist", func() {
 			It("should insert event", func() {
-				err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.Id, testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, testEvent.Organization)
+				err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, testEvent.Organization)
 				Ω(err).ShouldNot(HaveOccurred())
 			})
 		})
 
 	})
 
-	When("Getting Events", func() {
+	Context("Getting Events", func() {
 		BeforeEach(func() {
-			err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.Id, testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, fakeOrgId)
+			err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, testEvent.Organization)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
-		Context("Event does not exist", func() {
+		When("Event does not exist", func() {
 			fakeEventUuid := "fake"
 			It("Should fail", func() {
 				_, err := pg.GetUserRepo().GetEvent(context.Background(), fakeEventUuid)
@@ -201,7 +201,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("Event does exist", func() {
+		When("Event does exist", func() {
 			It("Should pass and match", func() {
 				event, err := pg.GetUserRepo().GetEvent(context.Background(), testEvent.Uuid)
 				Ω(err).ShouldNot(HaveOccurred())
@@ -218,14 +218,14 @@ var _ = Describe("User", func() {
 
 	// User Events
 
-	When("Inserting User Events", func() {
+	Context("Inserting User Events", func() {
 
 		BeforeEach(func() {
-			err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.Id, testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, fakeOrgId)
+			err := pg.GetUserRepo().InsertEvent(context.Background(), testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, testEvent.Organization)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
-		Context("user does not exist", func() {
+		When("user does not exist", func() {
 			fakeUserId := 1
 			It("Should fail", func() {
 				err := pg.GetUserRepo().InsertUserEvent(context.Background(), fakeUserId, testEvent.Id)
@@ -233,7 +233,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("event does not exist", func() {
+		When("event does not exist", func() {
 			fakeEventId := 1
 			It("Should Fail", func() {
 				err := pg.GetUserRepo().InsertUserEvent(context.Background(), testUser.Id, fakeEventId)
@@ -241,7 +241,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("user and event do exist", func() {
+		When("user and event do exist", func() {
 			It("Should pass", func() {
 				err := pg.GetUserRepo().InsertUserEvent(context.Background(), testUser.Id, testEvent.Id)
 				Ω(err).Should(HaveOccurred())
@@ -249,7 +249,7 @@ var _ = Describe("User", func() {
 		})
 	})
 
-	When("Getting User Events", func() {
+	Context("Getting User Events", func() {
 
 		testUsers := []bo.User{
 			{Id: 0, Uuid: "uuid1", Email: "test@test.com", FirstName: "Robert", LastName: "WarWar"},
@@ -288,7 +288,7 @@ var _ = Describe("User", func() {
 			}
 
 			for _, event := range testEvents {
-				err := pg.GetUserRepo().InsertEvent(context.Background(), event.Id, event.EventName, event.EventDate, event.EventLocation, event.Uuid, event.Organization)
+				err := pg.GetUserRepo().InsertEvent(context.Background(), event.EventName, event.EventDate, event.EventLocation, event.Uuid, event.Organization)
 				Ω(err).ShouldNot(HaveOccurred())
 			}
 
@@ -300,7 +300,7 @@ var _ = Describe("User", func() {
 
 		})
 
-		Context("user does not exist", func() {
+		When("user does not exist", func() {
 			fakeUserId := -1
 			It("Should fail", func() {
 				_, err := pg.GetUserRepo().GetUserEvents(context.Background(), fakeUserId)
@@ -308,7 +308,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("user does and is attending to at least 1 event", func() {
+		When("user does and is attending to at least 1 event", func() {
 			It("Should pass", func() {
 				for _, user := range testUsers {
 					usersEvents, err := pg.GetUserRepo().GetUserEvents(context.Background(), user.Id)
@@ -331,7 +331,7 @@ var _ = Describe("User", func() {
 			})
 		})
 
-		Context("user exists but is not any events", func() {
+		When("user exists but is not any events", func() {
 			usersEvents, err := pg.GetUserRepo().GetUserEvents(context.Background(), 5)
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(len(usersEvents)).Should(Equal(0))

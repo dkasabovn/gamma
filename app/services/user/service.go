@@ -43,7 +43,7 @@ func (u *userService) GetOrgUserEvents(ctx context.Context, user *bo.User) ([]bo
 	if !user.OrgUserFk.Valid {
 		return nil, errors.New("org user fk is invalid")
 	}
-	return u.userRepo.GetOrgUserEvents(ctx, int(user.OrgUserFk.Int64))
+	return u.userRepo.GetOrgUserEvents(ctx, user.OrgUserFk)
 }
 
 func (u *userService) GenerateInvite(ctx context.Context, eventUuid string) (string, error) {

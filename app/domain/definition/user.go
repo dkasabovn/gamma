@@ -9,7 +9,7 @@ import (
 
 type UserRepository interface {
 	GetUser(ctx context.Context, uuid string) (*bo.User, error)
-	InsertUser(ctx context.Context, uuid string, email string, firstName string, lastName string) error
+	InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string) error
 	GetOrgUserEvents(ctx context.Context, orgUserFk sql.NullInt64) ([]bo.Event, error)
 	InsertInvite(ctx context.Context, inviteUuid string, eventUuid string) error
 	GetInvite(ctx context.Context, inviteUuid string) (*bo.UserEventInvite, error)

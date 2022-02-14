@@ -74,14 +74,14 @@ var _ = Describe("User", func() {
 
 	When("Inserting a user", func() {
 		It("should not throw an error", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, testUser.FirstName, testUser.LastName)
+			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName)
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 	})
 
 	When("Getting a user", func() {
 		It("should not throw an error", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, testUser.FirstName, testUser.LastName)
+			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName)
 			Ω(err).ShouldNot(HaveOccurred())
 			user, err := pg.GetUserRepo().GetUser(ctx, testUser.Uuid)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -99,7 +99,7 @@ var _ = Describe("User", func() {
 
 	When("Inserting an org user", func() {
 		It("should not throw an error", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, testUser.FirstName, testUser.LastName)
+			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName)
 			Ω(err).ShouldNot(HaveOccurred())
 			err = pg.GetUserRepo().InsertOrgUser(ctx, testUser.Uuid, organizationId)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -108,7 +108,7 @@ var _ = Describe("User", func() {
 
 	When("Getting org user events", func() {
 		It("should get the events within the same organization", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, testUser.FirstName, testUser.LastName)
+			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName)
 			Ω(err).ShouldNot(HaveOccurred())
 			err = pg.GetUserRepo().InsertOrgUser(ctx, testUser.Uuid, organizationId)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -124,7 +124,7 @@ var _ = Describe("User", func() {
 
 	When("Getting user events", func() {
 		It("should get events the user is attending", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, testUser.FirstName, testUser.LastName)
+			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName)
 			Ω(err).ShouldNot(HaveOccurred())
 			err = pg.GetUserRepo().InsertEvent(ctx, testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, organizationId)
 			Ω(err).ShouldNot(HaveOccurred())

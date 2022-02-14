@@ -16,7 +16,7 @@ type GammaClaims struct {
 }
 
 func ECDSASign(claims *GammaClaims) (string, string) {
-	privateKeyString := os.Getenv("PRIVATE_KEY")
+	privateKeyString, _ := os.ReadFile("private-key.pem")
 
 	var privateKey *ecdsa.PrivateKey
 	var err error

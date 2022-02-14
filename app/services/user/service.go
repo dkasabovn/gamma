@@ -7,6 +7,7 @@ import (
 	"gamma/app/domain/bo"
 	"gamma/app/domain/definition"
 	"gamma/app/services/iface"
+	"gamma/app/system/auth/argon"
 	"sync"
 
 	"github.com/google/uuid"
@@ -35,8 +36,22 @@ func (u *userService) GetUser(ctx context.Context, uuid string) (*bo.User, error
 	return u.userRepo.GetUser(ctx, uuid)
 }
 
-func (u *userService) InsertUser(ctx context.Context, uuid string, email string, firstName string, lastName string) error {
-	return u.userRepo.InsertUser(ctx, uuid, email, firstName, lastName)
+func (u *userService) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string) error {
+	return u.userRepo.InsertUser(ctx, uuid, email, hash, firstName, lastName)
+}
+
+func (u *userService) CreateUser(ctx context.Context, email, password, firstName, lastName string) (string, error) {
+	hash, err := argon.PasswordToHash(password)
+	if err != nil {
+		log.Errorf("could not generate hash: %s", err)
+		return "", err
+	}
+	uuid := uuid.New()
+	if err := u.InsertUser(ctx, uuid.String(), email, hash, firstName, lastName); err != nil {
+		// this error should already be logged by InsertUser method
+		return "", err
+	}
+	return uuid.String(), nil
 }
 
 func (u *userService) GetOrgUserEvents(ctx context.Context, user *bo.User) ([]bo.Event, error) {

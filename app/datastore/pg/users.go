@@ -57,9 +57,9 @@ func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
 	return &user, nil
 }
 
-func (u *userRepo) InsertUser(ctx context.Context, uuid string, email string, firstName string, lastName string) error {
-	statement := "INSERT INTO users (uuid, email, first_name, last_name) VALUES ($1, $2, $3, $4)"
-	_, err := u.dbInstance.ExecContext(ctx, statement, uuid, email, firstName, lastName)
+func (u *userRepo) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string) error {
+	statement := "INSERT INTO users (uuid, email, argon_hash, first_name, last_name) VALUES ($1, $2, $3, $4, $5)"
+	_, err := u.dbInstance.ExecContext(ctx, statement, uuid, email, hash, firstName, lastName)
 
 	if err != nil {
 		log.Errorf("could not insert user into db: %s", err.Error())

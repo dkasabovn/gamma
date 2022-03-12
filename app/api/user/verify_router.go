@@ -2,9 +2,7 @@ package user
 
 import (
 	"gamma/app/api/core"
-	"gamma/app/domain/bo"
 	"gamma/app/system/auth/ecJwt"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -17,6 +15,7 @@ func AddOpenRoutes(e *echo.Echo) {
 	{
 		signupRouter(group)
 		loginRouter(group)
+		refreshRouter(group)
 	}
 
 }
@@ -31,17 +30,13 @@ func JwtRoutes(e *echo.Echo) {
 }
 
 func signupRouter(g *echo.Group) {
-	g.POST("/signup", func(c echo.Context) error {
-		core.AddTokens(c, bo.User{
-			Uuid:  "test",
-			Email: "dkn",
-		})
-		return c.JSON(http.StatusOK, map[string]string{
-			"howdy": "partner",
-		})
-	})
+	g.POST("/signup", signUpController)
 }
 
 func loginRouter(g *echo.Group) {
-	g.POST("/signin", func(c echo.Context) error { return nil })
+	g.POST("/signin", signInController)
+}
+
+func refreshRouter(g *echo.Group) {
+	g.GET("/refresh", refreshTokenController)
 }

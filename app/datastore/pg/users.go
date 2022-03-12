@@ -57,8 +57,35 @@ func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
 	return &user, nil
 }
 
+func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*bo.User, error) {
+	statement := "SELECT id, uuid, email, first_name, last_name, password_hash, org_user_fk FROM users WHERE email = $1"
+	res := u.dbInstance.QueryRowContext(ctx, statement, email)
+
+	if res.Err() != nil {
+		log.Errorf("could not get user by uuid: %s", res.Err().Error())
+		return nil, res.Err()
+	}
+
+	var user bo.User
+
+	if err := res.Scan(
+		&user.Id,
+		&user.Uuid,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.PasswordHash,
+		&user.OrgUserFk,
+	); err != nil {
+		log.Errorf("could not scan res into user object: %s", err.Error())
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (u *userRepo) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string) error {
-	statement := "INSERT INTO users (uuid, email, argon_hash, first_name, last_name) VALUES ($1, $2, $3, $4, $5)"
+	statement := "INSERT INTO users (uuid, email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4, $5)"
 	_, err := u.dbInstance.ExecContext(ctx, statement, uuid, email, hash, firstName, lastName)
 
 	if err != nil {

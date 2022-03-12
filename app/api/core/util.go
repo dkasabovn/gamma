@@ -25,12 +25,14 @@ func ApiConverter(data map[string]interface{}, errorCode int) *ApiResponse {
 
 func ApiSuccess(data map[string]interface{}) *ApiResponse {
 	return &ApiResponse{
-		Data: data,
+		Data:  data,
+		Error: 0,
 	}
 }
 
 func ApiError(errorCode int) *ApiResponse {
 	return &ApiResponse{
+		Data:  nil,
 		Error: errorCode,
 	}
 }

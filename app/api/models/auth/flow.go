@@ -1,6 +1,13 @@
 package auth
 
-type UserLogin struct {
-	Email       string
-	RawPassword string
+type UserSignup struct {
+	Email       string `json:"email"`
+	RawPassword string `json:"password"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+}
+
+type UserSignIn struct {
+	Email       string `json:"email"`
+	RawPassword string `json:"password"`
 }

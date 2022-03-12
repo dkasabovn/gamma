@@ -1,6 +1,7 @@
 package ecJwt
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"log"
 	"os"
@@ -10,11 +11,16 @@ import (
 )
 
 type GammaClaims struct {
-	Uuid  string `json:"uuid"`
-	Email string `json:"email"`
+	Uuid string `json:"uuid"`
 	jwt.StandardClaims
 }
 
+type GammaJwt struct {
+	BearerToken  string `json:"bearer_token" header:"Authorization"`
+	RefreshToken string `json:"refresh_token" param:"refresh_token"`
+}
+
+// TODO !!! Handle reading private, public key files
 func ECDSASign(claims *GammaClaims) (string, string) {
 	privateKeyString, _ := os.ReadFile("private-key.pem")
 
@@ -58,7 +64,7 @@ func ECDSASign(claims *GammaClaims) (string, string) {
 }
 
 func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
-	publicKeyString := os.Getenv("PUBLIC_KEY")
+	publicKeyString, _ := os.ReadFile("private-key.pem")
 	var publicKey *ecdsa.PublicKey
 	var err error
 	if publicKey, err = jwt.ParseECPublicKeyFromPEM([]byte(publicKeyString)); err != nil {
@@ -68,4 +74,16 @@ func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
 		return publicKey, nil
 	})
 	return token, err == nil
+}
+
+func GetTokens(ctx context.Context, userUuid string) *GammaJwt {
+	claims := &GammaClaims{
+		Uuid: userUuid,
+	}
+
+	accessToken, refreshToken := ECDSASign(claims)
+	return &GammaJwt{
+		BearerToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
 }

@@ -8,6 +8,7 @@ type User struct {
 	Email        string
 	FirstName    string
 	LastName     string
+	UserName     string
 	PasswordHash string
 	OrgUserFk    sql.NullInt64
 }

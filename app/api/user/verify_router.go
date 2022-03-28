@@ -1,9 +1,6 @@
 package user
 
 import (
-	"gamma/app/api/core"
-	"gamma/app/system/auth/ecJwt"
-
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -12,20 +9,17 @@ func AddOpenRoutes(e *echo.Echo) {
 
 	group := e.Group("/auth")
 
+	group.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"*"},
+		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization},
+		AllowCredentials: true,
+	}))
+
 	{
 		signupRouter(group)
 		loginRouter(group)
 		refreshRouter(group)
 	}
-
-}
-
-func JwtRoutes(e *echo.Echo) {
-	authRequired := e.Group("/api")
-	authRequired.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		Claims:         &ecJwt.GammaClaims{},
-		ParseTokenFunc: core.JwtParserFunction,
-	}))
 
 }
 

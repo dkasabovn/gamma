@@ -30,7 +30,7 @@ func (Run) EventDB() error {
 	sh.RunV("docker", "container", "stop", "gamma_db")
 	sh.RunV("docker", "container", "rm", "gamma_db")
 
-	err = sh.RunV("docker", "run", "-p", "5432:5432", "-d", "--name=gamma_db", "gamma/eventdb")
+	err = sh.RunV("docker", "run", "-p", "5432:5432", "-it", "--name=gamma_db", "gamma/eventdb")
 
 	return err
 }
@@ -55,7 +55,7 @@ func (Generate) PrivatePublicKeys() error {
 		return err
 	}
 
-	return sh.RunV(
+	err = sh.RunV(
 		"openssl",
 		"ec",
 		"-in",
@@ -63,5 +63,22 @@ func (Generate) PrivatePublicKeys() error {
 		"-pubout",
 		"-out",
 		"public-key.pem",
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return sh.RunV(
+		"openssl",
+		"req",
+		"-new",
+		"-x509",
+		"-key",
+		"private-key.pem",
+		"-out",
+		"cert.pem",
+		"-days",
+		"360",
 	)
 }

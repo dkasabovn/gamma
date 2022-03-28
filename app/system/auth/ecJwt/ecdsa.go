@@ -30,13 +30,18 @@ func ECDSASign(claims *GammaClaims) (string, string) {
 		log.Fatalf("Unable to parse ECDSA private key: %v", err)
 	}
 
-	refreshToken := jwt.NewWithClaims(
-		jwt.SigningMethodES256,
-		jwt.StandardClaims{
+	refreshClaims := &GammaClaims{
+		Uuid: claims.Uuid,
+		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(7 * 24 * time.Hour).Unix(),
 			Issuer:    "auth.gamma",
 			Audience:  "user.gamma",
 		},
+	}
+
+	refreshToken := jwt.NewWithClaims(
+		jwt.SigningMethodES256,
+		refreshClaims,
 	)
 
 	claims.ExpiresAt = time.Now().Add(1 * time.Hour).Unix()
@@ -64,7 +69,7 @@ func ECDSASign(claims *GammaClaims) (string, string) {
 }
 
 func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
-	publicKeyString, _ := os.ReadFile("private-key.pem")
+	publicKeyString, _ := os.ReadFile("public-key.pem")
 	var publicKey *ecdsa.PublicKey
 	var err error
 	if publicKey, err = jwt.ParseECPublicKeyFromPEM([]byte(publicKeyString)); err != nil {

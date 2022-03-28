@@ -13,6 +13,8 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
+// TODO(add full user profile to user data)
+
 var (
 	userOnce     sync.Once
 	userInstance definition.UserRepository
@@ -32,7 +34,7 @@ func GetUserRepo() definition.UserRepository {
 }
 
 func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
-	statement := "SELECT id, uuid, email, first_name, last_name, org_user_fk FROM users WHERE uuid = $1"
+	statement := "SELECT id, uuid, email, first_name, last_name, username, org_user_fk FROM users LEFT JOIN org_users ON org_user_fk = org_users.id WHERE uuid = $1"
 	res := u.dbInstance.QueryRowContext(ctx, statement, uuid)
 
 	if res.Err() != nil {
@@ -48,9 +50,10 @@ func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
+		&user.UserName,
 		&user.OrgUserFk,
 	); err != nil {
-		log.Errorf("could not scan res into user object: %s", err.Error())
+		log.Errorf("could not scan res into user object: %v", err)
 		return nil, err
 	}
 
@@ -84,9 +87,9 @@ func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*bo.User, 
 	return &user, nil
 }
 
-func (u *userRepo) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string) error {
-	statement := "INSERT INTO users (uuid, email, password_hash, first_name, last_name) VALUES ($1, $2, $3, $4, $5)"
-	_, err := u.dbInstance.ExecContext(ctx, statement, uuid, email, hash, firstName, lastName)
+func (u *userRepo) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string, userName string) error {
+	statement := "INSERT INTO users (uuid, email, password_hash, first_name, last_name, username) VALUES ($1, $2, $3, $4, $5, $6)"
+	_, err := u.dbInstance.ExecContext(ctx, statement, uuid, email, hash, firstName, lastName, userName)
 
 	if err != nil {
 		log.Errorf("could not insert user into db: %s", err.Error())
@@ -123,42 +126,6 @@ func (u *userRepo) GetOrgUserEvents(ctx context.Context, orgUserId sql.NullInt64
 	}
 
 	return events, nil
-}
-
-func (u *userRepo) InsertInvite(ctx context.Context, inviteUuid string, eventUuid string) error {
-	statement := "INSERT INTO user_event_invites (uuid, valid, event_uuid) VALUES ($1, $2, $3)"
-	_, err := u.dbInstance.ExecContext(ctx, statement, inviteUuid, true, eventUuid)
-
-	if err != nil {
-		log.Errorf("could not insert invite: %s", err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (u *userRepo) GetInvite(ctx context.Context, inviteUuid string) (*bo.UserEventInvite, error) {
-	statement := "SELECT id, uuid, event_uuid, valid FROM user_event_invites WHERE uuid = $1"
-	row := u.dbInstance.QueryRowContext(ctx, statement, inviteUuid)
-
-	if row.Err() != nil {
-		log.Errorf("could not get invite by invite id: %s", row.Err().Error())
-		return nil, row.Err()
-	}
-
-	var invite bo.UserEventInvite
-
-	if err := row.Scan(
-		&invite.Id,
-		&invite.Uuid,
-		&invite.EventUuid,
-		&invite.Valid,
-	); err != nil {
-		log.Errorf("could not scan invite into user invite object: %s", err.Error())
-		return nil, err
-	}
-
-	return &invite, nil
 }
 
 func (u *userRepo) DeleteInvite(ctx context.Context, inviteId int) error {

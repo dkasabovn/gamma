@@ -6,6 +6,6 @@ import (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, email, password, firstName, lastName string) (*ecJwt.GammaJwt, error)
+	CreateUser(ctx context.Context, email, password, firstName, lastName, userName string) (*ecJwt.GammaJwt, error)
 	SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error)
 }

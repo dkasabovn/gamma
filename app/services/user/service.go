@@ -41,8 +41,8 @@ func (u *userService) GetUserByEmail(ctx context.Context, email string) (*bo.Use
 	return u.userRepo.GetUserByEmail(ctx, email)
 }
 
-func (u *userService) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string) error {
-	return u.userRepo.InsertUser(ctx, uuid, email, hash, firstName, lastName)
+func (u *userService) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string, userName string) error {
+	return u.userRepo.InsertUser(ctx, uuid, email, hash, firstName, lastName, userName)
 }
 
 func (u *userService) SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error) {
@@ -64,14 +64,14 @@ func (u *userService) SignInUser(ctx context.Context, email, password string) (*
 	return nil, nil
 }
 
-func (u *userService) CreateUser(ctx context.Context, email, password, firstName, lastName string) (*ecJwt.GammaJwt, error) {
+func (u *userService) CreateUser(ctx context.Context, email, password, firstName, lastName string, userName string) (*ecJwt.GammaJwt, error) {
 	hash, err := argon.PasswordToHash(password)
 	if err != nil {
 		log.Errorf("could not generate hash: %s", err)
 		return nil, err
 	}
 	uuid := uuid.New()
-	if err := u.InsertUser(ctx, uuid.String(), email, hash, firstName, lastName); err != nil {
+	if err := u.InsertUser(ctx, uuid.String(), email, hash, firstName, lastName, userName); err != nil {
 		// this error should already be logged by InsertUser method
 		return nil, err
 	}
@@ -83,38 +83,6 @@ func (u *userService) GetOrgUserEvents(ctx context.Context, user *bo.User) ([]bo
 		return nil, errors.New("org user fk is invalid")
 	}
 	return u.userRepo.GetOrgUserEvents(ctx, user.OrgUserFk)
-}
-
-func (u *userService) GenerateInvite(ctx context.Context, eventUuid string) (string, error) {
-	inviteId := uuid.New()
-	err := u.userRepo.InsertInvite(ctx, inviteId.String(), eventUuid)
-	if err != nil {
-		log.Errorf("could not insert invite: %s", err.Error())
-		return "", err
-	}
-	return inviteId.String(), nil
-}
-
-func (u *userService) AcceptInvite(ctx context.Context, user *bo.User, inviteUuid string) error {
-	invite, err := u.userRepo.GetInvite(ctx, inviteUuid)
-	if err != nil {
-		log.Errorf("could not get invite: %s", err.Error())
-		return err
-	}
-
-	event, err := u.userRepo.GetEvent(ctx, invite.EventUuid)
-	if err != nil {
-		log.Errorf("could not get event by invite eventuuid: %s", err.Error())
-		return err
-	}
-
-	err = u.userRepo.InsertUserEvent(ctx, user.Id, event.Id)
-	if err != nil {
-		log.Errorf("could not add event to user: %s", err)
-		return err
-	}
-
-	return nil
 }
 
 func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error) {

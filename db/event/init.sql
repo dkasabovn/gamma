@@ -5,12 +5,14 @@ CREATE TABLE users (
     password_hash TEXT NOT NULL,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    username TEXT NOT NULL UNIQUE,
     org_user_fk INT
 );
 
 CREATE TABLE org_users (
     id SERIAL PRIMARY KEY,
-    organization_fk INT
+    policies_num INT NOT NULL,
+    organization_fk INT NOT NULL
 );
 
 CREATE TABLE organizations (
@@ -29,17 +31,30 @@ CREATE TABLE events (
     organization_fk INT
 );
 
+-- Events that users have been accepted to
 CREATE TABLE user_events (
     id SERIAL PRIMARY KEY,
-    user_fk INT,
-    event_fk INT
+    user_fk INT NOT NULL,
+    event_fk INT NOT NULL
 );
 
-CREATE TABLE user_event_invites (
+-- Contains event applications 
+CREATE TABLE event_applications (
     id SERIAL PRIMARY KEY,
-    uuid TEXT NOT NULL,
-    valid BOOLEAN NOT NULL,
-    event_uuid TEXT NOT NULL
+    user_fk INT NOT NULL,
+    event_fk INT NOT NULL
+);
+
+-- Contains users that are whitelisted to any organization event
+CREATE TABLE organization_whitelist (
+    id SERIAL PRIMARY KEY,
+    organization_fk INT NOT NULL,
+    user_fk INT NOT NULL
+);
+
+CREATE TABLE super_admins (
+    id SERIAL PRIMARY KEY,
+    user_fk INT NOT NULL
 );
 
 ALTER TABLE users
@@ -58,5 +73,3 @@ ALTER TABLE user_events
     ADD CONSTRAINT fk_user_events_event FOREIGN KEY (event_fk) REFERENCES events(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS index_users_on_uuid ON users USING btree(uuid);
-
-CREATE INDEX IF NOT EXISTS inex_user_invite_on_uuid ON user_event_invites USING btree(uuid);

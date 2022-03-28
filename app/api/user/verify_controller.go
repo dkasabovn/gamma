@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 func signUpController(c echo.Context) error {
@@ -16,15 +17,20 @@ func signUpController(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
 
-	tokens, err := user.GetUserService().CreateUser(c.Request().Context(), rawSignUp.Email, rawSignUp.RawPassword, rawSignUp.FirstName, rawSignUp.LastName)
+	tokens, err := user.GetUserService().CreateUser(c.Request().Context(), rawSignUp.Email, rawSignUp.RawPassword, rawSignUp.FirstName, rawSignUp.LastName, rawSignUp.UserName)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 
+	c.SetCookie(&http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken,
+		HttpOnly: true,
+	})
+
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-		"refresh_token": tokens.RefreshToken,
-		"bearer_token":  tokens.BearerToken,
+		"bearer_token": tokens.BearerToken,
 	}))
 }
 
@@ -45,29 +51,41 @@ func signInController(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
 	}
 
+	c.SetCookie(&http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken,
+		HttpOnly: true,
+	})
+
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-		"refresh_token": tokens.RefreshToken,
-		"bearer_token":  tokens.BearerToken,
+		"bearer_token": tokens.BearerToken,
 	}))
 }
 
 func refreshTokenController(c echo.Context) error {
-	var tokens ecJwt.GammaJwt
-	if err := c.Bind(&tokens); err != nil {
-		c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+	refreshToken, err := c.Cookie("refresh_token")
+	log.Infof("Cookies: %v", c.Cookies())
+	if err != nil {
+		log.Errorf("Could not get refresh_token")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
 	}
 
-	_, refreshValid := ecJwt.ECDSAVerify(tokens.RefreshToken)
+	_, refreshValid := ecJwt.ECDSAVerify(refreshToken.Value)
 	if !refreshValid {
 		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
 	}
 
-	token, _ := ecJwt.ECDSAVerify(tokens.BearerToken)
-	claims := token.Claims.(ecJwt.GammaClaims)
-	accessToken, refreshToken := ecJwt.ECDSASign(&claims)
+	token, _ := ecJwt.ECDSAVerify(refreshToken.Value)
+	claims := token.Claims.(*ecJwt.GammaClaims)
+	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid)
+
+	c.SetCookie(&http.Cookie{
+		Name:     "refresh_token",
+		Value:    tokens.RefreshToken,
+		HttpOnly: true,
+	})
 
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-		"refresh_token": refreshToken,
-		"bearer_token":  accessToken,
+		"bearer_token": tokens.BearerToken,
 	}))
 }

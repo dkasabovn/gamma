@@ -1,9 +1,12 @@
 package main
 
 import (
-	"gamma/app/api/user"
+	user "gamma/app/api/user"
+	"gamma/app/system"
 )
 
 func main() {
-	user.Init()
+	system.Initialize()
+	api := user.API()
+	api.Start(":6969")
 }

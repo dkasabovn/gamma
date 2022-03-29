@@ -22,10 +22,11 @@ type GammaJwt struct {
 
 // TODO !!! Handle reading private, public key files
 func ECDSASign(claims *GammaClaims) (string, string) {
-	privateKeyString, _ := os.ReadFile("private-key.pem")
+	var privateKeyString []byte
+	var err error
+	privateKeyString = []byte(os.Getenv("PRIVATE_KEY"))
 
 	var privateKey *ecdsa.PrivateKey
-	var err error
 	if privateKey, err = jwt.ParseECPrivateKeyFromPEM([]byte(privateKeyString)); err != nil {
 		log.Fatalf("Unable to parse ECDSA private key: %v", err)
 	}
@@ -69,9 +70,11 @@ func ECDSASign(claims *GammaClaims) (string, string) {
 }
 
 func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
-	publicKeyString, _ := os.ReadFile("public-key.pem")
-	var publicKey *ecdsa.PublicKey
+	var publicKeyString []byte
 	var err error
+	publicKeyString = []byte(os.Getenv("PUBLIC_KEY"))
+	
+	var publicKey *ecdsa.PublicKey
 	if publicKey, err = jwt.ParseECPublicKeyFromPEM([]byte(publicKeyString)); err != nil {
 		log.Fatalf("Unable to parse ECDSA public key: %v", err)
 	}

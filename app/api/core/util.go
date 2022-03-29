@@ -4,6 +4,7 @@ import (
 	"gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
 	"gamma/app/system/auth/ecJwt"
+	"net/http"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
@@ -41,6 +42,15 @@ func GetGammaClaims(c echo.Context) *ecJwt.GammaClaims {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(*ecJwt.GammaClaims)
 	return claims
+}
+
+func GetCookie(cookies []*http.Cookie, name string) *http.Cookie {
+	for _, c := range cookies {
+		if c.Name == name {
+			return c
+		}
+	}
+	return nil
 }
 
 func ExtractUser(c echo.Context) (*bo.User, error) {

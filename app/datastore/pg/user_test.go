@@ -104,22 +104,6 @@ var _ = Describe("User", func() {
 		})
 	})
 
-	When("Getting org user events", func() {
-		It("should get the events within the same organization", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName, "")
-			Ω(err).ShouldNot(HaveOccurred())
-			err = pg.GetUserRepo().InsertOrgUser(ctx, testUser.Uuid, organizationId)
-			Ω(err).ShouldNot(HaveOccurred())
-			err = pg.GetUserRepo().InsertEvent(ctx, testEvent.EventName, testEvent.EventDate, testEvent.EventLocation, testEvent.Uuid, organizationId)
-			Ω(err).ShouldNot(HaveOccurred())
-			user, err := pg.GetUserRepo().GetUser(ctx, testUser.Uuid)
-			Ω(err).ShouldNot(HaveOccurred())
-			events, err := pg.GetUserRepo().GetOrgUserEvents(ctx, user.OrgUserFk)
-			Ω(err).ShouldNot(HaveOccurred())
-			Ω(events).Should(HaveLen(1))
-		})
-	})
-
 	When("Getting user events", func() {
 		It("should get events the user is attending", func() {
 			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName, "")

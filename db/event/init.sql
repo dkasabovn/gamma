@@ -3,15 +3,18 @@ CREATE TABLE users (
     uuid TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    -- phone_number TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     username TEXT NOT NULL UNIQUE,
-    org_user_fk INT
+    -- image_url TEXT NOT NULL
 );
 
+-- users that belong to an organization
 CREATE TABLE org_users (
     id SERIAL PRIMARY KEY,
     policies_num INT NOT NULL,
+    user_fk INT NOT NULL,
     organization_fk INT NOT NULL
 );
 
@@ -20,6 +23,7 @@ CREATE TABLE organizations (
     org_name TEXT NOT NULL,
     city TEXT NOT NULL,
     uuid TEXT NOT NULL
+    -- image_url TEXT NOT NULL
 );
 
 CREATE TABLE events (
@@ -28,6 +32,7 @@ CREATE TABLE events (
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
     event_location TEXT NOT NULL,
     uuid TEXT NOT NULL,
+    -- image_url TEXT NOT NULL,
     organization_fk INT
 );
 
@@ -52,16 +57,23 @@ CREATE TABLE organization_whitelist (
     user_fk INT NOT NULL
 );
 
-CREATE TABLE super_admins (
+-- Policy Json
+CREATE TABLE invites {
     id SERIAL PRIMARY KEY,
-    user_fk INT NOT NULL
-);
+    expiration_date TIMESTAMP NOT NULL,
+    use_limit INT NOT NULL,
+    policy_json JSON NOT NULL,
+    uuid TEXT NOT NULL
+};
 
 ALTER TABLE users
     ADD CONSTRAINT fk_users_org_user FOREIGN KEY (org_user_fk) REFERENCES org_users(id) ON DELETE CASCADE;
 
 ALTER TABLE org_users
     ADD CONSTRAINT fk_orgs_users_organization FOREIGN KEY (organization_fk) REFERENCES organizations(id) ON DELETE CASCADE;
+
+ALTER TABLE org_users
+    ADD CONSTRAINT fk_org_users_user FOREIGN KEY (user_fk) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE events
     ADD CONSTRAINT fk_events_organization FOREIGN KEY (organization_fk) REFERENCES organizations(id) ON DELETE CASCADE;

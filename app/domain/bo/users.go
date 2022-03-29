@@ -1,7 +1,5 @@
 package bo
 
-import "database/sql"
-
 type User struct {
 	Id           int
 	Uuid         string
@@ -10,5 +8,4 @@ type User struct {
 	LastName     string
 	UserName     string
 	PasswordHash string
-	OrgUserFk    sql.NullInt64
 }

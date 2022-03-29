@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"errors"
 	"gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
 	"gamma/app/domain/definition"
@@ -75,14 +74,9 @@ func (u *userService) CreateUser(ctx context.Context, email, password, firstName
 		// this error should already be logged by InsertUser method
 		return nil, err
 	}
-	return ecJwt.GetTokens(ctx, uuid.String()), nil
-}
 
-func (u *userService) GetOrgUserEvents(ctx context.Context, user *bo.User) ([]bo.Event, error) {
-	if !user.OrgUserFk.Valid {
-		return nil, errors.New("org user fk is invalid")
-	}
-	return u.userRepo.GetOrgUserEvents(ctx, user.OrgUserFk)
+	// TODO(dk): Give more data to tokens
+	return ecJwt.GetTokens(ctx, uuid.String()), nil
 }
 
 func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error) {

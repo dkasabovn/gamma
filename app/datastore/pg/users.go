@@ -34,7 +34,7 @@ func GetUserRepo() definition.UserRepository {
 }
 
 func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
-	statement := "SELECT u.id, uuid, email, first_name, last_name, username, org_user_fk FROM users u LEFT JOIN org_users o ON o.id = u.org_user_fk WHERE uuid = $1"
+	statement := "SELECT u.id, uuid, email, first_name, last_name, username FROM users WHERE uuid = $1"
 	res := u.dbInstance.QueryRowContext(ctx, statement, uuid)
 
 	if res.Err() != nil {
@@ -51,7 +51,6 @@ func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.UserName,
-		&user.OrgUserFk,
 	); err != nil {
 		log.Errorf("could not scan res into user object: %v", err)
 		return nil, err
@@ -61,7 +60,7 @@ func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
 }
 
 func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*bo.User, error) {
-	statement := "SELECT id, uuid, email, first_name, last_name, password_hash, org_user_fk FROM users WHERE email = $1"
+	statement := "SELECT id, uuid, email, first_name, last_name, password_hash FROM users WHERE email = $1"
 	res := u.dbInstance.QueryRowContext(ctx, statement, email)
 
 	if res.Err() != nil {
@@ -78,7 +77,6 @@ func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*bo.User, 
 		&user.FirstName,
 		&user.LastName,
 		&user.PasswordHash,
-		&user.OrgUserFk,
 	); err != nil {
 		log.Errorf("could not scan res into user object: %s", err.Error())
 		return nil, err
@@ -126,18 +124,6 @@ func (u *userRepo) GetOrgUserEvents(ctx context.Context, orgUserId sql.NullInt64
 	}
 
 	return events, nil
-}
-
-func (u *userRepo) DeleteInvite(ctx context.Context, inviteId int) error {
-	statement := "DELETE FROM user_event_invites WHERE id = $1"
-	_, err := u.dbInstance.ExecContext(ctx, statement, inviteId)
-
-	if err != nil {
-		log.Errorf("could not delete invite: %s", err.Error())
-		return err
-	}
-
-	return nil
 }
 
 func (u *userRepo) GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error) {

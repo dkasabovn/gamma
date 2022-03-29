@@ -1,4 +1,4 @@
-package user
+package user_api
 
 import (
 	"gamma/app/api/core"
@@ -8,11 +8,19 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func AddUserRoutes(e *echo.Echo) {
-	authRequired := e.Group("/api")
+func (a *UserAPI) addUserRoutes() {
+	authRequired := a.echo.Group("/api")
 	authRequired.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		Claims:         &ecJwt.GammaClaims{},
 		ParseTokenFunc: core.JwtParserFunction,
 	}))
 
+	{
+		a.getUserRouter(authRequired)
+	}
+
+}
+
+func (a *UserAPI) getUserRouter(g *echo.Group) {
+	g.GET("/user", GetUserController)
 }

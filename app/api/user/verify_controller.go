@@ -1,4 +1,4 @@
-package user
+package user_api
 
 import (
 	"gamma/app/api/core"
@@ -11,7 +11,7 @@ import (
 	"github.com/labstack/gommon/log"
 )
 
-func signUpController(c echo.Context) error {
+func SignUpController(c echo.Context) error {
 	var rawSignUp auth.UserSignup
 	if err := c.Bind(&rawSignUp); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
@@ -34,7 +34,7 @@ func signUpController(c echo.Context) error {
 	}))
 }
 
-func signInController(c echo.Context) error {
+func SignInController(c echo.Context) error {
 	// TODOF: handle password reset / clues maybe
 	var rawSignIn auth.UserSignIn
 	if err := c.Bind(&rawSignIn); err != nil {
@@ -62,7 +62,7 @@ func signInController(c echo.Context) error {
 	}))
 }
 
-func refreshTokenController(c echo.Context) error {
+func RefreshTokenController(c echo.Context) error {
 	refreshToken, err := c.Cookie("refresh_token")
 	log.Infof("Cookies: %v", c.Cookies())
 	if err != nil {

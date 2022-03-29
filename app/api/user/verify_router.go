@@ -1,13 +1,13 @@
-package user
+package user_api
 
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
-func AddOpenRoutes(e *echo.Echo) {
+func (a *UserAPI) addOpenRoutes() {
 
-	group := e.Group("/auth")
+	group := a.echo.Group("/auth")
 
 	group.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"*"},
@@ -16,21 +16,21 @@ func AddOpenRoutes(e *echo.Echo) {
 	}))
 
 	{
-		signupRouter(group)
-		loginRouter(group)
-		refreshRouter(group)
+		a.signupRouter(group)
+		a.loginRouter(group)
+		a.refreshRouter(group)
 	}
 
 }
 
-func signupRouter(g *echo.Group) {
-	g.POST("/signup", signUpController)
+func (a *UserAPI) signupRouter(g *echo.Group) {
+	g.POST("/signup", SignUpController)
 }
 
-func loginRouter(g *echo.Group) {
-	g.POST("/signin", signInController)
+func (a *UserAPI) loginRouter(g *echo.Group) {
+	g.POST("/signin", SignInController)
 }
 
-func refreshRouter(g *echo.Group) {
-	g.GET("/refresh", refreshTokenController)
+func (a *UserAPI) refreshRouter(g *echo.Group) {
+	g.GET("/refresh", RefreshTokenController)
 }

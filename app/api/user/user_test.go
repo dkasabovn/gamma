@@ -33,11 +33,11 @@ var _ = Describe("API", func() {
 	var refresh_token string
 
 	_signUp := auth.UserSignup{
-		Email : "new_email@email.com",
+		Email:       "new_email@email.com",
 		RawPassword: "securePassword",
-		FirstName: "gabriel",
-		LastName: "diaz",
-		UserName: "XxBOBxX",
+		FirstName:   "gabriel",
+		LastName:    "diaz",
+		UserName:    "XxBOBxX",
 	}
 
 	// _user := bo.User{
@@ -48,11 +48,9 @@ var _ = Describe("API", func() {
 	// }
 
 	_signIn := auth.UserSignIn{
-		Email: _signUp.Email,
+		Email:       _signUp.Email,
 		RawPassword: _signUp.RawPassword,
 	}
-	
-
 
 	When("Signing Up with a new email that already exists", func() {
 		It("Should create a new user", func() {
@@ -93,7 +91,7 @@ var _ = Describe("API", func() {
 
 	When("Logging in with a valid account and correct password", func() {
 		It("Should return new cookies", func() {
-			
+
 			data, _ := json.Marshal(_signIn)
 			reader := bytes.NewReader(data)
 			req := httptest.NewRequest(http.MethodPost, "/auth/signin", reader)
@@ -112,10 +110,10 @@ var _ = Describe("API", func() {
 		})
 	})
 
-	When("Loggin in with an account that does not exist",func() {
+	When("Loggin in with an account that does not exist", func() {
 		It("Should Faild", func() {
 			data, _ := json.Marshal(auth.UserSignIn{
-				Email: "not-an-account@mail.com",
+				Email:       "not-an-account@mail.com",
 				RawPassword: "password",
 			})
 
@@ -134,7 +132,7 @@ var _ = Describe("API", func() {
 	When("Logging-in with an account that does exist with an incorrect password", func() {
 		It("Should fail", func() {
 			data, _ := json.Marshal(auth.UserSignIn{
-				Email: _signIn.Email,
+				Email:       _signIn.Email,
 				RawPassword: "incorrect",
 			})
 
@@ -163,7 +161,7 @@ var _ = Describe("API", func() {
 			})
 
 			err := user.RefreshTokenController(c)
-			
+
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(REC.Code).Should(Equal(http.StatusOK))
 
@@ -214,6 +212,3 @@ var _ = Describe("API", func() {
 	})
 
 })
-
-
-

@@ -1,17 +1,18 @@
 package system
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
-
-	"github.com/joho/godotenv"
 )
 
 func Initialize() {
-	err := godotenv.Load()
-	if err != nil {
-		panic("Could not find a .env")
-	}
+	// err := godotenv.Load()
+	// if err != nil {
+	// 	log.Fatalf("Could not find a .env")
+	// }
+	path, _ := os.Getwd()
+	fmt.Printf("DIR: %s", path)
 	loadPrivatePublicKeyPairs()
 }
 func loadPrivatePublicKeyPairs() {

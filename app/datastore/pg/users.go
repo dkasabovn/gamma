@@ -34,7 +34,7 @@ func GetUserRepo() definition.UserRepository {
 }
 
 func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
-	statement := "SELECT id, uuid, email, first_name, last_name, username, org_user_fk FROM users LEFT JOIN org_users ON org_user_fk = org_users.id WHERE uuid = $1"
+	statement := "SELECT u.id, uuid, email, first_name, last_name, username, org_user_fk FROM users u LEFT JOIN org_users o ON o.id = u.org_user_fk WHERE uuid = $1"
 	res := u.dbInstance.QueryRowContext(ctx, statement, uuid)
 
 	if res.Err() != nil {

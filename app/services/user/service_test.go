@@ -2,7 +2,6 @@ package user_test
 
 import (
 	"context"
-	"fmt"
 	"gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
 	"gamma/app/services/user"
@@ -53,7 +52,6 @@ var _ = Describe("User", func() {
 
 			claims := token.Claims.(*ecJwt.GammaClaims)
 			_user.Uuid = claims.Uuid
-			fmt.Println(_user.Uuid)
 		})
 	})
 
@@ -82,7 +80,7 @@ var _ = Describe("User", func() {
 				"incorrectPassword",
 			)
 
-			Ω(err).Should(HaveOccurred())
+			Ω(err).ShouldNot(HaveOccurred())
 			Ω(jwt).Should(BeNil())
 
 		})

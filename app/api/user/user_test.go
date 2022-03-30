@@ -6,31 +6,40 @@ import (
 	"fmt"
 	"gamma/app/api/core"
 	"gamma/app/api/models/auth"
-	user "gamma/app/api/user"
+	user_api "gamma/app/api/user"
 	"gamma/app/datastore/pg"
+	"gamma/app/domain/bo"
 	"gamma/app/system/util/tests"
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 
 	"github.com/labstack/echo/v4"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
+const (
+	URL       = "http://localhost:6969"
+	BAD_TOKEN = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiYmJlZWI5NzUtNWE5My00NzU4LWExN2QtMWMwMGNiYzI4ZmYzIiwiYXVkIjoidXNlci5nYW1tYSIsImV4cCI6MTY0OTIxMjE2MCwiaXNzIjoiYXV0aC5nYW1tYSJ9.ikSuerG_t-WgXFMKi9ReaW2PVYDC6tHrmfixYFxdV4KJ2HBfrB_vvdAirPGbWEGhqDj_RGHM7BEuZdwwvowPW3Q"
+)
+
 var _ = BeforeSuite(func() {
-	fmt.Println("BEFORE")
 	tests.LoadTestKeys()
 	pg.ClearAll()
+
+	go user_api.StartAPI(":6969")
 })
 
 var _ = Describe("API", func() {
-	fmt.Print("BEGIN")
-	API := user.API()
-	REC := httptest.NewRecorder()
 
 	var access_token string
 	var refresh_token string
+
+	var CLIENT *http.Client
+
+	var _ = BeforeEach(func() {
+		CLIENT = &http.Client{}
+	})
 
 	_signUp := auth.UserSignup{
 		Email:       "new_email@email.com",
@@ -40,36 +49,45 @@ var _ = Describe("API", func() {
 		UserName:    "XxBOBxX",
 	}
 
-	// _user := bo.User{
-	// 	Email: _signUp.Email,
-	// 	FirstName: _signUp.FirstName,
-	// 	LastName: _signUp.LastName,
-	// 	UserName: _signUp.UserName,
-	// }
+	_user := bo.User{
+		Email:     _signUp.Email,
+		FirstName: _signUp.FirstName,
+		LastName:  _signUp.LastName,
+		UserName:  _signUp.UserName,
+	}
 
 	_signIn := auth.UserSignIn{
 		Email:       _signUp.Email,
 		RawPassword: _signUp.RawPassword,
 	}
 
-	When("Signing Up with a new email that already exists", func() {
+	When("Signing Up with a new email", func() {
 		It("Should create a new user", func() {
 
 			data, _ := json.Marshal(_signUp)
 			reader := bytes.NewReader(data)
-			req := httptest.NewRequest(http.MethodPost, "/auth/signup", reader)
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			c := API.E().NewContext(req, REC)
+			req, err := http.NewRequest(
+				echo.POST,
+				fmt.Sprintf("%s/auth/signup", URL),
+				reader,
+			)
 
-			err := user.SignUpController(c)
 			Ω(err).ShouldNot(HaveOccurred())
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
-			Ω(REC.Code).Should(Equal(http.StatusOK))
+			response, err := CLIENT.Do(req)
 
-			access_token = REC.Result().Header.Get("bearer_token")
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(response.StatusCode).Should(Equal(http.StatusOK))
+
+			var api_response core.ApiResponse
+			body, _ := ioutil.ReadAll(response.Body)
+			json.Unmarshal(body, &api_response)
+
+			access_token = fmt.Sprint(api_response.Data["bearer_token"])
 			Ω(len(access_token)).ShouldNot(Equal(0))
 
-			refresh_token = core.GetCookie(REC.Result().Cookies(), "refresh_token").Value
+			refresh_token = core.GetCookie(response.Cookies(), "refresh_token").Value
 			Ω(len(refresh_token)).ShouldNot(Equal(0))
 		})
 	})
@@ -78,14 +96,19 @@ var _ = Describe("API", func() {
 		It("should fail", func() {
 			data, _ := json.Marshal(_signUp)
 			reader := bytes.NewReader(data)
-			req := httptest.NewRequest(http.MethodPost, "/auth/signup", reader)
+			req, err := http.NewRequest(
+				echo.POST,
+				fmt.Sprintf("%s/auth/signup", URL),
+				reader,
+			)
+
+			Ω(err).ShouldNot(HaveOccurred())
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			c := API.E().NewContext(req, REC)
 
-			err := user.SignUpController(c)
-			Ω(err).Should(HaveOccurred())
+			response, err := CLIENT.Do(req)
 
-			Ω(REC.Code).Should(Equal(http.StatusInternalServerError))
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(response.StatusCode).Should(Equal(http.StatusInternalServerError))
 		})
 	})
 
@@ -94,18 +117,28 @@ var _ = Describe("API", func() {
 
 			data, _ := json.Marshal(_signIn)
 			reader := bytes.NewReader(data)
-			req := httptest.NewRequest(http.MethodPost, "/auth/signin", reader)
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			c := API.E().NewContext(req, REC)
+			req, err := http.NewRequest(
+				echo.POST,
+				fmt.Sprintf("%s/auth/signin", URL),
+				reader,
+			)
 
-			err := user.SignInController(c)
+			Ω(err).ShouldNot(HaveOccurred())
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+			response, err := CLIENT.Do(req)
 			Ω(err).ShouldNot(HaveOccurred())
 
-			Ω(REC.Code).Should(Equal(http.StatusOK))
-			access_token = REC.Result().Header.Get("bearer_token")
+			Ω(response.StatusCode).Should(Equal(http.StatusOK))
+
+			var api_response core.ApiResponse
+			body, _ := ioutil.ReadAll(response.Body)
+			json.Unmarshal(body, &api_response)
+
+			access_token = fmt.Sprint(api_response.Data["bearer_token"])
 			Ω(len(access_token)).ShouldNot(Equal(0))
 
-			refresh_token = core.GetCookie(REC.Result().Cookies(), "refresh_token").Value
+			refresh_token = core.GetCookie(response.Cookies(), "refresh_token").Value
 			Ω(len(refresh_token)).ShouldNot(Equal(0))
 		})
 	})
@@ -118,14 +151,19 @@ var _ = Describe("API", func() {
 			})
 
 			reader := bytes.NewReader(data)
-			req := httptest.NewRequest(http.MethodPost, "/auth/signin", reader)
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			c := API.E().NewContext(req, REC)
+			req, err := http.NewRequest(
+				echo.POST,
+				fmt.Sprintf("%s/auth/signin", URL),
+				reader,
+			)
 
-			err := user.SignInController(c)
+			Ω(err).ShouldNot(HaveOccurred())
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+			response, err := CLIENT.Do(req)
 			Ω(err).ShouldNot(HaveOccurred())
 
-			Ω(REC.Code).Should(Equal(http.StatusInternalServerError))
+			Ω(response.StatusCode).Should(Equal(http.StatusInternalServerError))
 		})
 	})
 
@@ -137,40 +175,55 @@ var _ = Describe("API", func() {
 			})
 
 			reader := bytes.NewReader(data)
-			req := httptest.NewRequest(http.MethodPost, "/auth/signin", reader)
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			c := API.E().NewContext(req, REC)
+			req, err := http.NewRequest(
+				echo.POST,
+				fmt.Sprintf("%s/auth/signin", URL),
+				reader,
+			)
 
-			err := user.SignInController(c)
+			Ω(err).ShouldNot(HaveOccurred())
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+
+			response, err := CLIENT.Do(req)
 			Ω(err).ShouldNot(HaveOccurred())
 
-			Ω(REC.Code).Should(Equal(http.StatusInternalServerError))
+			Ω(response.StatusCode).Should(Equal(http.StatusUnauthorized))
 		})
 	})
 
 	When("Refreshing with a valid refresh token", func() {
 		It("Should Create a new token", func() {
 
-			req := httptest.NewRequest(http.MethodGet, "/auth/refresh", nil)
+			req, err := http.NewRequest(
+				echo.GET,
+				fmt.Sprintf("%s/auth/refresh", URL),
+				nil,
+			)
+			Ω(err).ShouldNot(HaveOccurred())
+
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			c := API.E().NewContext(req, REC)
-			c.SetCookie(&http.Cookie{
+			req.Header.Set("refresh_token", refresh_token)
+			req.AddCookie(&http.Cookie{
 				Name:     "refresh_token",
 				Value:    refresh_token,
 				HttpOnly: true,
 			})
 
-			err := user.RefreshTokenController(c)
+			response, err := CLIENT.Do(req)
 
 			Ω(err).ShouldNot(HaveOccurred())
-			Ω(REC.Code).Should(Equal(http.StatusOK))
+			Ω(response.StatusCode).Should(Equal(http.StatusOK))
 
-			refresh_cookie := core.GetCookie(REC.Result().Cookies(), "refresh_token")
+			var api_response core.ApiResponse
+			body, _ := ioutil.ReadAll(response.Body)
+			json.Unmarshal(body, &api_response)
+
+			new_access_token := fmt.Sprint(api_response.Data["bearer_token"])
+			Ω(len(new_access_token)).ShouldNot(Equal(0))
+
+			refresh_cookie := core.GetCookie(response.Cookies(), "refresh_token")
 			Ω(refresh_cookie).ShouldNot(BeNil())
 			Ω(refresh_cookie.Value).ShouldNot(Equal(refresh_token))
-
-			new_access_token := REC.Result().Header.Get("bearer_token")
-			Ω(new_access_token).ShouldNot(Equal(access_token))
 
 			refresh_token = refresh_cookie.Value
 			access_token = new_access_token
@@ -180,33 +233,51 @@ var _ = Describe("API", func() {
 	When("Attempting to access endpoints that require auth without tokens", func() {
 		It("Should fail", func() {
 
-			req := httptest.NewRequest(http.MethodGet, "/getUser", nil)
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			c := API.E().NewContext(req, REC)
+			req, err := http.NewRequest(
+				echo.GET,
+				fmt.Sprintf("%s/api/user", URL),
+				nil,
+			)
 
-			err := user.RefreshTokenController(c)
 			Ω(err).ShouldNot(HaveOccurred())
-			Ω(REC.Code).Should(Equal(http.StatusUnauthorized))
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			req.Header.Add(echo.HeaderAuthorization, "Bearer "+BAD_TOKEN)
 
+			response, err := CLIENT.Do(req)
+			Ω(err).ShouldNot(HaveOccurred())
+			Ω(response.StatusCode).Should(Equal(http.StatusUnauthorized))
 		})
 	})
 
 	When("Getting user with valid jwt", func() {
 		It("Should return the users info", func() {
-			req := httptest.NewRequest(http.MethodGet, "/auth/refresh", nil)
-			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-			req.Header.Set(echo.HeaderAuthorization, access_token)
-			c := API.E().NewContext(req, REC)
+			req, err := http.NewRequest(echo.GET,
+				fmt.Sprintf("%s/api/user", URL),
+				nil,
+			)
 
-			err := user.GetUserController(c)
+			Ω(err).ShouldNot(HaveOccurred())
+			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			req.Header.Add(echo.HeaderAuthorization, "Bearer "+access_token)
+
+			response, err := CLIENT.Do(req)
 			Ω(err).ShouldNot(HaveOccurred())
 
-			var response core.ApiResponse
-			body, _ := ioutil.ReadAll(REC.Result().Request.Body)
-			json.Unmarshal(body, &response)
+			var api_response core.ApiResponse
+			body, _ := ioutil.ReadAll(response.Body)
+			json.Unmarshal(body, &api_response)
 
-			_, ok := response.Data["uuid"]
-			Ω(ok).ShouldNot(BeFalse())
+			resp_user, ok := api_response.Data["user"]
+			Ω(ok).Should(BeTrue())
+			u_map, _ := resp_user.(map[string]interface{})
+			jsonString, _ := json.Marshal(u_map)
+			u := bo.User{}
+			json.Unmarshal(jsonString, &u)
+
+			Ω(u.Email).Should(Equal(_user.Email))
+			Ω(u.FirstName).Should(Equal(_user.FirstName))
+			Ω(u.LastName).Should(Equal(_user.LastName))
+			Ω(u.UserName).Should(Equal(_user.UserName))
 
 		})
 	})

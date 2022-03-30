@@ -58,7 +58,7 @@ func (u *userService) SignInUser(ctx context.Context, email, password string) (*
 	}
 
 	if valid {
-		return ecJwt.GetTokens(ctx, user.Uuid), nil
+		return ecJwt.GetTokens(ctx, user.Uuid, user.Email, user.UserName, "https://tinyurl.com/monkeygamma"), nil
 	}
 	return nil, nil
 }
@@ -74,9 +74,7 @@ func (u *userService) CreateUser(ctx context.Context, email, password, firstName
 		// this error should already be logged by InsertUser method
 		return nil, err
 	}
-
-	// TODO(dk): Give more data to tokens
-	return ecJwt.GetTokens(ctx, uuid.String()), nil
+	return ecJwt.GetTokens(ctx, uuid.String(), email, userName, "https://tinyurl.com/monkeygamma"), nil
 }
 
 func (u *userService) GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUser, error) {

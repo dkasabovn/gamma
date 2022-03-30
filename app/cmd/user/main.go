@@ -7,6 +7,5 @@ import (
 
 func main() {
 	system.Initialize()
-	api := user.API()
-	api.Start(":6969")
+	user.StartAPI(":6969")
 }

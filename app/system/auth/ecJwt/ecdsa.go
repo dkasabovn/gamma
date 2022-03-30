@@ -12,6 +12,9 @@ import (
 
 type GammaClaims struct {
 	Uuid string `json:"uuid"`
+	Email string `json:"email,omitempty"`
+	UserName string `json:"user_name,omitempty"`
+	Image string `json:"image,omitempty"`
 	jwt.StandardClaims
 }
 
@@ -84,9 +87,12 @@ func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
 	return token, err == nil
 }
 
-func GetTokens(ctx context.Context, userUuid string) *GammaJwt {
+func GetTokens(ctx context.Context, userUuid, userEmail, userName, userImage string) *GammaJwt {
 	claims := &GammaClaims{
 		Uuid: userUuid,
+		Email: userEmail,
+		UserName: userName,
+		Image: userImage,
 	}
 
 	accessToken, refreshToken := ECDSASign(claims)

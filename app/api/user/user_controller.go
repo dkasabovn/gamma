@@ -2,7 +2,7 @@ package user_api
 
 import (
 	"gamma/app/api/core"
-	"gamma/app/domain/bo"
+	"gamma/app/api/models/dto"
 	"gamma/app/services/user"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
@@ -26,7 +26,7 @@ func (a *UserAPI) getUserController(c echo.Context) error {
 	}))
 }
 
-func GetEventsController(c echo.Context) error {
+func GetOrganizationsController(c echo.Context) error {
 	userObj, err := core.ExtractUser(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
@@ -40,15 +40,18 @@ func GetEventsController(c echo.Context) error {
 }
 
 func InsertEventController(c echo.Context) error {
-	userObj, err := core.ExtractUser(c)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
-	}
-
-	var event bo.Event
+	// TODO(dk): Check perms or put them in JWT so it can't be tampered with
+	var event dto.EventByOrg
 	if err := c.Bind(&event); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
 
-	eventCreated, err := user.GetUserService().InsertEventByOrganization()
+	eventCreated, err := user.GetUserService().InsertEventByOrganization(c.Request().Context(), event.Uuid, &event.Event)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"event": eventCreated,
+	}))
 }

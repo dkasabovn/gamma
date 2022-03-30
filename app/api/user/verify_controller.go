@@ -2,7 +2,7 @@ package user_api
 
 import (
 	"gamma/app/api/core"
-	"gamma/app/api/models/auth"
+	"gamma/app/api/models/dto"
 	"gamma/app/domain/bo"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
@@ -12,12 +12,12 @@ import (
 )
 
 func (a *UserAPI) signUpController(c echo.Context) error {
-	var rawSignUp auth.UserSignup
+	var rawSignUp dto.UserSignup
 	if err := c.Bind(&rawSignUp); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
 
-	tokens, err := a.srvc.CreateUser(c.Request().Context(), rawSignUp.Email, rawSignUp.RawPassword, rawSignUp.FirstName, rawSignUp.LastName, rawSignUp.UserName)
+	tokens, err := a.srvc.CreateUser(c.Request().Context(), rawSignUp.RawPassword, rawSignUp.Email, rawSignUp.PhoneNumber, rawSignUp.FirstName, rawSignUp.LastName, rawSignUp.UserName, rawSignUp.ImageUrl)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
@@ -36,7 +36,7 @@ func (a *UserAPI) signUpController(c echo.Context) error {
 
 func (a *UserAPI) signInController(c echo.Context) error {
 	// TODOF: handle password reset / clues maybe
-	var rawSignIn auth.UserSignIn
+	var rawSignIn dto.UserSignIn
 	if err := c.Bind(&rawSignIn); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
@@ -77,7 +77,7 @@ func (a *UserAPI) refreshTokenController(c echo.Context) error {
 
 	token, _ := ecJwt.ECDSAVerify(refreshToken.Value)
 	claims := token.Claims.(*ecJwt.GammaClaims)
-	
+
 	var user *bo.User
 	if user, err = a.srvc.GetUser(c.Request().Context(), claims.Uuid); err != nil {
 		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))

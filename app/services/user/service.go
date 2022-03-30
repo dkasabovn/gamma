@@ -40,8 +40,8 @@ func (u *userService) GetUserByEmail(ctx context.Context, email string) (*bo.Use
 	return u.userRepo.GetUserByEmail(ctx, email)
 }
 
-func (u *userService) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string, userName string) error {
-	return u.userRepo.InsertUser(ctx, uuid, email, hash, firstName, lastName, userName)
+func (u *userService) InsertUser(ctx context.Context, uuid, email, phone_number, hash, firstName, lastName, userName, image_url string) error {
+	return u.userRepo.InsertUser(ctx, uuid, email, phone_number, hash, firstName, lastName, userName, image_url)
 }
 
 func (u *userService) SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error) {
@@ -63,21 +63,21 @@ func (u *userService) SignInUser(ctx context.Context, email, password string) (*
 	return nil, nil
 }
 
-func (u *userService) CreateUser(ctx context.Context, email, password, firstName, lastName string, userName string) (*ecJwt.GammaJwt, error) {
+func (u *userService) CreateUser(ctx context.Context, password, email, phone_number, firstName, lastName, userName, image_url string) (*ecJwt.GammaJwt, error) {
 	hash, err := argon.PasswordToHash(password)
 	if err != nil {
 		log.Errorf("could not generate hash: %s", err)
 		return nil, err
 	}
 	uuid := uuid.New()
-	if err := u.InsertUser(ctx, uuid.String(), email, hash, firstName, lastName, userName); err != nil {
+	if err := u.InsertUser(ctx, uuid.String(), email, phone_number, hash, firstName, lastName, userName, image_url); err != nil {
 		// this error should already be logged by InsertUser method
 		return nil, err
 	}
 	return ecJwt.GetTokens(ctx, uuid.String(), email, userName, "https://tinyurl.com/monkeygamma"), nil
 }
 
-func (u *userService) GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUser, error) {
+func (u *userService) GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUserJoin, error) {
 	return u.userRepo.GetUserOrganizations(ctx, userId)
 }
 

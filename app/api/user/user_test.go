@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gamma/app/api/core"
-	"gamma/app/api/models/auth"
+	"gamma/app/api/models/dto"
 	user_api "gamma/app/api/user"
 	"gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
@@ -41,7 +41,7 @@ var _ = Describe("API", func() {
 		CLIENT = &http.Client{}
 	})
 
-	_signUp := auth.UserSignup{
+	_signUp := dto.UserSignup{
 		Email:       "new_email@email.com",
 		RawPassword: "securePassword",
 		FirstName:   "gabriel",
@@ -56,7 +56,7 @@ var _ = Describe("API", func() {
 		UserName:  _signUp.UserName,
 	}
 
-	_signIn := auth.UserSignIn{
+	_signIn := dto.UserSignIn{
 		Email:       _signUp.Email,
 		RawPassword: _signUp.RawPassword,
 	}
@@ -145,7 +145,7 @@ var _ = Describe("API", func() {
 
 	When("Loggin in with an account that does not exist", func() {
 		It("Should Faild", func() {
-			data, _ := json.Marshal(auth.UserSignIn{
+			data, _ := json.Marshal(dto.UserSignIn{
 				Email:       "not-an-account@mail.com",
 				RawPassword: "password",
 			})
@@ -169,7 +169,7 @@ var _ = Describe("API", func() {
 
 	When("Logging-in with an account that does exist with an incorrect password", func() {
 		It("Should fail", func() {
-			data, _ := json.Marshal(auth.UserSignIn{
+			data, _ := json.Marshal(dto.UserSignIn{
 				Email:       _signIn.Email,
 				RawPassword: "incorrect",
 			})

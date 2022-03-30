@@ -43,7 +43,7 @@ var _ = Describe("User", func() {
 		pg.ClearAll()
 		var err error
 		organizationUuid = uuid.NewString()
-		_, err = pg.GetUserRepo().InsertOrganization(ctx, organizationUuid, "Gabes Warehouse", "Translyvania")
+		_, err = pg.GetUserRepo().InsertOrganization(ctx, organizationUuid, "Gabes Warehouse", "Translyvania", "http://poggers.com")
 		Ω(err).ShouldNot(HaveOccurred())
 	})
 
@@ -64,14 +64,14 @@ var _ = Describe("User", func() {
 
 	When("Inserting a user", func() {
 		It("should not throw an error", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName, "")
+			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "123-456-7891", "", testUser.FirstName, testUser.LastName, "", "http://monkey.com")
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 	})
 
 	When("Getting a user", func() {
 		It("should not throw an error", func() {
-			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "", testUser.FirstName, testUser.LastName, "")
+			err := pg.GetUserRepo().InsertUser(ctx, testUser.Uuid, testUser.Email, "123-456-7891", "", testUser.FirstName, testUser.LastName, "", "http://monkey.com")
 			Ω(err).ShouldNot(HaveOccurred())
 			user, err := pg.GetUserRepo().GetUser(ctx, testUser.Uuid)
 			Ω(err).ShouldNot(HaveOccurred())

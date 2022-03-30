@@ -26,5 +26,5 @@ func (a *UserAPI) getUserRouter(g *echo.Group) {
 }
 
 func (a *UserAPI) getOrgAdminBootstrap(g *echo.Group) {
-	g.GET("/events", GetEventsController)
+	g.GET("/events", GetOrganizationsController)
 }

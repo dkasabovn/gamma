@@ -25,10 +25,10 @@ var _ = Describe("User", func() {
 
 	_password := "securePassword"
 	_user := bo.User{
-		Email : "new_email@email.com",
+		Email:     "new_email@email.com",
 		FirstName: "joe",
-		LastName: "bob",
-		UserName: "XxJoeBOBxX",
+		LastName:  "bob",
+		UserName:  "XxJoeBOBxX",
 	}
 
 	When("Creating a user", func() {
@@ -36,11 +36,13 @@ var _ = Describe("User", func() {
 
 			jwt, err := user.GetUserService().CreateUser(
 				ctx,
-				_user.Email,
 				_password,
+				_user.Email,
+				_user.PhoneNumber,
 				_user.FirstName,
 				_user.LastName,
 				_user.UserName,
+				_user.ImageUrl,
 			)
 
 			Ω(err).ShouldNot(HaveOccurred())

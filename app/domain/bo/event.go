@@ -9,6 +9,7 @@ type Event struct {
 	EventName     string
 	EventDate     time.Time
 	EventLocation string
+	EventImage    string
 	Uuid          string
 	Organization  int
 }

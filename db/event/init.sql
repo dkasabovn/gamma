@@ -3,11 +3,11 @@ CREATE TABLE users (
     uuid TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    -- phone_number TEXT NOT NULL UNIQUE,
+    phone_number TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE
-    -- image_url TEXT NOT NULL
+    username TEXT NOT NULL UNIQUE,
+    image_url TEXT NOT NULL
 );
 
 -- users that belong to an organization
@@ -22,8 +22,8 @@ CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
     org_name TEXT NOT NULL,
     city TEXT NOT NULL,
-    uuid TEXT NOT NULL
-    -- image_url TEXT NOT NULL
+    uuid TEXT NOT NULL,
+    org_image_url TEXT NOT NULL
 );
 
 CREATE TABLE events (
@@ -32,7 +32,7 @@ CREATE TABLE events (
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
     event_location TEXT NOT NULL,
     uuid TEXT NOT NULL,
-    -- image_url TEXT NOT NULL,
+    event_image_url TEXT NOT NULL,
     organization_fk INT
 );
 

@@ -1,16 +1,14 @@
 package bo
 
 type Organization struct {
-	Uuid             string
 	Id               int
+	Uuid             string
 	OrganizationName string
 	City             string
+	ImageUrl         string
 }
 
-type OrganizationUser struct {
-	Uuid             string
-	Id               int
-	OrganizationName string
-	City             string
-	PolicyNum        int
+type OrganizationUserJoin struct {
+	Organization
+	PolicyNum int
 }

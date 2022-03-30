@@ -34,7 +34,7 @@ func GetUserRepo() definition.UserRepository {
 }
 
 func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
-	statement := "SELECT uuid, email, first_name, last_name, username FROM users WHERE uuid = $1"
+	statement := "SELECT uuid, email, first_name, last_name, username, phone_number, image_url FROM users WHERE uuid = $1"
 	res := u.dbInstance.QueryRowContext(ctx, statement, uuid)
 
 	if res.Err() != nil {
@@ -50,6 +50,8 @@ func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
 		&user.FirstName,
 		&user.LastName,
 		&user.UserName,
+		&user.PhoneNumber,
+		&user.ImageUrl,
 	); err != nil {
 		log.Errorf("could not scan res into user object: %v", err)
 		return nil, err
@@ -59,7 +61,7 @@ func (u *userRepo) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
 }
 
 func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*bo.User, error) {
-	statement := "SELECT id, uuid, email, first_name, last_name, password_hash FROM users WHERE email = $1"
+	statement := "SELECT id, uuid, email, first_name, last_name, password_hash, username, phone_number, image_url FROM users WHERE email = $1"
 	res := u.dbInstance.QueryRowContext(ctx, statement, email)
 
 	if res.Err() != nil {
@@ -76,6 +78,9 @@ func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*bo.User, 
 		&user.FirstName,
 		&user.LastName,
 		&user.PasswordHash,
+		&user.UserName,
+		&user.PhoneNumber,
+		&user.ImageUrl,
 	); err != nil {
 		log.Errorf("could not scan res into user object: %s", err.Error())
 		return nil, err
@@ -84,8 +89,8 @@ func (u *userRepo) GetUserByEmail(ctx context.Context, email string) (*bo.User, 
 	return &user, nil
 }
 
-func (u *userRepo) GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUser, error) {
-	statement := "SELECT org_name, city, uuid, policies_num FROM org_users INNER JOIN organizations ON org_users.organization_fk = organizations.id WHERE org_users.user_fk = $1"
+func (u *userRepo) GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUserJoin, error) {
+	statement := "SELECT org_name, org_image_url, city, uuid, policies_num FROM org_users INNER JOIN organizations ON org_users.organization_fk = organizations.id WHERE org_users.user_fk = $1"
 	res, err := u.dbInstance.QueryContext(ctx, statement, userId)
 
 	if err != nil {
@@ -93,29 +98,30 @@ func (u *userRepo) GetUserOrganizations(ctx context.Context, userId int) ([]bo.O
 		return nil, err
 	}
 
-	var orgUsers []bo.OrganizationUser
+	var orgUserJoins []bo.OrganizationUserJoin
 
 	for res.Next() {
-		var orgUser bo.OrganizationUser
+		var organizationUserJoin bo.OrganizationUserJoin
 
 		if err := res.Scan(
-			&orgUser.OrganizationName,
-			&orgUser.City,
-			&orgUser.Uuid,
-			&orgUser.PolicyNum,
+			&organizationUserJoin.OrganizationName,
+			&organizationUserJoin.ImageUrl,
+			&organizationUserJoin.City,
+			&organizationUserJoin.Uuid,
+			&organizationUserJoin.PolicyNum,
 		); err != nil {
 			log.Errorf("error while scanning: %s", err.Error())
 			return nil, err
 		}
 
-		orgUsers = append(orgUsers, orgUser)
+		orgUserJoins = append(orgUserJoins, organizationUserJoin)
 	}
 
-	return orgUsers, nil
+	return orgUserJoins, nil
 }
 
 func (u *userRepo) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]bo.Event, error) {
-	statement := "SELECT events.id, event_name, event_date, event_location, uuid FROM events INNER JOIN organizations ON events.organization_fk = organizations.id WHERE organizations.uuid = $1"
+	statement := "SELECT events.id, event_name, event_date, event_location, event_image_url, uuid FROM events INNER JOIN organizations ON events.organization_fk = organizations.id WHERE organizations.uuid = $1"
 	res, err := u.dbInstance.QueryContext(ctx, statement, orgUuid)
 
 	if err != nil {
@@ -133,6 +139,7 @@ func (u *userRepo) GetOrganizationEvents(ctx context.Context, orgUuid string) ([
 			&event.EventName,
 			&event.EventDate,
 			&event.EventLocation,
+			&event.EventImage,
 			&event.Uuid,
 		); err != nil {
 			log.Errorf("error while scanning: %s", err.Error())
@@ -150,10 +157,10 @@ func (u *userRepo) InsertEventByOrganization(ctx context.Context, orgUuid string
 		WITH org_id AS (
 			SELECT id FROM organizations WHERE uuid = $1
 		)
-		INSERT INTO events (event_name, event_date, event_location, uuid, organization_fk) VALUES ($2,$3,$4,$5, (SELECT id FROM org_id))
+		INSERT INTO events (event_name, event_date, event_location, event_image_url, uuid, organization_fk) VALUES ($2,$3,$4,$5,$6, (SELECT id FROM org_id))
 		RETURNING id
 	`
-	res := u.dbInstance.QueryRowContext(ctx, statement, orgUuid, event.EventName, event.EventDate, event.EventLocation, event.Uuid)
+	res := u.dbInstance.QueryRowContext(ctx, statement, orgUuid, event.EventName, event.EventDate, event.EventLocation, event.EventImage, event.Uuid)
 
 	if res.Err() != nil {
 		log.Errorf("could not insert event by organization uuid: %s", res.Err().Error())
@@ -198,9 +205,9 @@ func (u *userRepo) DeleteEventById(ctx context.Context, eventId int) error {
 	return err
 }
 
-func (u *userRepo) InsertUser(ctx context.Context, uuid string, email string, hash string, firstName string, lastName string, userName string) error {
-	statement := "INSERT INTO users (uuid, email, password_hash, first_name, last_name, username) VALUES ($1, $2, $3, $4, $5, $6)"
-	_, err := u.dbInstance.ExecContext(ctx, statement, uuid, email, hash, firstName, lastName, userName)
+func (u *userRepo) InsertUser(ctx context.Context, uuid, email, phone_number, hash, firstName, lastName, userName, image_url string) error {
+	statement := "INSERT INTO users (uuid, email, password_hash, first_name, last_name, username, phone_number, image_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+	_, err := u.dbInstance.ExecContext(ctx, statement, uuid, email, hash, firstName, lastName, userName, phone_number, image_url)
 
 	if err != nil {
 		log.Errorf("could not insert user into db: %s", err.Error())
@@ -276,9 +283,9 @@ func (u *userRepo) GetEvent(ctx context.Context, eventUuid string) (*bo.Event, e
 	return &event, nil
 }
 
-func (u *userRepo) InsertOrganization(ctx context.Context, uuid, name, city string) (int, error) {
-	statement := "INSERT INTO organizations (org_name, city, uuid) VALUES ($1, $2, $3) RETURNING id"
-	res := u.dbInstance.QueryRowContext(ctx, statement, name, city, uuid)
+func (u *userRepo) InsertOrganization(ctx context.Context, uuid, name, city, image_url string) (int, error) {
+	statement := "INSERT INTO organizations (org_name, city, uuid, org_image_url) VALUES ($1, $2, $3, $4) RETURNING id"
+	res := u.dbInstance.QueryRowContext(ctx, statement, name, city, uuid, image_url)
 
 	if res.Err() != nil {
 		log.Errorf("could not insert org: %s", res.Err().Error())

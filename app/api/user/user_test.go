@@ -8,6 +8,7 @@ import (
 	"gamma/app/api/models/auth"
 	user_api "gamma/app/api/user"
 	"gamma/app/datastore/pg"
+	"gamma/app/domain/bo"
 	"gamma/app/system/util/tests"
 	"io/ioutil"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 
 const (
 	URL = "http://localhost:6969"
+	BAD_TOKEN = "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1dWlkIjoiYmJlZWI5NzUtNWE5My00NzU4LWExN2QtMWMwMGNiYzI4ZmYzIiwiYXVkIjoidXNlci5nYW1tYSIsImV4cCI6MTY0OTIxMjE2MCwiaXNzIjoiYXV0aC5nYW1tYSJ9.ikSuerG_t-WgXFMKi9ReaW2PVYDC6tHrmfixYFxdV4KJ2HBfrB_vvdAirPGbWEGhqDj_RGHM7BEuZdwwvowPW3Q"
 )
 
 var _ = BeforeSuite(func() {
@@ -47,12 +49,12 @@ var _ = Describe("API", func() {
 		UserName: "XxBOBxX",
 	}
 
-	// _user := bo.User{
-	// 	Email: _signUp.Email,
-	// 	FirstName: _signUp.FirstName,
-	// 	LastName: _signUp.LastName,
-	// 	UserName: _signUp.UserName,
-	// }
+	_user := bo.User{
+		Email: _signUp.Email,
+		FirstName: _signUp.FirstName,
+		LastName: _signUp.LastName,
+		UserName: _signUp.UserName,
+	}
 
 	_signIn := auth.UserSignIn{
 		Email: _signUp.Email,
@@ -243,6 +245,7 @@ var _ = Describe("API", func() {
 
 			Ω(err).ShouldNot(HaveOccurred())
 			req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+			req.Header.Add(echo.HeaderAuthorization, "Bearer " + BAD_TOKEN)
 
 			response, err := CLIENT.Do(req)
 			Ω(err).ShouldNot(HaveOccurred())
@@ -268,10 +271,19 @@ var _ = Describe("API", func() {
 			body, _ := ioutil.ReadAll(response.Body)
 			json.Unmarshal(body, &api_response)
 
-			fmt.Printf("DATA: %v", api_response.Data)
 
-			_, ok := api_response.Data["uuid"]
-			Ω(ok).ShouldNot(BeFalse())
+			resp_user, ok := api_response.Data["user"]
+			Ω(ok).Should(BeTrue())
+			u_map, _ := resp_user.(map[string]interface{})
+			jsonString, _ := json.Marshal(u_map)
+			u := bo.User{}
+			json.Unmarshal(jsonString, &u)
+			
+			Ω(u.Email).Should(Equal(_user.Email))
+			Ω(u.FirstName).Should(Equal(_user.FirstName))
+			Ω(u.LastName).Should(Equal(_user.LastName))
+			Ω(u.UserName).Should(Equal(_user.UserName))
+			
 
 		})
 	})

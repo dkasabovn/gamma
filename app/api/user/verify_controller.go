@@ -3,7 +3,6 @@ package user_api
 import (
 	"gamma/app/api/core"
 	"gamma/app/api/models/auth"
-	"gamma/app/services/user"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
 
@@ -17,7 +16,7 @@ func (a *UserAPI) signUpController(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
 
-	tokens, err := user.GetUserService().CreateUser(c.Request().Context(), rawSignUp.Email, rawSignUp.RawPassword, rawSignUp.FirstName, rawSignUp.LastName, rawSignUp.UserName)
+	tokens, err := a.srvc.CreateUser(c.Request().Context(), rawSignUp.Email, rawSignUp.RawPassword, rawSignUp.FirstName, rawSignUp.LastName, rawSignUp.UserName)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
@@ -41,7 +40,7 @@ func (a *UserAPI) signInController(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
 
-	tokens, err := user.GetUserService().SignInUser(c.Request().Context(), rawSignIn.Email, rawSignIn.RawPassword)
+	tokens, err := a.srvc.SignInUser(c.Request().Context(), rawSignIn.Email, rawSignIn.RawPassword)
 
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
@@ -77,7 +76,7 @@ func (a *UserAPI) refreshTokenController(c echo.Context) error {
 
 	token, _ := ecJwt.ECDSAVerify(refreshToken.Value)
 	claims := token.Claims.(*ecJwt.GammaClaims)
-	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid)
+	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid, claims.Email, "https://tinyurl.com/monkeygamma")
 
 	c.SetCookie(&http.Cookie{
 		Name:     "refresh_token",

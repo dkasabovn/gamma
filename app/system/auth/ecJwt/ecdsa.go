@@ -86,9 +86,11 @@ func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
 	return token, err == nil
 }
 
-func GetTokens(ctx context.Context, userUuid string) *GammaJwt {
+func GetTokens(ctx context.Context, userUuid, userEmail, userImage string) *GammaJwt {
 	claims := &GammaClaims{
 		Uuid: userUuid,
+		Email: userEmail,
+		Image: userImage,
 	}
 
 	accessToken, refreshToken := ECDSASign(claims)

@@ -1,7 +1,6 @@
 package system
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -11,8 +10,6 @@ func Initialize() {
 	// if err != nil {
 	// 	log.Fatalf("Could not find a .env")
 	// }
-	path, _ := os.Getwd()
-	fmt.Printf("DIR: %s", path)
 	loadPrivatePublicKeyPairs()
 }
 func loadPrivatePublicKeyPairs() {

@@ -3,6 +3,7 @@ package user_api
 import (
 	"gamma/app/api/core"
 	"gamma/app/api/models/auth"
+	"gamma/app/domain/bo"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
 
@@ -76,7 +77,13 @@ func (a *UserAPI) refreshTokenController(c echo.Context) error {
 
 	token, _ := ecJwt.ECDSAVerify(refreshToken.Value)
 	claims := token.Claims.(*ecJwt.GammaClaims)
-	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid, claims.Email, claims.UserName, "https://tinyurl.com/monkeygamma")
+	
+	var user *bo.User
+	if user, err = a.srvc.GetUser(c.Request().Context(), claims.Uuid); err != nil {
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid, user.Email, user.UserName, "https://tinyurl.com/monkeygamma")
 
 	c.SetCookie(&http.Cookie{
 		Name:     "refresh_token",

@@ -1,7 +1,6 @@
 package user_api
 
 import (
-	"fmt"
 	"gamma/app/api/core"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
@@ -11,7 +10,6 @@ import (
 )
 
 func (a *UserAPI) getUserController(c echo.Context) error {
-	fmt.Print(c.Get(echo.HeaderAuthorization))
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(*ecJwt.GammaClaims)
 	uuid := claims.Uuid

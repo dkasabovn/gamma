@@ -79,6 +79,14 @@ func (u *userService) CreateUser(ctx context.Context, email, password, firstName
 	return ecJwt.GetTokens(ctx, uuid.String()), nil
 }
 
+func (u *userService) GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUser, error) {
+	return u.userRepo.GetUserOrganizations(ctx, userId)
+}
+
+func (u *userService) InsertEventByOrganization(ctx context.Context, orgUuid string, event *bo.Event) (*bo.Event, error) {
+	return u.userRepo.InsertEventByOrganization(ctx, orgUuid, event)
+}
+
 func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error) {
 	return u.userRepo.GetUserEvents(ctx, userId)
 }

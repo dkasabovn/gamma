@@ -39,6 +39,10 @@ func (Test) All() error {
 	return sh.RunV("ginkgo", "./app/...")
 }
 
+func (Test) Pg() error {
+	return sh.RunV("ginkgo", "./app/datastore/pg/...")
+}
+
 func (Generate) PrivatePublicKeys() error {
 	err := sh.RunV(
 		"openssl",

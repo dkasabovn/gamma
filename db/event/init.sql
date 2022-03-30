@@ -6,7 +6,7 @@ CREATE TABLE users (
     -- phone_number TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL UNIQUE
     -- image_url TEXT NOT NULL
 );
 
@@ -58,16 +58,13 @@ CREATE TABLE organization_whitelist (
 );
 
 -- Policy Json
-CREATE TABLE invites {
+CREATE TABLE invites (
     id SERIAL PRIMARY KEY,
     expiration_date TIMESTAMP NOT NULL,
     use_limit INT NOT NULL,
     policy_json JSON NOT NULL,
     uuid TEXT NOT NULL
-};
-
-ALTER TABLE users
-    ADD CONSTRAINT fk_users_org_user FOREIGN KEY (org_user_fk) REFERENCES org_users(id) ON DELETE CASCADE;
+);
 
 ALTER TABLE org_users
     ADD CONSTRAINT fk_orgs_users_organization FOREIGN KEY (organization_fk) REFERENCES organizations(id) ON DELETE CASCADE;
@@ -85,3 +82,5 @@ ALTER TABLE user_events
     ADD CONSTRAINT fk_user_events_event FOREIGN KEY (event_fk) REFERENCES events(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS index_users_on_uuid ON users USING btree(uuid);
+
+CREATE INDEX IF NOT EXISTS index_organizations_on_uuid ON organizations USING btree(uuid);

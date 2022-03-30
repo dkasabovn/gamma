@@ -82,7 +82,7 @@ var _ = Describe("User", func() {
 				"incorrectPassword",
 			)
 
-			Ω(err).Should(HaveOccurred())
+			Ω(err).ShouldNot(HaveOccurred())
 			Ω(jwt).Should(BeNil())
 
 		})

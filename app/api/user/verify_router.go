@@ -24,13 +24,13 @@ func (a *UserAPI) addOpenRoutes() {
 }
 
 func (a *UserAPI) signupRouter(g *echo.Group) {
-	g.POST("/signup", SignUpController)
+	g.POST("/signup", a.signUpController)
 }
 
 func (a *UserAPI) loginRouter(g *echo.Group) {
-	g.POST("/signin", SignInController)
+	g.POST("/signin", a.signInController)
 }
 
-func (a *UserAPI) refreshRouter(g *echo.Group) {
-	g.GET("/refresh", RefreshTokenController)
+func  (a *UserAPI) refreshRouter(g *echo.Group) {
+	g.GET("/refresh", a.refreshTokenController)
 }

@@ -1,40 +1,32 @@
 package user_api
 
 import (
-	"sync"
+	"gamma/app/services/iface"
+	"gamma/app/services/user"
 
 	"github.com/labstack/echo/v4"
 )
 
 
 var (
-	apiOnce sync.Once
 	apiInstance *UserAPI
 )
 type UserAPI struct {
 	echo *echo.Echo
+	port string
+	srvc iface.UserService
 }
 
-func API() *UserAPI{
-	apiOnce.Do(func() {
+func StartAPI(port string) {
 
-		e := echo.New()
-		apiInstance = &UserAPI{
-			echo : e,
-		}
-	
-		apiInstance.addOpenRoutes()
-		apiInstance.addUserRoutes()
+	apiInstance = &UserAPI{
+		echo : echo.New(),
+		port : port,
+		srvc: user.GetUserService(),
+	}
 
-	})
-	
-	return apiInstance
-}
+	apiInstance.addOpenRoutes()
+	apiInstance.addUserRoutes()
 
-func (a *UserAPI) Start(port string) {
-		a.echo.Logger.Fatal(a.echo.Start(port))
-} 
-
-func (a *UserAPI) E() *echo.Echo{
-	return a.echo
+	apiInstance.echo.Logger.Fatal(apiInstance.echo.Start(port))
 }

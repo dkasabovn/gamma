@@ -12,6 +12,8 @@ import (
 
 type GammaClaims struct {
 	Uuid string `json:"uuid"`
+	Email string `json:"email,omitempty"`
+	Image string `json:"image,omitempty"`
 	jwt.StandardClaims
 }
 

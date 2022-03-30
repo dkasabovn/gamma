@@ -76,7 +76,7 @@ func (a *UserAPI) refreshTokenController(c echo.Context) error {
 
 	token, _ := ecJwt.ECDSAVerify(refreshToken.Value)
 	claims := token.Claims.(*ecJwt.GammaClaims)
-	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid, claims.Email, "https://tinyurl.com/monkeygamma")
+	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid, claims.Email, claims.UserName, "https://tinyurl.com/monkeygamma")
 
 	c.SetCookie(&http.Cookie{
 		Name:     "refresh_token",

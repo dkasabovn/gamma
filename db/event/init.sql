@@ -1,12 +1,12 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     uuid TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     phone_number TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE,
     image_url TEXT NOT NULL
 );
 
@@ -20,18 +20,18 @@ CREATE TABLE org_users (
 
 CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
+    uuid TEXT NOT NULL,
     org_name TEXT NOT NULL,
     city TEXT NOT NULL,
-    uuid TEXT NOT NULL,
     org_image_url TEXT NOT NULL
 );
 
 CREATE TABLE events (
     id SERIAL PRIMARY KEY,
+    uuid TEXT NOT NULL,
     event_name TEXT NOT NULL,
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
     event_location TEXT NOT NULL,
-    uuid TEXT NOT NULL,
     event_image_url TEXT NOT NULL,
     organization_fk INT
 );
@@ -60,10 +60,10 @@ CREATE TABLE organization_whitelist (
 -- Policy Json
 CREATE TABLE invites (
     id SERIAL PRIMARY KEY,
+    uuid TEXT NOT NULL,
     expiration_date TIMESTAMP NOT NULL,
     use_limit INT NOT NULL,
-    policy_json JSON NOT NULL,
-    uuid TEXT NOT NULL
+    policy_json JSON NOT NULL
 );
 
 ALTER TABLE org_users

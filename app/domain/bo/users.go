@@ -3,11 +3,11 @@ package bo
 type User struct {
 	Id           int
 	Uuid         string
+	PasswordHash string
 	Email        string
 	PhoneNumber  string
-	ImageUrl     string
+	UserName     string
 	FirstName    string
 	LastName     string
-	UserName     string
-	PasswordHash string
+	ImageUrl     string
 }

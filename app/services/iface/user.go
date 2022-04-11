@@ -4,6 +4,7 @@ import (
 	"context"
 	"gamma/app/domain/bo"
 	"gamma/app/system/auth/ecJwt"
+	"time"
 )
 
 type UserService interface {
@@ -12,4 +13,6 @@ type UserService interface {
 	GetUser(ctx context.Context, uuid string) (*bo.User, error)
 	GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUserJoin, error)
 	InsertEventByOrganization(ctx context.Context, orgUuid string, event *bo.Event) (*bo.Event, error)
+	CreateInvite(ctx context.Context, orgUser bo.OrgUser, expirationDate time.Time, useLimit int, policy bo.InvitePolicy) (string, error)
+	AcceptInvite(ctx context.Context, userEmail string, inviteUuid string) (bool, error)
 }

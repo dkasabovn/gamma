@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
 	"gamma/app/domain/definition"
@@ -9,6 +10,7 @@ import (
 	"gamma/app/system/auth/argon"
 	"gamma/app/system/auth/ecJwt"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
@@ -88,3 +90,51 @@ func (u *userService) InsertEventByOrganization(ctx context.Context, orgUuid str
 func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error) {
 	return u.userRepo.GetUserEvents(ctx, userId)
 }
+
+func (u *userService) CreateInvite(ctx context.Context, orgUser bo.OrgUser, expirationDate time.Time, useLimit int, policy bo.InvitePolicy) (string, error)  {
+	if !orgUser.CanCreateEvent() {
+		return  "", errors.New("user does not have perms")
+	}
+
+	inviteUuid := uuid.NewString()
+	return inviteUuid, u.userRepo.InsertInvite(ctx, expirationDate, useLimit, inviteUuid, policy)
+}
+
+func(u *userService) AcceptInvite(ctx context.Context, userEmail string, inviteUuid string) (bool, error) {
+	invite, err := u.userRepo.GetInvite(ctx, inviteUuid)
+	if err != nil {
+		return false, err
+	}
+
+	user, err := u.userRepo.GetUserByEmail(ctx, userEmail)
+	if err != nil {
+		return false, err
+	}
+
+	userOrgs, err := u.userRepo.GetUserOrganizations(ctx, user.Id)
+	if err != nil {
+		return false, err
+	}
+
+	if !invite.UserCanAttend(user, userOrgs) {
+		return false, nil
+	}
+
+	switch invite.Policy.InviteType{
+	case bo.InviteToEvent:	
+		err = u.userRepo.InsertUserEvent(ctx, user.Id, invite.Policy.InviteTo)
+	case bo.InviteToOrg:
+		err = u.userRepo.InsertOrgUser(ctx, user.Id, invite.Policy.InviteTo, invite.Policy.PoliciesNum)
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, u.userRepo.DecrementInvite(ctx, invite.Id)
+}
+
+
+
+
+

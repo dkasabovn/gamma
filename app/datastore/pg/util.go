@@ -7,7 +7,7 @@ import (
 )
 
 func ClearAll() {
-	_, err := datastore.RwInstance().Exec("TRUNCATE users, org_users, organizations, events, user_events CASCADE")
+	_, err := datastore.RwInstance().Exec("TRUNCATE users, org_users, organizations, events, user_events, invites CASCADE")
 	if err != nil {
 		log.Errorf("could not wipe database clean: %s", err.Error())
 	}

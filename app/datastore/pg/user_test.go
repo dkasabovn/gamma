@@ -2,6 +2,7 @@ package pg_test
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,9 +15,9 @@ import (
 
 // Ω
 
-var _ = AfterSuite(func() {
-	pg.ClearAll()
-})
+// var _ = AfterSuite(func() {
+// 	pg.ClearAll()
+// })
 
 var _ = Describe("User", func() {
 
@@ -38,6 +39,30 @@ var _ = Describe("User", func() {
 		EventLocation: "Alaska",
 		Uuid:          uuid.NewString(),
 	}
+
+	testEventInvite := bo.Invite{
+		Uuid: "testEventInvite",
+		ExpirationDate: time.Now().Add(time.Hour * 24),
+		UseLimit: 1,
+		Policy: bo.InvitePolicy {
+			InviteType: bo.InviteToEvent,
+			InviteTo:  1,
+			Constraint: bo.ConstraintEmail,
+			Receiver: testUser.Email,
+		},
+	}
+
+	// testOrgInvite := bo.Invite{
+	// 	Uuid: "testOrgInvite",
+	// 	ExpirationDate: time.Now().Add(time.Hour * 24),
+	// 	UseLimit: 5,
+	// 	Policy: bo.InvitePolicy {
+	// 		InviteType: bo.InviteToOrg,
+	// 		InviteTo:  2,
+	// 		Constraint: bo.ConstraintEmail,
+	// 		Receiver: testUser.Email,
+	// 	},
+	// }
 
 	BeforeEach(func() {
 		pg.ClearAll()
@@ -84,6 +109,69 @@ var _ = Describe("User", func() {
 		It("should throw an error", func() {
 			_, err := pg.GetUserRepo().GetUser(ctx, uuid.NewString())
 			Ω(err).Should(HaveOccurred())
+		})
+	})
+
+	When("Creating an invite", func() {
+		It("Should create a new event", func () {
+			err := pg.GetUserRepo().InsertInvite(
+				ctx,
+				testEventInvite.ExpirationDate,
+				testEventInvite.UseLimit,
+				testEventInvite.Uuid,
+				testEventInvite.Policy,
+			)
+
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+	})
+
+	When("Retriving an invite", func() {
+		It("Should not fail", func() {
+
+			err := pg.GetUserRepo().InsertInvite(
+				ctx,
+				testEventInvite.ExpirationDate,
+				testEventInvite.UseLimit,
+				testEventInvite.Uuid,
+				testEventInvite.Policy,
+			)
+
+			Ω(err).ShouldNot(HaveOccurred())
+
+			invite, err := pg.GetUserRepo().GetInvite(ctx, testEventInvite.Uuid)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			Ω(invite.ExpirationDate.Day()).Should(Equal(testEventInvite.ExpirationDate.Day()))
+			Ω(invite.UseLimit).Should(Equal(testEventInvite.UseLimit))
+			Ω(invite.Policy.InviteTo).Should(Equal(testEventInvite.Policy.InviteTo))
+			Ω(invite.Policy.InviteType).Should(Equal(testEventInvite.Policy.InviteType))
+			Ω(invite.Policy.Receiver).Should(Equal(testEventInvite.Policy.Receiver))
+			Ω(invite.Policy.Constraint).Should(Equal(testEventInvite.Policy.Constraint))
+		})
+	})
+
+	When("Decrementing an invite", func() {
+		It("should decrease the use limit by 1", func() {
+			err := pg.GetUserRepo().InsertInvite(
+				ctx,
+				testEventInvite.ExpirationDate,
+				testEventInvite.UseLimit,
+				testEventInvite.Uuid,
+				testEventInvite.Policy,
+			)
+			Ω(err).ShouldNot(HaveOccurred())
+			invite, err := pg.GetUserRepo().GetInvite(ctx, testEventInvite.Uuid)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			err = pg.GetUserRepo().DecrementInvite(ctx, invite.Id)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			invite, err = pg.GetUserRepo().GetInvite(ctx, testEventInvite.Uuid)
+			Ω(err).ShouldNot(HaveOccurred())
+
+			fmt.Printf("%v+", invite)
+			Ω(invite.UseLimit).Should(Equal(testEventInvite.UseLimit-1))
 		})
 	})
 })

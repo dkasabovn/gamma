@@ -6,3 +6,8 @@ type OrgUser struct {
 	PoliciesNum    int
 	UserFk         int
 }
+
+// TODO: Decide on perms
+func (u OrgUser) CanCreateEvent() bool {
+	return false
+}

@@ -326,3 +326,56 @@ func (u *userRepo) InsertEvent(ctx context.Context, event_name string, event_dat
 
 	return nil
 }
+
+func (u *userRepo) InsertInvite(ctx context.Context, expirationDate time.Time, useLimit int, uuid string, policy bo.InvitePolicy) error {
+	statement := "INSERT INTO invites (expiration_date, use_limit, uuid, policy_json) VALUES ($1, $2, $3, $4)"
+	_, err := u.dbInstance.ExecContext(ctx, statement, expirationDate, useLimit, uuid, policy)
+
+	if err != nil {
+		log.Errorf("could not insert into invites: %s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func (u *userRepo) GetInvite(ctx context.Context, inviteUuid string) (*bo.Invite, error){
+	statement := "SELECT id, expiration_date, use_limit, policy_json FROM invites WHERE uuid = $1"
+	row := u.dbInstance.QueryRowContext(ctx, statement, inviteUuid)
+
+	if row.Err() != nil {
+		log.Errorf("could not get invite by uuid: %s", row.Err().Error())
+		return nil, row.Err()
+	}
+
+	var invite bo.Invite
+
+	if err := row.Scan(
+		&invite.Id,
+		&invite.ExpirationDate,
+		&invite.UseLimit,
+		&invite.Policy,
+	); err != nil {
+		log.Errorf("could not scan event into bo.Invite: %s", err.Error())
+		return nil, err
+	}
+
+	return &invite, nil
+}
+
+func (u *userRepo) DecrementInvite(ctx context.Context, inviteId int) error {
+	statement := `
+	UPDATE invites
+	SET 
+		use_limit = use_limit - 1
+	WHERE id = $1
+	`
+
+	_, err := u.dbInstance.ExecContext(ctx, statement, inviteId)
+	if err != nil {
+		log.Errorf("could not decrement invite use limit: %s", err.Error())
+		return err
+	}
+
+	return nil
+}

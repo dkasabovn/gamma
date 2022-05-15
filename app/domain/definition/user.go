@@ -18,4 +18,5 @@ type UserRepository interface {
 	InsertOrgUser(ctx context.Context, userId int, organizationId int, policiesNum int) error
 	GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUserJoin, error)
 	InsertEventByOrganization(ctx context.Context, orgUuid string, event *bo.Event) (*bo.Event, error)
+	GetOrganizationEvents(ctx context.Context, orgUuid string) ([]bo.Event, error)
 }

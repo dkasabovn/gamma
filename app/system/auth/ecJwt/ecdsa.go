@@ -3,18 +3,23 @@ package ecJwt
 import (
 	"context"
 	"crypto/ecdsa"
+	"io/ioutil"
 	"log"
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 )
 
+var (
+	privateKey []byte
+	publicKey  []byte
+)
+
 type GammaClaims struct {
-	Uuid string `json:"uuid"`
-	Email string `json:"email,omitempty"`
+	Uuid     string `json:"uuid"`
+	Email    string `json:"email,omitempty"`
 	UserName string `json:"user_name,omitempty"`
-	Image string `json:"image,omitempty"`
+	Image    string `json:"image,omitempty"`
 	jwt.StandardClaims
 }
 
@@ -23,14 +28,25 @@ type GammaJwt struct {
 	RefreshToken string `json:"refresh_token" param:"refresh_token"`
 }
 
+func LoadPrivatePublicKeyPairsDev() {
+	private_key, err := ioutil.ReadFile("private-key.pem")
+	if err != nil {
+		panic("Could not open private-key file")
+	}
+	privateKey = private_key
+	public_key, err := ioutil.ReadFile("public-key.pem")
+	if err != nil {
+		panic("Could not open public-key file")
+	}
+	publicKey = public_key
+}
+
 // TODO !!! Handle reading private, public key files
 func ECDSASign(claims *GammaClaims) (string, string) {
-	var privateKeyString []byte
+	var privateKeyS *ecdsa.PrivateKey
 	var err error
-	privateKeyString = []byte(os.Getenv("PRIVATE_KEY"))
 
-	var privateKey *ecdsa.PrivateKey
-	if privateKey, err = jwt.ParseECPrivateKeyFromPEM([]byte(privateKeyString)); err != nil {
+	if privateKeyS, err = jwt.ParseECPrivateKeyFromPEM(privateKey); err != nil {
 		log.Fatalf("Unable to parse ECDSA private key: %v", err)
 	}
 
@@ -57,14 +73,12 @@ func ECDSASign(claims *GammaClaims) (string, string) {
 		claims,
 	)
 
-	signedAccessToken, err := token.SignedString(privateKey)
-
+	signedAccessToken, err := token.SignedString(privateKeyS)
 	if err != nil {
 		log.Fatalf("Could not sign jwt with private key: %v", err)
 	}
 
-	signedRefreshToken, err := refreshToken.SignedString(privateKey)
-
+	signedRefreshToken, err := refreshToken.SignedString(privateKeyS)
 	if err != nil {
 		log.Fatalf("Could not sign jwt with private key: %v", err)
 	}
@@ -73,26 +87,24 @@ func ECDSASign(claims *GammaClaims) (string, string) {
 }
 
 func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
-	var publicKeyString []byte
 	var err error
-	publicKeyString = []byte(os.Getenv("PUBLIC_KEY"))
-	
-	var publicKey *ecdsa.PublicKey
-	if publicKey, err = jwt.ParseECPublicKeyFromPEM([]byte(publicKeyString)); err != nil {
+	var publicKeyS *ecdsa.PublicKey
+
+	if publicKeyS, err = jwt.ParseECPublicKeyFromPEM(publicKey); err != nil {
 		log.Fatalf("Unable to parse ECDSA public key: %v", err)
 	}
 	token, err := jwt.ParseWithClaims(tokenStr, &GammaClaims{}, func(t *jwt.Token) (interface{}, error) {
-		return publicKey, nil
+		return publicKeyS, nil
 	})
 	return token, err == nil
 }
 
 func GetTokens(ctx context.Context, userUuid, userEmail, userName, userImage string) *GammaJwt {
 	claims := &GammaClaims{
-		Uuid: userUuid,
-		Email: userEmail,
+		Uuid:     userUuid,
+		Email:    userEmail,
 		UserName: userName,
-		Image: userImage,
+		Image:    userImage,
 	}
 
 	accessToken, refreshToken := ECDSASign(claims)

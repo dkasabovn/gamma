@@ -85,6 +85,10 @@ func (u *userService) InsertEventByOrganization(ctx context.Context, orgUuid str
 	return u.userRepo.InsertEventByOrganization(ctx, orgUuid, event)
 }
 
+func (u *userService) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]bo.Event, error) {
+	return u.userRepo.GetOrganizationEvents(ctx, orgUuid)
+}
+
 func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error) {
 	return u.userRepo.GetUserEvents(ctx, userId)
 }

@@ -35,12 +35,12 @@ func GetOrganizationsController(c echo.Context) error {
 	events, err := user.GetUserService().GetUserOrganizations(c.Request().Context(), userObj.Id)
 
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-		"events": events,
+		"organizations": events,
 	}))
 }
 
 func InsertEventController(c echo.Context) error {
-	// TODO(dk): Check perms or put them in JWT so it can't be tampered with
+	// TODO(dk): Add ExtractOrgUser method to get policy num, then validte policy num
 	var event dto.EventByOrg
 	if err := c.Bind(&event); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
@@ -55,3 +55,11 @@ func InsertEventController(c echo.Context) error {
 		"event": eventCreated,
 	}))
 }
+
+// func GetEventsController(c echo.Context) error {
+// 	orgUuid := c.Param("org_id")
+// 	if orgUuid == "" {
+// 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+// 	}
+
+// }

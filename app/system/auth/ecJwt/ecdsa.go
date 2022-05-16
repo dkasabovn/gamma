@@ -7,6 +7,8 @@ import (
 	"log"
 	"time"
 
+	userRepo "gamma/app/datastore/pg"
+
 	"github.com/golang-jwt/jwt"
 )
 
@@ -16,10 +18,10 @@ var (
 )
 
 type GammaClaims struct {
-	Uuid     string `json:"uuid"`
-	Email    string `json:"email,omitempty"`
-	UserName string `json:"user_name,omitempty"`
-	Image    string `json:"image,omitempty"`
+	Uuid      string `json:"uuid"`
+	ImageUrl  string `json:"image_url"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 	jwt.StandardClaims
 }
 
@@ -99,12 +101,12 @@ func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
 	return token, err == nil
 }
 
-func GetTokens(ctx context.Context, userUuid, userEmail, userName, userImage string) *GammaJwt {
+func GetTokens(ctx context.Context, user *userRepo.User) *GammaJwt {
 	claims := &GammaClaims{
-		Uuid:     userUuid,
-		Email:    userEmail,
-		UserName: userName,
-		Image:    userImage,
+		Uuid:      user.Uuid,
+		ImageUrl:  user.ImageUrl,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
 	}
 
 	accessToken, refreshToken := ECDSASign(claims)

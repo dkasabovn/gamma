@@ -1,8 +1,8 @@
 package core
 
 import (
-	"gamma/app/datastore/pg"
-	"gamma/app/domain/bo"
+	userRepo "gamma/app/datastore/pg"
+	"gamma/app/services/user"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
 
@@ -53,12 +53,23 @@ func GetCookie(cookies []*http.Cookie, name string) *http.Cookie {
 	return nil
 }
 
-func ExtractUser(c echo.Context) (*bo.User, error) {
+func ExtractUser(c echo.Context) (*userRepo.User, error) {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*ecJwt.GammaClaims)
-	user, err := pg.GetUserRepo().GetUser(c.Request().Context(), claims.Uuid)
+	user, err := user.GetUserService().GetUser(c.Request().Context(), claims.Uuid)
 	if err != nil {
 		log.Errorf("Could not extract user from faulty token: %s", userToken.Raw)
+		return nil, err
+	}
+	return user, nil
+}
+
+func ExtractOrguser(c echo.Context) (*userRepo.GetUserOrgUserJoinRow, error) {
+	userToken := c.Get("user").(*jwt.Token)
+	claims := userToken.Claims.(*ecJwt.GammaClaims)
+	user, err := user.GetUserService().GetUserOrgUserByUuid(c.Request().Context(), claims.Uuid)
+	if err != nil {
+		log.Errorf("Could not extract org user from token: %s", userToken.Raw)
 		return nil, err
 	}
 	return user, nil

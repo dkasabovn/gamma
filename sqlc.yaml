@@ -1,0 +1,9 @@
+version: 1
+packages:
+  - path: "./app/datastore/pg"
+    name: "userRepo"
+    engine: "postgresql"
+    schema: "./db/event/init.sql"
+    queries: "./db/event/queries.sql"
+    emit_result_struct_pointers: true
+    emit_params_struct_pointers: true

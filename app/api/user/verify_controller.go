@@ -5,7 +5,7 @@ import (
 
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
-	"gamma/app/domain/bo"
+	userRepo "gamma/app/datastore/pg"
 	"gamma/app/system/auth/ecJwt"
 
 	"github.com/labstack/echo/v4"
@@ -13,13 +13,13 @@ import (
 )
 
 func (a *UserAPI) signUpController(c echo.Context) error {
-	var rawSignUp dto.UserSignup
+	var rawSignUp userRepo.InsertUserParams
 	if err := c.Bind(&rawSignUp); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
 
 	// TODO(dk): upload the image and create the url instead of passing it in through raw signup
-	tokens, err := a.srvc.CreateUser(c.Request().Context(), rawSignUp.RawPassword, rawSignUp.Email, rawSignUp.PhoneNumber, rawSignUp.FirstName, rawSignUp.LastName, rawSignUp.UserName, rawSignUp.ImageUrl)
+	tokens, err := a.srvc.CreateUser(c.Request().Context(), &rawSignUp)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
@@ -78,12 +78,12 @@ func (a *UserAPI) refreshTokenController(c echo.Context) error {
 	token, _ := ecJwt.ECDSAVerify(refreshToken.Value)
 	claims := token.Claims.(*ecJwt.GammaClaims)
 
-	var user *bo.User
+	var user *userRepo.User
 	if user, err = a.srvc.GetUser(c.Request().Context(), claims.Uuid); err != nil {
 		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
 	}
 
-	tokens := ecJwt.GetTokens(c.Request().Context(), claims.Uuid, user.Email, user.UserName, "https://tinyurl.com/monkeygamma")
+	tokens := ecJwt.GetTokens(c.Request().Context(), user)
 
 	c.SetCookie(&http.Cookie{
 		Name:     "refresh_token",

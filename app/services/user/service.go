@@ -2,9 +2,8 @@ package user
 
 import (
 	"context"
-	"gamma/app/datastore/pg"
-	"gamma/app/domain/bo"
-	"gamma/app/domain/definition"
+	"gamma/app/datastore"
+	userRepo "gamma/app/datastore/pg"
 	"gamma/app/services/iface"
 	"gamma/app/system/auth/argon"
 	"gamma/app/system/auth/ecJwt"
@@ -20,28 +19,32 @@ var (
 )
 
 type userService struct {
-	userRepo definition.UserRepository
+	userRepo userRepo.Queries
 }
 
 func GetUserService() iface.UserService {
 	userOnce.Do(func() {
 		userServiceInstance = &userService{
-			userRepo: pg.GetUserRepo(),
+			userRepo: *userRepo.New(datastore.RwInstance()),
 		}
 	})
 	return userServiceInstance
 }
 
-func (u *userService) GetUser(ctx context.Context, uuid string) (*bo.User, error) {
-	return u.userRepo.GetUser(ctx, uuid)
+func (u *userService) GetUser(ctx context.Context, uuid string) (*userRepo.User, error) {
+	return u.userRepo.GetUserByUuid(ctx, uuid)
 }
 
-func (u *userService) GetUserByEmail(ctx context.Context, email string) (*bo.User, error) {
+func (u *userService) GetUserByEmail(ctx context.Context, email string) (*userRepo.User, error) {
 	return u.userRepo.GetUserByEmail(ctx, email)
 }
 
-func (u *userService) InsertUser(ctx context.Context, uuid, email, phone_number, hash, firstName, lastName, userName, image_url string) error {
-	return u.userRepo.InsertUser(ctx, uuid, email, phone_number, hash, firstName, lastName, userName, image_url)
+func (u *userService) GetUserOrgUserByUuid(ctx context.Context, uuid string) (*userRepo.GetUserOrgUserJoinRow, error) {
+	return u.userRepo.GetUserOrgUserJoin(ctx, uuid)
+}
+
+func (u *userService) InsertUser(ctx context.Context, input *userRepo.InsertUserParams) error {
+	return u.userRepo.InsertUser(ctx, input)
 }
 
 func (u *userService) SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error) {
@@ -58,37 +61,41 @@ func (u *userService) SignInUser(ctx context.Context, email, password string) (*
 	}
 
 	if valid {
-		return ecJwt.GetTokens(ctx, user.Uuid, user.Email, user.UserName, "https://tinyurl.com/monkeygamma"), nil
+		return ecJwt.GetTokens(ctx, user), nil
 	}
 	return nil, nil
 }
 
-func (u *userService) CreateUser(ctx context.Context, password, email, phone_number, firstName, lastName, userName, image_url string) (*ecJwt.GammaJwt, error) {
-	hash, err := argon.PasswordToHash(password)
+func (u *userService) CreateUser(ctx context.Context, input *userRepo.InsertUserParams) (*ecJwt.GammaJwt, error) {
+	hash, err := argon.PasswordToHash(input.PasswordHash)
 	if err != nil {
 		log.Errorf("could not generate hash: %s", err)
 		return nil, err
 	}
-	uuid := uuid.New()
-	if err := u.InsertUser(ctx, uuid.String(), email, phone_number, hash, firstName, lastName, userName, image_url); err != nil {
+
+	input.Uuid = uuid.New().String()
+	input.PasswordHash = hash
+
+	if err := u.InsertUser(ctx, input); err != nil {
 		// this error should already be logged by InsertUser method
 		return nil, err
 	}
-	return ecJwt.GetTokens(ctx, uuid.String(), email, userName, "https://tinyurl.com/monkeygamma"), nil
+	return ecJwt.GetTokens(ctx, &userRepo.User{
+		Uuid:      input.Uuid,
+		ImageUrl:  input.ImageUrl,
+		FirstName: input.FirstName,
+		LastName:  input.LastName,
+	}), nil
 }
 
-func (u *userService) GetUserOrganizations(ctx context.Context, userId int) ([]bo.OrganizationUserJoin, error) {
-	return u.userRepo.GetUserOrganizations(ctx, userId)
+func (u *userService) GetUserOrganizations(ctx context.Context, userId int) ([]*userRepo.GetUserOrganizationsRow, error) {
+	return u.userRepo.GetUserOrganizations(ctx, int32(userId))
 }
 
-func (u *userService) InsertEventByOrganization(ctx context.Context, orgUuid string, event *bo.Event) (*bo.Event, error) {
-	return u.userRepo.InsertEventByOrganization(ctx, orgUuid, event)
-}
-
-func (u *userService) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]bo.Event, error) {
+func (u *userService) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*userRepo.GetOrganizationEventsRow, error) {
 	return u.userRepo.GetOrganizationEvents(ctx, orgUuid)
 }
 
-func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]bo.Event, error) {
-	return u.userRepo.GetUserEvents(ctx, userId)
+func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]*userRepo.GetUserEventsRow, error) {
+	return u.userRepo.GetUserEvents(ctx, int32(userId))
 }

@@ -6,8 +6,9 @@ CREATE TABLE users (
     phone_number TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    username TEXT NOT NULL UNIQUE,
-    image_url TEXT NOT NULL
+    image_url TEXT NOT NULL,
+    validated BOOLEAN NOT NULL,
+    refresh_token TEXT NOT NULL
 );
 
 -- users that belong to an organization
@@ -31,6 +32,7 @@ CREATE TABLE events (
     event_name TEXT NOT NULL,
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
     event_location TEXT NOT NULL,
+    event_description TEXT NOT NULL,
     uuid TEXT NOT NULL,
     event_image_url TEXT NOT NULL,
     organization_fk INT
@@ -48,13 +50,6 @@ CREATE TABLE event_applications (
     id SERIAL PRIMARY KEY,
     user_fk INT NOT NULL,
     event_fk INT NOT NULL
-);
-
--- Contains users that are whitelisted to any organization event
-CREATE TABLE organization_whitelist (
-    id SERIAL PRIMARY KEY,
-    organization_fk INT NOT NULL,
-    user_fk INT NOT NULL
 );
 
 -- Policy Json

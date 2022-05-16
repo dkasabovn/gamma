@@ -24,11 +24,3 @@ func (a *UserAPI) addUserRoutes() {
 func (a *UserAPI) getUserRouter(g *echo.Group) {
 	g.GET("/user", a.getUserController)
 }
-
-func (a *UserAPI) getOrgAdminBootstrapRouter(g *echo.Group) {
-	g.GET("/org", GetOrganizationsController)
-}
-
-func (a *UserAPI) getEventsRouter(g *echo.Group) {
-	g.GET("/{org_id}/events", nil)
-}

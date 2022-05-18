@@ -7,15 +7,14 @@ package userRepo
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
 const getEventById = `-- name: GetEventById :one
-SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events WHERE id = $1::text LIMIT 1
+SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events WHERE id = $1::int LIMIT 1
 `
 
-func (q *Queries) GetEventById(ctx context.Context, eventID string) (*Event, error) {
+func (q *Queries) GetEventById(ctx context.Context, eventID int32) (*Event, error) {
 	row := q.db.QueryRowContext(ctx, getEventById, eventID)
 	var i Event
 	err := row.Scan(
@@ -51,6 +50,23 @@ func (q *Queries) GetEventByUuid(ctx context.Context, eventUuid string) (*Event,
 	return &i, err
 }
 
+const getOrganizationByUuid = `-- name: GetOrganizationByUuid :one
+SELECT id, org_name, city, uuid, org_image_url FROM organizations WHERE uuid = $1::text LIMIT 1
+`
+
+func (q *Queries) GetOrganizationByUuid(ctx context.Context, organizationUuid string) (*Organization, error) {
+	row := q.db.QueryRowContext(ctx, getOrganizationByUuid, organizationUuid)
+	var i Organization
+	err := row.Scan(
+		&i.ID,
+		&i.OrgName,
+		&i.City,
+		&i.Uuid,
+		&i.OrgImageUrl,
+	)
+	return &i, err
+}
+
 const getOrganizationEvents = `-- name: GetOrganizationEvents :many
 SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON e.organization_fk = o.id WHERE o.uuid = $1::text
 `
@@ -63,7 +79,7 @@ type GetOrganizationEventsRow struct {
 	EventDescription string
 	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   sql.NullInt32
+	OrganizationFk   int32
 	ID_2             int32
 	OrgName          string
 	City             string
@@ -169,7 +185,7 @@ type GetUserEventsRow struct {
 	EventDescription string
 	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   sql.NullInt32
+	OrganizationFk   int32
 }
 
 func (q *Queries) GetUserEvents(ctx context.Context, userID int32) ([]*GetUserEventsRow, error) {
@@ -310,7 +326,7 @@ type InsertEventParams struct {
 	EventDescription string
 	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   sql.NullInt32
+	OrganizationFk   int32
 }
 
 func (q *Queries) InsertEvent(ctx context.Context, arg *InsertEventParams) error {
@@ -392,5 +408,16 @@ func (q *Queries) InsertUser(ctx context.Context, arg *InsertUserParams) error {
 		arg.Validated,
 		arg.RefreshToken,
 	)
+	return err
+}
+
+const truncateAll = `-- name: TruncateAll :exec
+
+TRUNCATE users, org_users, organizations, events, user_events, event_applications, invites
+`
+
+// UTIL
+func (q *Queries) TruncateAll(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, truncateAll)
 	return err
 }

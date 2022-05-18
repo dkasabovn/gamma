@@ -5,7 +5,6 @@
 package userRepo
 
 import (
-	"database/sql"
 	"encoding/json"
 	"time"
 )
@@ -18,7 +17,7 @@ type Event struct {
 	EventDescription string
 	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   sql.NullInt32
+	OrganizationFk   int32
 }
 
 type EventApplication struct {

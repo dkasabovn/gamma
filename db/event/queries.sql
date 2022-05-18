@@ -22,7 +22,10 @@ SELECT * FROM user_events ue INNER JOIN events e ON ue.event_fk = e.id WHERE ue.
 SELECT * FROM events WHERE uuid = sqlc.arg(event_uuid)::text LIMIT 1;
 
 -- name: GetEventById :one
-SELECT * FROM events WHERE id = sqlc.arg(event_id)::text LIMIT 1;
+SELECT * FROM events WHERE id = sqlc.arg(event_id)::int LIMIT 1;
+
+-- name: GetOrganizationByUuid :one
+SELECT * FROM organizations WHERE uuid = sqlc.arg(organization_uuid)::text LIMIT 1;
 
 -- PUTS
 
@@ -37,3 +40,8 @@ INSERT INTO org_users (policies_num, user_fk, organization_fk) VALUES ($1,$2,$3)
 
 -- name: InsertEvent :exec
 INSERT INTO events (event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7);
+
+-- UTIL
+
+-- name: TruncateAll :exec
+TRUNCATE users, org_users, organizations, events, user_events, event_applications, invites;

@@ -35,7 +35,7 @@ CREATE TABLE events (
     event_description TEXT NOT NULL,
     uuid TEXT NOT NULL,
     event_image_url TEXT NOT NULL,
-    organization_fk INT
+    organization_fk INT NOT NULL
 );
 
 -- Events that users have been accepted to

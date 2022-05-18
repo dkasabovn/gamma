@@ -19,13 +19,13 @@ var (
 )
 
 type userService struct {
-	userRepo userRepo.Queries
+	userRepo *userRepo.Queries
 }
 
 func GetUserService() iface.UserService {
 	userOnce.Do(func() {
 		userServiceInstance = &userService{
-			userRepo: *userRepo.New(datastore.RwInstance()),
+			userRepo: userRepo.New(datastore.RwInstance()),
 		}
 	})
 	return userServiceInstance

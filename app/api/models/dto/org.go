@@ -7,6 +7,7 @@ type ResOrganization struct {
 	City        string `json:"city"`
 	Uuid        string `json:"uuid"`
 	OrgImageUrl string `json:"org_image"`
+	PolicyNum   int32  `json:"policy_num"`
 }
 
 func ConvertOrganization(org *userRepo.GetUserOrganizationsRow) *ResOrganization {
@@ -15,6 +16,7 @@ func ConvertOrganization(org *userRepo.GetUserOrganizationsRow) *ResOrganization
 		City:        org.City,
 		Uuid:        org.Uuid,
 		OrgImageUrl: org.OrgImageUrl,
+		PolicyNum:   org.PoliciesNum,
 	}
 }
 

@@ -2,6 +2,7 @@ package user_api
 
 import (
 	"gamma/app/api/core"
+	"gamma/app/api/models/dto"
 	"gamma/app/system/auth/ecJwt"
 	"net/http"
 
@@ -24,16 +25,18 @@ func (a *UserAPI) getUserController(c echo.Context) error {
 	}))
 }
 
-func (a *UserAPI) getUserOrganizations(c echo.Context) error {
-	// org_user, err := core.ExtractOrguser(c)
-	// if err != nil {
-	// 	return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
-	// }
+func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {
+	org_user, err := core.ExtractOrguser(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
 
-	// orgs, err := a.srvc.GetUserOrganizations(c.Request().Context(), org_user.ID)
-	// if err != nil {
-	// 	return c.JSON(http.StatusNotFound, core.ApiError(http.StatusNotFound))
-	// }
+	orgs, err := a.srvc.GetUserOrganizations(c.Request().Context(), org_user.ID)
+	if err != nil {
+		return c.JSON(http.StatusNotFound, core.ApiError(http.StatusNotFound))
+	}
 
-	return nil
+	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
+		"organizations": dto.ConvertOrganizations(orgs),
+	}))
 }

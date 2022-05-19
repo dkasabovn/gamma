@@ -99,3 +99,7 @@ func (u *userService) GetOrganizationEvents(ctx context.Context, orgUuid string)
 func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]*userRepo.GetUserEventsRow, error) {
 	return u.userRepo.GetUserEvents(ctx, int32(userId))
 }
+
+func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.Event, error) {
+	return u.userRepo.GetEvents(ctx)
+}

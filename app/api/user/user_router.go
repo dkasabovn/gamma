@@ -28,3 +28,7 @@ func (a *UserAPI) getUserRouter(g *echo.Group) {
 func (a *UserAPI) getUserOrganizationsRouter(g *echo.Group) {
 	g.GET("/orgs", a.getUserOrganizationsController)
 }
+
+func (a *UserAPI) getEventsRouter(g *echo.Group) {
+	g.GET("/events", a.getEventsController)
+}

@@ -88,8 +88,8 @@ func (u *userService) CreateUser(ctx context.Context, input *userRepo.InsertUser
 	}), nil
 }
 
-func (u *userService) GetUserOrganizations(ctx context.Context, userId int) ([]*userRepo.GetUserOrganizationsRow, error) {
-	return u.userRepo.GetUserOrganizations(ctx, int32(userId))
+func (u *userService) GetUserOrganizations(ctx context.Context, userId int32) ([]*userRepo.GetUserOrganizationsRow, error) {
+	return u.userRepo.GetUserOrganizations(ctx, userId)
 }
 
 func (u *userService) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*userRepo.GetOrganizationEventsRow, error) {

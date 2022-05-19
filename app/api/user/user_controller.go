@@ -23,3 +23,17 @@ func (a *UserAPI) getUserController(c echo.Context) error {
 		"user": user,
 	}))
 }
+
+func (a *UserAPI) getUserOrganizations(c echo.Context) error {
+	// org_user, err := core.ExtractOrguser(c)
+	// if err != nil {
+	// 	return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	// }
+
+	// orgs, err := a.srvc.GetUserOrganizations(c.Request().Context(), org_user.ID)
+	// if err != nil {
+	// 	return c.JSON(http.StatusNotFound, core.ApiError(http.StatusNotFound))
+	// }
+
+	return nil
+}

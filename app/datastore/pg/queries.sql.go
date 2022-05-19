@@ -50,6 +50,42 @@ func (q *Queries) GetEventByUuid(ctx context.Context, eventUuid string) (*Event,
 	return &i, err
 }
 
+const getEvents = `-- name: GetEvents :many
+SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events ORDER BY event_date DESC
+`
+
+func (q *Queries) GetEvents(ctx context.Context) ([]*Event, error) {
+	rows, err := q.db.QueryContext(ctx, getEvents)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*Event
+	for rows.Next() {
+		var i Event
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventName,
+			&i.EventDate,
+			&i.EventLocation,
+			&i.EventDescription,
+			&i.Uuid,
+			&i.EventImageUrl,
+			&i.OrganizationFk,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getOrganizationByUuid = `-- name: GetOrganizationByUuid :one
 SELECT id, org_name, city, uuid, org_image_url FROM organizations WHERE uuid = $1::text LIMIT 1
 `

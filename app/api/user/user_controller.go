@@ -40,3 +40,13 @@ func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {
 		"organizations": dto.ConvertOrganizations(orgs),
 	}))
 }
+
+func (a *UserAPI) getEventsController(c echo.Context) error {
+	events, err := a.srvc.GetEvents(c.Request().Context())
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
+		"events": dto.ConvertEvents(events),
+	}))
+}

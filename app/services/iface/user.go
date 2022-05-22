@@ -12,4 +12,5 @@ type UserService interface {
 	GetUser(ctx context.Context, uuid string) (*userRepo.User, error)
 	GetUserOrgUserByUuid(ctx context.Context, uuid string) (*userRepo.GetUserOrgUserJoinRow, error)
 	GetUserOrganizations(ctx context.Context, userId int32) ([]*userRepo.GetUserOrganizationsRow, error)
+	GetEvents(ctx context.Context) ([]*userRepo.Event, error)
 }

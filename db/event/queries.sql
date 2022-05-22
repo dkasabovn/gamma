@@ -30,6 +30,9 @@ SELECT * FROM organizations WHERE uuid = sqlc.arg(organization_uuid)::text LIMIT
 -- name: GetEvents :many
 SELECT * FROM events ORDER BY event_date DESC;
 
+-- name: GetEventsOrderedByCreation :many
+SELECT * FROM events ORDER BY id DESC;
+
 -- PUTS
 
 -- name: InsertUser :exec

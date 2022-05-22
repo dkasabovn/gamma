@@ -3,19 +3,36 @@ package main
 import (
 	"context"
 	"fmt"
+	"gamma/app/datastore"
 	userRepo "gamma/app/datastore/pg"
+	"gamma/app/services/user"
 	"gamma/app/system"
-	"gamma/app/system/auth/ecJwt"
 )
 
 func main() {
 	system.Initialize()
-	jwt := ecJwt.GetTokens(context.Background(), &userRepo.User{
-		Uuid:      "testing",
-		ImageUrl:  "testing",
-		FirstName: "testing",
-		LastName:  "testing",
+
+	err := userRepo.New(datastore.RwInstance()).TruncateAll(context.TODO())
+
+	if err != nil {
+		fmt.Printf("Error\n")
+	}
+
+	tokens, err := user.GetUserService().CreateUser(context.Background(), &userRepo.InsertUserParams{
+		Uuid:         "",
+		Email:        "bigtest@gmail.com",
+		PasswordHash: "testing",
+		PhoneNumber:  "6101231234",
+		FirstName:    "Big",
+		LastName:     "Man",
+		ImageUrl:     "https://media.npr.org/assets/img/2017/09/12/macaca_nigra_self-portrait-3e0070aa19a7fe36e802253048411a38f14a79f8-s1100-c50.jpg",
+		Validated:    true,
+		RefreshToken: "",
 	})
 
-	fmt.Printf("%s\n", jwt.BearerToken)
+	if err != nil {
+		fmt.Printf("Error\n")
+	}
+
+	fmt.Printf("Access: %s\n\n\nRefresh: %s", tokens.BearerToken, tokens.RefreshToken)
 }

@@ -42,10 +42,6 @@ func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {
 }
 
 func (a *UserAPI) getEventsController(c echo.Context) error {
-	// _, err := core.ExtractUser(c)
-	// if err != nil {
-	// 	return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
-	// }
 	events, err := a.srvc.GetEvents(c.Request().Context())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))

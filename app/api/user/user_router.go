@@ -17,6 +17,7 @@ func (a *UserAPI) addUserRoutes() {
 
 	{
 		a.getUserRouter(authRequired)
+		a.getEventsRouter(authRequired)
 	}
 
 }

@@ -7,10 +7,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-
 var (
 	apiInstance *UserAPI
 )
+
 type UserAPI struct {
 	echo *echo.Echo
 	port string
@@ -20,8 +20,8 @@ type UserAPI struct {
 func StartAPI(port string) {
 
 	apiInstance = &UserAPI{
-		echo : echo.New(),
-		port : port,
+		echo: echo.New(),
+		port: port,
 		srvc: user.GetUserService(),
 	}
 

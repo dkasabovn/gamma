@@ -7,6 +7,7 @@ package userRepo
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 )
 
@@ -374,6 +375,27 @@ func (q *Queries) InsertEvent(ctx context.Context, arg *InsertEventParams) error
 		arg.Uuid,
 		arg.EventImageUrl,
 		arg.OrganizationFk,
+	)
+	return err
+}
+
+const insertInvite = `-- name: InsertInvite :exec
+INSERT INTO invites (expiration_date, use_limit, policy_json, uuid) VALUES ($1, $2, $3, $4)
+`
+
+type InsertInviteParams struct {
+	ExpirationDate time.Time
+	UseLimit       int32
+	PolicyJson     json.RawMessage
+	Uuid           string
+}
+
+func (q *Queries) InsertInvite(ctx context.Context, arg *InsertInviteParams) error {
+	_, err := q.db.ExecContext(ctx, insertInvite,
+		arg.ExpirationDate,
+		arg.UseLimit,
+		arg.PolicyJson,
+		arg.Uuid,
 	)
 	return err
 }

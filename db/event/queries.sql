@@ -44,6 +44,13 @@ INSERT INTO org_users (policies_num, user_fk, organization_fk) VALUES ($1,$2,$3)
 -- name: InsertEvent :exec
 INSERT INTO events (event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
+-- name: InsertInvite :exec
+INSERT INTO invites (expiration_date, use_limit, policy_json, uuid) VALUES ($1, $2, $3, $4);
+
+-- UPDATES
+
+UPDATE invites SET use_limit = use_limit - 1 WHERE id = $1 AND use_limit > 0;
+
 -- UTIL
 
 -- name: TruncateAll :exec

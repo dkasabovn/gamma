@@ -50,6 +50,7 @@ func (u *userService) InsertUser(ctx context.Context, input *userRepo.InsertUser
 func (u *userService) SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error) {
 	user, err := u.GetUserByEmail(ctx, email)
 	if err != nil {
+		log.Errorf("Could not get user by Email: %v", email)
 		return nil, err
 	}
 

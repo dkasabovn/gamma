@@ -8,6 +8,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/gommon/log"
 )
 
 func (a *UserAPI) getUserController(c echo.Context) error {
@@ -44,6 +45,7 @@ func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {
 func (a *UserAPI) getEventsController(c echo.Context) error {
 	events, err := a.srvc.GetEvents(c.Request().Context())
 	if err != nil {
+		log.Errorf("could not get any events")
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{

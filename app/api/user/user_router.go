@@ -10,6 +10,11 @@ import (
 
 func (a *UserAPI) addUserRoutes() {
 	authRequired := a.echo.Group("/api")
+	authRequired.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"*"},
+		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization},
+		AllowCredentials: true,
+	}))
 	authRequired.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		Claims:         &ecJwt.GammaClaims{},
 		ParseTokenFunc: core.JwtParserFunction,
@@ -32,4 +37,14 @@ func (a *UserAPI) getUserOrganizationsRouter(g *echo.Group) {
 
 func (a *UserAPI) getEventsRouter(g *echo.Group) {
 	g.GET("/events", a.getEventsController)
+}
+
+func (a *UserAPI) createEventRouter(g *echo.Group) {
+	g.POST("/event", func(ctx echo.Context) error { return nil })
+}
+
+func (a *UserAPI) getEventsByOrgRouter(g *echo.Group) {
+	g.GET("/events/:org_uuid", func(ctx echo.Context) error {
+		return nil
+	})
 }

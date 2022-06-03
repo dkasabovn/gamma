@@ -13,6 +13,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
+	syreclabs.com/go/faker v1.2.3
 )
 
 require (
@@ -45,5 +46,4 @@ require (
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	syreclabs.com/go/faker v1.2.3 // indirect
 )

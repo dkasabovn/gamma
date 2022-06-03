@@ -44,6 +44,7 @@ func (a *UserAPI) signInController(c echo.Context) error {
 
 	tokens, err := a.srvc.SignInUser(c.Request().Context(), rawSignIn.Email, rawSignIn.RawPassword)
 	if err != nil {
+		log.Errorf("could not get sign in tokens: %v", err)
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 

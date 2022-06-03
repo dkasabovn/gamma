@@ -30,7 +30,7 @@ func (Run) EventDB() error {
 	sh.RunV("docker", "container", "stop", "gamma_db")
 	sh.RunV("docker", "container", "rm", "gamma_db")
 
-	err = sh.RunV("docker", "run", "-p", "5432:5432", "-it", "--name=gamma_db", "gamma/eventdb")
+	err = sh.RunV("docker", "run", "-p", "5432:5432", "-d", "--name=gamma_db", "gamma/eventdb")
 
 	return err
 }

@@ -10,6 +10,11 @@ import (
 
 func (a *UserAPI) addUserRoutes() {
 	authRequired := a.echo.Group("/api")
+	authRequired.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"*"},
+		AllowHeaders:     []string{echo.HeaderContentType, echo.HeaderAuthorization},
+		AllowCredentials: true,
+	}))
 	authRequired.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		Claims:         &ecJwt.GammaClaims{},
 		ParseTokenFunc: core.JwtParserFunction,
@@ -18,6 +23,7 @@ func (a *UserAPI) addUserRoutes() {
 	{
 		a.getUserRouter(authRequired)
 		a.getEventsRouter(authRequired)
+		a.getUserOrganizationsRouter(authRequired)
 	}
 
 }
@@ -32,4 +38,20 @@ func (a *UserAPI) getUserOrganizationsRouter(g *echo.Group) {
 
 func (a *UserAPI) getEventsRouter(g *echo.Group) {
 	g.GET("/events", a.getEventsController)
+}
+
+func (a *UserAPI) createEventRouter(g *echo.Group) {
+	g.POST("/event/:org_uuid", a.createEventController)
+}
+
+func (a *UserAPI) getEventsByOrgRouter(g *echo.Group) {
+	g.GET("/events/:org_uuid", a.getEventsByOrgController)
+}
+
+func (a *UserAPI) getEventApplicationsRouter(g *echo.Group) {
+	g.GET("/applications/:event_uuid", func(ctx echo.Context) error { return nil })
+}
+
+func (a *UserAPI) postEventApplicationDecisionsRouter(g *echo.Group) {
+	g.POST("/applications/:event_uuid", func(ctx echo.Context) error { return nil })
 }

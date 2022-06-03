@@ -52,20 +52,18 @@ var _ = Describe("./App/Datastore/Pg/User", func() {
 	BeforeEach(func() {
 		err := repo.InsertUser(context.Background(), userData)
 		Ω(err).ShouldNot(HaveOccurred())
-		err = repo.InsertOrganization(context.Background(), orgData)
+		orgId32, err := repo.InsertOrganization(context.Background(), orgData)
 		Ω(err).ShouldNot(HaveOccurred())
+		orgId = int(orgId32)
 
 		user, err := repo.GetUserByUuid(context.Background(), userData.Uuid)
 		Ω(err).ShouldNot(HaveOccurred())
 		userId = int(user.ID)
-		organization, err := repo.GetOrganizationByUuid(context.Background(), orgData.Uuid)
-		Ω(err).ShouldNot(HaveOccurred())
-		orgId = int(organization.ID)
 
 		err = repo.InsertOrgUser(context.Background(), &userRepo.InsertOrgUserParams{
 			PoliciesNum:    69,
 			UserFk:         user.ID,
-			OrganizationFk: organization.ID,
+			OrganizationFk: orgId32,
 		})
 		Ω(err).ShouldNot(HaveOccurred())
 
@@ -96,7 +94,10 @@ var _ = Describe("./App/Datastore/Pg/User", func() {
 
 	When("getting a user and org user by uuid", func() {
 		It("should properly fetch both the org user and user", func() {
-			user_org_user, err := repo.GetUserOrgUserJoin(context.Background(), userData.Uuid)
+			user_org_user, err := repo.GetUserOrgUserJoin(context.Background(), &userRepo.GetUserOrgUserJoinParams{
+				UserUuid: userData.Uuid,
+				OrgUuid:  orgData.Uuid,
+			})
 			Ω(err).ShouldNot(HaveOccurred())
 			Ω(user_org_user.PoliciesNum).Should(Equal(int32(69)))
 			Ω(user_org_user.FirstName).Should(Equal(userData.FirstName))

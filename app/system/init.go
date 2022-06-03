@@ -2,6 +2,8 @@ package system
 
 import (
 	"gamma/app/system/auth/ecJwt"
+
+	"github.com/joho/godotenv"
 )
 
 var (
@@ -10,9 +12,9 @@ var (
 )
 
 func Initialize() {
-	// err := godotenv.Load()
-	// if err != nil {
-	// 	log.Fatalf("Could not find a .env")
-	// }
+	err := godotenv.Load()
+	if err != nil {
+		panic("can't load dot env")
+	}
 	ecJwt.LoadPrivatePublicKeyPairsDev()
 }

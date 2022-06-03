@@ -39,8 +39,11 @@ func (u *userService) GetUserByEmail(ctx context.Context, email string) (*userRe
 	return u.userRepo.GetUserByEmail(ctx, email)
 }
 
-func (u *userService) GetUserOrgUserByUuid(ctx context.Context, uuid string) (*userRepo.GetUserOrgUserJoinRow, error) {
-	return u.userRepo.GetUserOrgUserJoin(ctx, uuid)
+func (u *userService) GetUserOrgUserByUuid(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetUserOrgUserJoinRow, error) {
+	return u.userRepo.GetUserOrgUserJoin(ctx, &userRepo.GetUserOrgUserJoinParams{
+		UserUuid: user_uuid,
+		OrgUuid:  org_uuid,
+	})
 }
 
 func (u *userService) InsertUser(ctx context.Context, input *userRepo.InsertUserParams) error {
@@ -50,6 +53,7 @@ func (u *userService) InsertUser(ctx context.Context, input *userRepo.InsertUser
 func (u *userService) SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error) {
 	user, err := u.GetUserByEmail(ctx, email)
 	if err != nil {
+		log.Errorf("Could not get user by Email: %v", email)
 		return nil, err
 	}
 
@@ -92,7 +96,7 @@ func (u *userService) GetUserOrganizations(ctx context.Context, userId int32) ([
 	return u.userRepo.GetUserOrganizations(ctx, userId)
 }
 
-func (u *userService) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*userRepo.GetOrganizationEventsRow, error) {
+func (u *userService) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*userRepo.Event, error) {
 	return u.userRepo.GetOrganizationEvents(ctx, orgUuid)
 }
 
@@ -102,4 +106,16 @@ func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]*userRep
 
 func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.Event, error) {
 	return u.userRepo.GetEvents(ctx)
+}
+
+func (u *userService) CreateEvent(ctx context.Context, eventParams *userRepo.InsertEventParams) error {
+	return u.userRepo.InsertEvent(ctx, eventParams)
+}
+
+func (u *userService) CreateOrganization(ctx context.Context, orgParams *userRepo.InsertOrganizationParams) (int32, error) {
+	return u.userRepo.InsertOrganization(ctx, orgParams)
+}
+
+func (u *userService) CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error {
+	return u.userRepo.InsertOrgUser(ctx, orgUserParams)
 }

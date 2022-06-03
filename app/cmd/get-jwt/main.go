@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"gamma/app/datastore"
 	userRepo "gamma/app/datastore/pg"
+	"gamma/app/domain/bo"
 	"gamma/app/services/user"
 	"gamma/app/system"
+	"gamma/app/system/auth/ecJwt"
 )
 
 func main() {
@@ -31,7 +33,37 @@ func main() {
 	})
 
 	if err != nil {
-		fmt.Printf("Error\n")
+		panic(err)
+	}
+
+	orgId, err := user.GetUserService().CreateOrganization(context.Background(), &userRepo.InsertOrganizationParams{
+		OrgName:     "Kappa Ligma",
+		City:        "Ligma City",
+		Uuid:        "howdypartner",
+		OrgImageUrl: "https://media.npr.org/assets/img/2017/09/12/macaca_nigra_self-portrait-3e0070aa19a7fe36e802253048411a38f14a79f8-s1100-c50.jpg",
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	tkn, _ := ecJwt.ECDSAVerify(tokens.BearerToken)
+	uuid := tkn.Claims.(*ecJwt.GammaClaims).Uuid
+
+	user_obj, err := user.GetUserService().GetUser(context.Background(), uuid)
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = user.GetUserService().CreateOrgUser(context.Background(), &userRepo.InsertOrgUserParams{
+		PoliciesNum:    int32(bo.Create(bo.OWNER)),
+		UserFk:         user_obj.ID,
+		OrganizationFk: orgId,
+	})
+
+	if err != nil {
+		panic(err)
 	}
 
 	fmt.Printf("Access: %s\n\n\nRefresh: %s", tokens.BearerToken, tokens.RefreshToken)

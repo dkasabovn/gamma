@@ -7,3 +7,4 @@ app/cmd/usersvc/.env
 .vscode/settings.json
 *.pem
 *.env
+ga_service*.json

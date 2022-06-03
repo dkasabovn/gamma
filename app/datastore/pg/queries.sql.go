@@ -141,34 +141,18 @@ func (q *Queries) GetOrganizationByUuid(ctx context.Context, organizationUuid st
 }
 
 const getOrganizationEvents = `-- name: GetOrganizationEvents :many
-SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON e.organization_fk = o.id WHERE o.uuid = $1::text
+SELECT e.id, e.event_name, e.event_date, e.event_location, e.event_description, e.uuid, e.event_image_url, e.organization_fk FROM events e INNER JOIN organizations o ON e.organization_fk = o.id WHERE o.uuid = $1::text
 `
 
-type GetOrganizationEventsRow struct {
-	ID               int32
-	EventName        string
-	EventDate        time.Time
-	EventLocation    string
-	EventDescription string
-	Uuid             string
-	EventImageUrl    string
-	OrganizationFk   int32
-	ID_2             int32
-	OrgName          string
-	City             string
-	Uuid_2           string
-	OrgImageUrl      string
-}
-
-func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*GetOrganizationEventsRow, error) {
+func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*Event, error) {
 	rows, err := q.db.QueryContext(ctx, getOrganizationEvents, orgUuid)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetOrganizationEventsRow
+	var items []*Event
 	for rows.Next() {
-		var i GetOrganizationEventsRow
+		var i Event
 		if err := rows.Scan(
 			&i.ID,
 			&i.EventName,
@@ -178,11 +162,6 @@ func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]
 			&i.Uuid,
 			&i.EventImageUrl,
 			&i.OrganizationFk,
-			&i.ID_2,
-			&i.OrgName,
-			&i.City,
-			&i.Uuid_2,
-			&i.OrgImageUrl,
 		); err != nil {
 			return nil, err
 		}
@@ -297,8 +276,13 @@ func (q *Queries) GetUserEvents(ctx context.Context, userID int32) ([]*GetUserEv
 }
 
 const getUserOrgUserJoin = `-- name: GetUserOrgUserJoin :one
-SELECT u.id, uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token, o.id, policies_num, user_fk, organization_fk FROM users u INNER JOIN org_users o ON u.id = o.user_fk WHERE u.uuid = $1::text LIMIT 1
+SELECT u.id, uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token, o.id, policies_num, user_fk, organization_fk FROM users u INNER JOIN org_users o ON u.id = o.user_fk WHERE u.uuid = $1::text AND o.uuid = $2::text LIMIT 1
 `
+
+type GetUserOrgUserJoinParams struct {
+	UserUuid string
+	OrgUuid  string
+}
 
 type GetUserOrgUserJoinRow struct {
 	ID             int32
@@ -317,8 +301,8 @@ type GetUserOrgUserJoinRow struct {
 	OrganizationFk int32
 }
 
-func (q *Queries) GetUserOrgUserJoin(ctx context.Context, uuid string) (*GetUserOrgUserJoinRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserOrgUserJoin, uuid)
+func (q *Queries) GetUserOrgUserJoin(ctx context.Context, arg *GetUserOrgUserJoinParams) (*GetUserOrgUserJoinRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserOrgUserJoin, arg.UserUuid, arg.OrgUuid)
 	var i GetUserOrgUserJoinRow
 	err := row.Scan(
 		&i.ID,
@@ -451,8 +435,8 @@ func (q *Queries) InsertOrgUser(ctx context.Context, arg *InsertOrgUserParams) e
 	return err
 }
 
-const insertOrganization = `-- name: InsertOrganization :exec
-INSERT INTO organizations (org_name, city, uuid, org_image_url) VALUES ($1,$2,$3,$4)
+const insertOrganization = `-- name: InsertOrganization :one
+INSERT INTO organizations (org_name, city, uuid, org_image_url) VALUES ($1,$2,$3,$4) RETURNING id
 `
 
 type InsertOrganizationParams struct {
@@ -462,14 +446,16 @@ type InsertOrganizationParams struct {
 	OrgImageUrl string
 }
 
-func (q *Queries) InsertOrganization(ctx context.Context, arg *InsertOrganizationParams) error {
-	_, err := q.db.ExecContext(ctx, insertOrganization,
+func (q *Queries) InsertOrganization(ctx context.Context, arg *InsertOrganizationParams) (int32, error) {
+	row := q.db.QueryRowContext(ctx, insertOrganization,
 		arg.OrgName,
 		arg.City,
 		arg.Uuid,
 		arg.OrgImageUrl,
 	)
-	return err
+	var id int32
+	err := row.Scan(&id)
+	return id, err
 }
 
 const insertUser = `-- name: InsertUser :exec

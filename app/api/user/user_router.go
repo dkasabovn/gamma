@@ -24,6 +24,8 @@ func (a *UserAPI) addUserRoutes() {
 		a.getUserRouter(authRequired)
 		a.getEventsRouter(authRequired)
 		a.getUserOrganizationsRouter(authRequired)
+		a.getOrgImageUploadRouter(authRequired)
+		a.getEventsByOrgRouter(authRequired)
 	}
 
 }
@@ -54,4 +56,8 @@ func (a *UserAPI) getEventApplicationsRouter(g *echo.Group) {
 
 func (a *UserAPI) postEventApplicationDecisionsRouter(g *echo.Group) {
 	g.POST("/applications/:event_uuid", func(ctx echo.Context) error { return nil })
+}
+
+func (a *UserAPI) getOrgImageUploadRouter(g *echo.Group) {
+	g.GET("/orgimage/:org_uuid", a.getOrgImageUploadController)
 }

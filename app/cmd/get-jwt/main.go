@@ -9,6 +9,7 @@ import (
 	"gamma/app/services/user"
 	"gamma/app/system"
 	"gamma/app/system/auth/ecJwt"
+	"time"
 )
 
 func main() {
@@ -60,6 +61,16 @@ func main() {
 		PoliciesNum:    int32(bo.Create(bo.OWNER)),
 		UserFk:         user_obj.ID,
 		OrganizationFk: orgId,
+	})
+
+	err = user.GetUserService().CreateEvent(context.Background(), &userRepo.InsertEventParams{
+		EventName:        "Ligma",
+		EventDate:        time.Now(),
+		EventLocation:    "Here",
+		EventDescription: "howdy partner",
+		Uuid:             "poggy woggies",
+		EventImageUrl:    "https://media.npr.org/assets/img/2017/09/12/macaca_nigra_self-portrait-3e0070aa19a7fe36e802253048411a38f14a79f8-s1100-c50.jpg",
+		OrganizationFk:   orgId,
 	})
 
 	if err != nil {

@@ -10,7 +10,8 @@ import (
 
 func GenerateObjectUploadUrl(objectPath string) (string, error) {
 	url, err := datastore.StorageInstance().Bucket(datastore.BUCKET_NAME).GenerateSignedPostPolicyV4(objectPath, &storage.PostPolicyV4Options{
-		Expires: time.Now().Add(15 * time.Minute),
+		Expires:    time.Now().Add(15 * time.Minute),
+		Conditions: []storage.PostPolicyV4Condition{},
 	})
 	if err != nil {
 		log.Errorf("could not generate pre-signed url: %v", err)

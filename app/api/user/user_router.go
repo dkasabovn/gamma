@@ -43,7 +43,7 @@ func (a *UserAPI) getEventsRouter(g *echo.Group) {
 }
 
 func (a *UserAPI) createEventRouter(g *echo.Group) {
-	g.POST("/event/:org_uuid", a.testCreateEventController)
+	g.POST("/event/:org_uuid", a.postCreateEventController)
 }
 
 func (a *UserAPI) getEventsByOrgRouter(g *echo.Group) {

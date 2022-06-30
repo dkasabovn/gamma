@@ -62,6 +62,9 @@ func main() {
 		UserFk:         user_obj.ID,
 		OrganizationFk: orgId,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	err = user.GetUserService().CreateEvent(context.Background(), &userRepo.InsertEventParams{
 		EventName:        "Ligma",

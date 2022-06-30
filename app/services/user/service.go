@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"gamma/app/datastore"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/services/iface"
@@ -104,7 +105,7 @@ func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]*userRep
 	return u.userRepo.GetUserEvents(ctx, int32(userId))
 }
 
-func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.Event, error) {
+func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.GetEventsRow, error) {
 	return u.userRepo.GetEvents(ctx)
 }
 
@@ -118,4 +119,8 @@ func (u *userService) CreateOrganization(ctx context.Context, orgParams *userRep
 
 func (u *userService) CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error {
 	return u.userRepo.InsertOrgUser(ctx, orgUserParams)
+}
+
+func (u *userService) SearchEvents(ctx context.Context, filter string) ([]*userRepo.SearchEventsRow, error) {
+	return u.userRepo.SearchEvents(ctx, fmt.Sprintf("'%% %s %%'", filter))
 }

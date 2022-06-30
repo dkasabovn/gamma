@@ -12,7 +12,7 @@ const (
 	CREATE_ORGANIZATION              = 1 << 6
 	MODIFY_ORG_USERS                 = 1 << 7
 	SUPER_ADMIN                      = 1 << 8
-	OWNER                            = 1 << 9
+	OWNER                            = 1<<9 | SUPER_ADMIN | MODIFY_ORG_USERS | MODIFY_EVENTS | MODIFY_ORGANIZATION | CREATE_EVENTS | CREATE_ORGANIZATION | ACCEPT_APPLICATIONS
 )
 
 func (p PolicyNumber) Is(num PolicyNumber) bool {

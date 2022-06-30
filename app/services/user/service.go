@@ -104,7 +104,7 @@ func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]*userRep
 	return u.userRepo.GetUserEvents(ctx, int32(userId))
 }
 
-func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.Event, error) {
+func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.GetEventsRow, error) {
 	return u.userRepo.GetEvents(ctx)
 }
 

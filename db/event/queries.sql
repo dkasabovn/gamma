@@ -7,7 +7,7 @@ SELECT * FROM users WHERE uuid = sqlc.arg(uuid)::text LIMIT 1;
 SELECT * FROM users WHERE email = sqlc.arg(email)::text LIMIT 1;
 
 -- name: GetUserOrgUserJoin :one
-SELECT * FROM users u INNER JOIN org_users o ON u.id = o.user_fk WHERE u.uuid = sqlc.arg(user_uuid)::text AND o.uuid = sqlc.arg(org_uuid)::text LIMIT 1;
+SELECT * FROM users u INNER JOIN org_users o ON u.id = o.user_fk INNER JOIN organizations org ON org.id = o.organization_fk WHERE u.uuid = sqlc.arg(user_uuid)::text AND org.uuid = sqlc.arg(org_uuid)::text LIMIT 1;
 
 -- name: GetUserOrganizations :many
 SELECT * FROM org_users ou INNER JOIN organizations og ON ou.organization_fk = og.id WHERE ou.user_fk = sqlc.arg(user_id)::int;
@@ -28,7 +28,10 @@ SELECT * FROM events WHERE id = sqlc.arg(event_id)::int LIMIT 1;
 SELECT * FROM organizations WHERE uuid = sqlc.arg(organization_uuid)::text LIMIT 1;
 
 -- name: GetEvents :many
-SELECT * FROM events ORDER BY event_date DESC;
+SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organiztion_fk ORDER BY event_date DESC;
+
+-- name: SearchEvents :many
+SELECT * FROM events WHERE event_name LIKE sqlc.arg(event_name_like_query)::text;
 
 -- name: GetEventsOrderedByCreation :many
 SELECT * FROM events ORDER BY id DESC;

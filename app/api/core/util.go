@@ -69,7 +69,7 @@ func ExtractOrguser(c echo.Context, org_uuid string) (*userRepo.GetUserOrgUserJo
 	claims := userToken.Claims.(*ecJwt.GammaClaims)
 	user, err := user.GetUserService().GetUserOrgUserByUuid(c.Request().Context(), claims.Uuid, org_uuid)
 	if err != nil {
-		log.Errorf("Could not extract org user from token: %s", userToken.Raw)
+		log.Errorf("Could not extract org user from token: %s; %v", userToken.Raw, err)
 		return nil, err
 	}
 	return user, nil

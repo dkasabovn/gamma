@@ -28,13 +28,10 @@ SELECT * FROM events WHERE id = sqlc.arg(event_id)::int LIMIT 1;
 SELECT * FROM organizations WHERE uuid = sqlc.arg(organization_uuid)::text LIMIT 1;
 
 -- name: GetEvents :many
-SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organiztion_fk ORDER BY event_date DESC;
+SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_date > NOW() ORDER BY event_date - NOW() ASC LIMIT 50;
 
 -- name: SearchEvents :many
-SELECT * FROM events WHERE event_name LIKE sqlc.arg(event_name_like_query)::text;
-
--- name: GetEventsOrderedByCreation :many
-SELECT * FROM events ORDER BY id DESC;
+SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_name LIKE sqlc.arg(event_name_like_query)::text LIMIT 10;
 
 -- PUTS
 

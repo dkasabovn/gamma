@@ -23,7 +23,7 @@ type ReqEvent struct {
 	// EventImage handled separately
 }
 
-func ConvertEvent(event *userRepo.Event) *ResEvent {
+func ConvertOrgEvent(event *userRepo.Event) *ResEvent {
 	return &ResEvent{
 		EventName:        event.EventName,
 		EventDate:        event.EventDate,
@@ -34,7 +34,19 @@ func ConvertEvent(event *userRepo.Event) *ResEvent {
 	}
 }
 
-func ConvertGetEvent(event *userRepo.GetEventsRow) *ResEvent {
+func ConvertEvent(event *userRepo.GetEventsRow) *ResEvent {
+	return &ResEvent{
+		EventName:        event.EventName,
+		EventDate:        event.EventDate,
+		EventLocation:    event.EventLocation,
+		EventDescription: event.EventDescription,
+		Uuid:             event.Uuid,
+		EventImageUrl:    event.EventImageUrl,
+		OrgUuid:          &event.Uuid_2,
+	}
+}
+
+func ConvertSearchEvent(event *userRepo.SearchEventsRow) *ResEvent {
 	return &ResEvent{
 		EventName:        event.EventName,
 		EventDate:        event.EventDate,
@@ -49,7 +61,7 @@ func ConvertGetEvent(event *userRepo.GetEventsRow) *ResEvent {
 func ConvertOrgEvents(events []*userRepo.Event) []*ResEvent {
 	event_list := make([]*ResEvent, len(events))
 	for i, event := range events {
-		event_list[i] = ConvertEvent(event)
+		event_list[i] = ConvertOrgEvent(event)
 	}
 	return event_list
 }
@@ -57,7 +69,15 @@ func ConvertOrgEvents(events []*userRepo.Event) []*ResEvent {
 func ConvertEvents(events []*userRepo.GetEventsRow) []*ResEvent {
 	event_list := make([]*ResEvent, len(events))
 	for i, event := range events {
-		event_list[i] = ConvertGetEvent(event)
+		event_list[i] = ConvertEvent(event)
+	}
+	return event_list
+}
+
+func ConvertSearchEvents(events []*userRepo.SearchEventsRow) []*ResEvent {
+	event_list := make([]*ResEvent, len(events))
+	for i, event := range events {
+		event_list[i] = ConvertSearchEvent(event)
 	}
 	return event_list
 }

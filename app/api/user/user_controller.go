@@ -51,17 +51,39 @@ func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {
 }
 
 func (a *UserAPI) getEventsController(c echo.Context) error {
-	events, err := a.srvc.GetEvents(c.Request().Context())
+	_, err := core.ExtractUser(c)
 	if err != nil {
-		log.Errorf("could not get any events")
-		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+		log.Errorf("could not get user: %v", err)
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
 	}
-	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-		"events": dto.ConvertEvents(events),
-	}))
+	if filter := c.QueryParam("filter"); filter != "" {
+		events, err := a.srvc.SearchEvents(c.Request().Context(), filter)
+		if err != nil {
+			log.Errorf("could not get any events")
+			return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+		}
+		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+			"events": dto.ConvertSearchEvents(events),
+		}))
+	} else {
+		events, err := a.srvc.GetEvents(c.Request().Context())
+		if err != nil {
+			log.Errorf("could not get any events")
+			return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+		}
+		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+			"events": dto.ConvertEvents(events),
+		}))
+	}
 }
 
 func (a *UserAPI) getEventsByOrgController(c echo.Context) error {
+	_, err := core.ExtractUser(c)
+	if err != nil {
+		log.Errorf("could not get user: %v", err)
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
 	events, err := a.srvc.GetOrganizationEvents(c.Request().Context(), c.Param("org_uuid"))
 	if err != nil {
 		log.Errorf("could not get organization events: %v", events)

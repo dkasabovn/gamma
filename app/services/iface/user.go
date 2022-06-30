@@ -17,4 +17,5 @@ type UserService interface {
 	CreateOrganization(ctx context.Context, orgParams *userRepo.InsertOrganizationParams) (int32, error)
 	CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error
 	GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*userRepo.Event, error)
+	SearchEvents(ctx context.Context, filter string) ([]*userRepo.SearchEventsRow, error)
 }

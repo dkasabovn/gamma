@@ -52,7 +52,7 @@ func (q *Queries) GetEventByUuid(ctx context.Context, eventUuid string) (*Event,
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON o.id = e.organiztion_fk ORDER BY event_date DESC
+SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_date > NOW() ORDER BY event_date - NOW() ASC LIMIT 50
 `
 
 type GetEventsRow struct {
@@ -94,42 +94,6 @@ func (q *Queries) GetEvents(ctx context.Context) ([]*GetEventsRow, error) {
 			&i.City,
 			&i.Uuid_2,
 			&i.OrgImageUrl,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getEventsOrderedByCreation = `-- name: GetEventsOrderedByCreation :many
-SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events ORDER BY id DESC
-`
-
-func (q *Queries) GetEventsOrderedByCreation(ctx context.Context) ([]*Event, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsOrderedByCreation)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*Event
-	for rows.Next() {
-		var i Event
-		if err := rows.Scan(
-			&i.ID,
-			&i.EventName,
-			&i.EventDate,
-			&i.EventLocation,
-			&i.EventDescription,
-			&i.Uuid,
-			&i.EventImageUrl,
-			&i.OrganizationFk,
 		); err != nil {
 			return nil, err
 		}
@@ -523,18 +487,34 @@ func (q *Queries) InsertUser(ctx context.Context, arg *InsertUserParams) error {
 }
 
 const searchEvents = `-- name: SearchEvents :many
-SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events WHERE event_name LIKE $1::text
+SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_name LIKE $1::text LIMIT 10
 `
 
-func (q *Queries) SearchEvents(ctx context.Context, eventNameLikeQuery string) ([]*Event, error) {
+type SearchEventsRow struct {
+	ID               int32
+	EventName        string
+	EventDate        time.Time
+	EventLocation    string
+	EventDescription string
+	Uuid             string
+	EventImageUrl    string
+	OrganizationFk   int32
+	ID_2             int32
+	OrgName          string
+	City             string
+	Uuid_2           string
+	OrgImageUrl      string
+}
+
+func (q *Queries) SearchEvents(ctx context.Context, eventNameLikeQuery string) ([]*SearchEventsRow, error) {
 	rows, err := q.db.QueryContext(ctx, searchEvents, eventNameLikeQuery)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Event
+	var items []*SearchEventsRow
 	for rows.Next() {
-		var i Event
+		var i SearchEventsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.EventName,
@@ -544,6 +524,11 @@ func (q *Queries) SearchEvents(ctx context.Context, eventNameLikeQuery string) (
 			&i.Uuid,
 			&i.EventImageUrl,
 			&i.OrganizationFk,
+			&i.ID_2,
+			&i.OrgName,
+			&i.City,
+			&i.Uuid_2,
+			&i.OrgImageUrl,
 		); err != nil {
 			return nil, err
 		}

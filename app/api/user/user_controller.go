@@ -1,8 +1,10 @@
 package user_api
 
 import (
+	"fmt"
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
+	"gamma/app/datastore/objectstore"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
 	"gamma/app/system/auth/ecJwt"
@@ -109,4 +111,27 @@ func (a *UserAPI) getEventsByOrgController(c echo.Context) error {
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
 		"events": dto.ConvertEvents(events),
 	}))
+}
+
+func (a *UserAPI) getOrgImageUploadController(c echo.Context) error {
+	user, err := core.ExtractOrguser(c, c.Param("org_uuid"))
+	if err != nil {
+		log.Errorf("user is not an org user")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	policy_num := bo.PolicyNumber(user.PoliciesNum)
+	if !policy_num.Can(bo.CREATE_EVENTS) {
+		log.Errorf("user is not authorized to create events")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	upload_url := fmt.Sprintf("orgs/%s/%s", c.Param("org_uuid"), uuid.NewString())
+	url, err := objectstore.GenerateObjectUploadUrl(upload_url)
+	if err != nil {
+		log.Errorf("could not generate presigned url")
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	return c.Redirect(http.StatusTemporaryRedirect, url)
 }

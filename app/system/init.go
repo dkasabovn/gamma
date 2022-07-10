@@ -11,6 +11,7 @@ var (
 	PublicKey   []byte
 	PrivateKey  []byte
 	ENVIRONMENT string
+	BUCKET_NAME string
 )
 
 func Initialize() {
@@ -19,5 +20,6 @@ func Initialize() {
 		panic("can't load dot env")
 	}
 	ENVIRONMENT = os.Getenv("ENVIRONMENT")
+	BUCKET_NAME = os.Getenv("BUCKET_NAME")
 	ecJwt.LoadPrivatePublicKeyPairsDev()
 }

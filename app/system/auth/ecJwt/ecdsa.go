@@ -43,7 +43,6 @@ func LoadPrivatePublicKeyPairsDev() {
 	publicKey = public_key
 }
 
-// TODO !!! Handle reading private, public key files
 func ECDSASign(claims *GammaClaims) (string, string) {
 	var privateKeyS *ecdsa.PrivateKey
 	var err error

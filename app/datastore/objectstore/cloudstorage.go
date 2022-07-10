@@ -3,8 +3,8 @@ package objectstore
 import (
 	"context"
 	"gamma/app/datastore"
+	"gamma/app/system"
 	"io/ioutil"
-	"os"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -27,10 +27,9 @@ func GenerateObjectUploadUrl(objectPath string) (string, error) {
 	return url.URL, nil
 }
 
-// TODO: Create env variables rather than this
 func newCloudStore() Storage {
 	return &cloudStore{
-		bucket: datastore.StorageInstance().Bucket(os.Getenv("BUCKET_NAME")),
+		bucket: datastore.StorageInstance().Bucket(system.BUCKET_NAME),
 	}
 }
 

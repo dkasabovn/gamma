@@ -33,6 +33,9 @@ SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WH
 -- name: SearchEvents :many
 SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_name LIKE sqlc.arg(event_name_like_query)::text LIMIT 10;
 
+-- name: GetUserCheck :one
+SELECT * FROM users u LEFT JOIN org_users o ON u.id = o.user_fk WHERE u.uuid = sqlc.arg(user_uuid)::text LIMIT 1;
+
 -- PUTS
 
 -- name: InsertUser :exec
@@ -48,7 +51,7 @@ INSERT INTO org_users (policies_num, user_fk, organization_fk) VALUES ($1,$2,$3)
 INSERT INTO events (event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- name: InsertInvite :exec
-INSERT INTO invites (expiration_date, use_limit, policy_json, uuid) VALUES ($1, $2, $3, $4);
+INSERT INTO invites (expiration_date, capacity, policy_json, uuid, org_user_uuid, org_fk) VALUES ($1, $2, $3, $4, $5, $6);
 
 -- UPDATES
 

@@ -56,9 +56,11 @@ CREATE TABLE event_applications (
 CREATE TABLE invites (
     id SERIAL PRIMARY KEY,
     expiration_date TIMESTAMP NOT NULL,
-    use_limit INT NOT NULL,
+    capacity INT NOT NULL,
     policy_json JSON NOT NULL,
-    uuid TEXT NOT NULL
+    uuid TEXT NOT NULL,
+    org_user_uuid TEXT NOT NULL,
+    org_fk INT NOT NULL
 );
 
 ALTER TABLE org_users

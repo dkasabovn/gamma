@@ -124,3 +124,7 @@ func (u *userService) CreateOrgUser(ctx context.Context, orgUserParams *userRepo
 func (u *userService) SearchEvents(ctx context.Context, filter string) ([]*userRepo.SearchEventsRow, error) {
 	return u.userRepo.SearchEvents(ctx, fmt.Sprintf("'%% %s %%'", filter))
 }
+
+func (u *userService) CreateInvite(ctx context.Context, inviteParams *userRepo.InsertInviteParams) error {
+	return u.userRepo.InsertInvite(ctx, inviteParams)
+}

@@ -7,28 +7,30 @@ import (
 	"gamma/app/datastore/objectstore"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
-	"gamma/app/system/auth/ecJwt"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
 
 func (a *UserAPI) getUserController(c echo.Context) error {
-	token := c.Get("user").(*jwt.Token)
-	claims := token.Claims.(*ecJwt.GammaClaims)
-	uuid := claims.Uuid
-
-	user, err := a.srvc.GetUser(c.Request().Context(), uuid)
+	// TODO (add the left join method)
+	user, err := core.ExtractUser(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+		log.Errorf("could not get user: %v", err)
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	userEvents, err := a.srvc.GetUserEvents(c.Request().Context(), int(user.ID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 
 	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
-		"user": user,
+		"user":   user,
+		"events": userEvents,
 	}))
 }
 
@@ -161,4 +163,51 @@ func (a *UserAPI) postCreateEventController(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusAccepted, nil)
+}
+
+func (a *UserAPI) postEventInviteLinkController(c echo.Context) error {
+	org_user, err := core.ExtractOrguser(c, c.Param("org_uuid"))
+	if err != nil {
+		log.Errorf("user is not an org user")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	policy_num := bo.PolicyNumber(org_user.PoliciesNum)
+	if !policy_num.Can(bo.MODIFY_EVENTS) && !policy_num.Is(bo.SUPER_ADMIN) {
+		log.Errorf("user is not authorized to create events")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	var inviteParams dto.InviteCreate
+	if err := c.Bind(&inviteParams); err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+	}
+
+	invite, err := bo.NewInviteWithReqs(bo.EVENT, bo.InviteRequirements{
+		OrganizationID: inviteParams.Organization,
+		UserID:         inviteParams.User,
+	}).Serialize()
+	if err != nil {
+		log.Errorf("could not serialize invite: %v", err)
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	inviteUuid := uuid.NewString()
+
+	if err := a.srvc.CreateInvite(c.Request().Context(), &userRepo.InsertInviteParams{
+		ExpirationDate: inviteParams.ExpirationDate,
+		Capacity:       int32(inviteParams.Capacity),
+		PolicyJson:     invite,
+		Uuid:           inviteUuid,
+		OrgUserUuid:    inviteParams.OrgUserUuid,
+		OrgFk:          org_user.OrganizationFk,
+	}); err != nil {
+		log.Errorf("could not create invite: %v", err)
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"invite_uuid": inviteUuid,
+	}))
 }

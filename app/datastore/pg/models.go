@@ -29,9 +29,11 @@ type EventApplication struct {
 type Invite struct {
 	ID             int32
 	ExpirationDate time.Time
-	UseLimit       int32
+	Capacity       int32
 	PolicyJson     json.RawMessage
 	Uuid           string
+	OrgUserUuid    string
+	OrgFk          int32
 }
 
 type OrgUser struct {

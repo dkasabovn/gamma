@@ -17,9 +17,9 @@ type ResEvent struct {
 
 type ReqEvent struct {
 	EventName        string    `form:"event_name"`
-	EventDate        time.Time `json:"event_date"`
-	EventLocation    string    `json:"event_location"`
-	EventDescription string    `json:"event_description"`
+	EventDate        time.Time `form:"event_date"`
+	EventLocation    string    `form:"event_location"`
+	EventDescription string    `form:"event_description"`
 	// EventImage handled separately
 }
 

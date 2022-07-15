@@ -395,22 +395,26 @@ func (q *Queries) InsertEvent(ctx context.Context, arg *InsertEventParams) error
 }
 
 const insertInvite = `-- name: InsertInvite :exec
-INSERT INTO invites (expiration_date, use_limit, policy_json, uuid) VALUES ($1, $2, $3, $4)
+INSERT INTO invites (expiration_date, capacity, policy_json, uuid, org_user_uuid, org_fk) VALUES ($1, $2, $3, $4, $5, $6)
 `
 
 type InsertInviteParams struct {
 	ExpirationDate time.Time
-	UseLimit       int32
+	Capacity       int32
 	PolicyJson     json.RawMessage
 	Uuid           string
+	OrgUserUuid    string
+	OrgFk          int32
 }
 
 func (q *Queries) InsertInvite(ctx context.Context, arg *InsertInviteParams) error {
 	_, err := q.db.ExecContext(ctx, insertInvite,
 		arg.ExpirationDate,
-		arg.UseLimit,
+		arg.Capacity,
 		arg.PolicyJson,
 		arg.Uuid,
+		arg.OrgUserUuid,
+		arg.OrgFk,
 	)
 	return err
 }

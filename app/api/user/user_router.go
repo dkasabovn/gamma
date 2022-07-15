@@ -26,6 +26,7 @@ func (a *UserAPI) addUserRoutes() {
 		a.getUserOrganizationsRouter(authRequired)
 		a.getEventsByOrgRouter(authRequired)
 		a.createEventRouter(authRequired)
+		a.postEventInviteLinkRouter(authRequired)
 	}
 
 }
@@ -50,10 +51,10 @@ func (a *UserAPI) getEventsByOrgRouter(g *echo.Group) {
 	g.GET("/events/:org_uuid", a.getEventsByOrgController)
 }
 
-func (a *UserAPI) getEventApplicationsRouter(g *echo.Group) {
-	g.GET("/applications/:event_uuid", func(ctx echo.Context) error { return nil })
+func (a *UserAPI) postEventApplicationRouter(g *echo.Group) {
+	g.POST("/applications/:event_uuid", func(ctx echo.Context) error { return nil })
 }
 
-func (a *UserAPI) postEventApplicationDecisionsRouter(g *echo.Group) {
-	g.POST("/applications/:event_uuid", func(ctx echo.Context) error { return nil })
+func (a *UserAPI) postEventInviteLinkRouter(g *echo.Group) {
+	g.POST("/invite/events/:org_uuid", a.postEventInviteLinkController)
 }

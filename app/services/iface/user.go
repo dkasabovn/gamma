@@ -18,4 +18,6 @@ type UserService interface {
 	CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error
 	GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*userRepo.Event, error)
 	SearchEvents(ctx context.Context, filter string) ([]*userRepo.SearchEventsRow, error)
+	GetUserEvents(ctx context.Context, userId int) ([]*userRepo.GetUserEventsRow, error)
+	CreateInvite(ctx context.Context, inviteParams *userRepo.InsertInviteParams) error
 }

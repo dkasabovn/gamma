@@ -31,22 +31,60 @@ func (a *UserAPI) addUserRoutes() {
 
 }
 
+// @Summary Self
+// @Description Get data about self and events
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer <your_token>"
+// @Success 200
+// @Router /api/user [get]
 func (a *UserAPI) getUserRouter(g *echo.Group) {
 	g.GET("/user", a.getUserController)
 }
 
+// @Summary Self Orgs
+// @Description Get the organizations you are in
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer <your_token>"
+// @Success 200
+// @Router /api/orgs [get]
 func (a *UserAPI) getUserOrganizationsRouter(g *echo.Group) {
 	g.GET("/orgs", a.getUserOrganizationsController)
 }
 
+// @Summary Events
+// @Description Get a list of events going on
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer <your_token>"
+// @Success 200
+// @Router /api/events [get]
 func (a *UserAPI) getEventsRouter(g *echo.Group) {
 	g.GET("/events", a.getEventsController)
 }
 
+// @Summary Create Event
+// @Description Create an event for a particular org
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer <your_token>"
+// @Param org_uuid path string true "Org uuid"
+// @Param event_data body dto.ReqEvent true "Also needs 'event_image' which is a file"
+// @Success 200
+// @Router /api/event/{org_uuid} [post]
 func (a *UserAPI) createEventRouter(g *echo.Group) {
 	g.POST("/event/:org_uuid", a.postCreateEventController)
 }
 
+// @Summary Org Events
+// @Description Get events for a particular organization
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer <your_token>"
+// @Param org_uuid path string true "Org uuid"
+// @Success 200
+// @Router /api/event/{org_uuid} [get]
 func (a *UserAPI) getEventsByOrgRouter(g *echo.Group) {
 	g.GET("/events/:org_uuid", a.getEventsByOrgController)
 }

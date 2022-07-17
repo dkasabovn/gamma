@@ -68,7 +68,7 @@ func main() {
 
 	err = user.GetUserService().CreateEvent(context.Background(), &userRepo.InsertEventParams{
 		EventName:        "Ligma",
-		EventDate:        time.Now(),
+		EventDate:        time.Now().Add(time.Hour * 300),
 		EventLocation:    "Here",
 		EventDescription: "howdy partner",
 		Uuid:             "poggy woggies",

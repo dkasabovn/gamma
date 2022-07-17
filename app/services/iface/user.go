@@ -10,7 +10,7 @@ type UserService interface {
 	CreateUser(ctx context.Context, input *userRepo.InsertUserParams) (*ecJwt.GammaJwt, error)
 	SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error)
 	GetUser(ctx context.Context, uuid string) (*userRepo.User, error)
-	GetUserOrgUserByUuid(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetUserOrgUserJoinRow, error)
+	GetOrgUser(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetOrgUserRow, error)
 	GetUserOrganizations(ctx context.Context, userId int32) ([]*userRepo.GetUserOrganizationsRow, error)
 	GetEvents(ctx context.Context) ([]*userRepo.GetEventsRow, error)
 	CreateEvent(ctx context.Context, eventParams *userRepo.InsertEventParams) error

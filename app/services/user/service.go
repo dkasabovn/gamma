@@ -40,8 +40,8 @@ func (u *userService) GetUserByEmail(ctx context.Context, email string) (*userRe
 	return u.userRepo.GetUserByEmail(ctx, email)
 }
 
-func (u *userService) GetUserOrgUserByUuid(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetUserOrgUserJoinRow, error) {
-	return u.userRepo.GetUserOrgUserJoin(ctx, &userRepo.GetUserOrgUserJoinParams{
+func (u *userService) GetOrgUser(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetOrgUserRow, error) {
+	return u.userRepo.GetOrgUser(ctx, &userRepo.GetOrgUserParams{
 		UserUuid: user_uuid,
 		OrgUuid:  org_uuid,
 	})

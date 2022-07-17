@@ -147,6 +147,8 @@ func (a *UserAPI) postCreateEventController(c echo.Context) error {
 		return nil
 	}
 
+	eventUuid := uuid.NewString()
+
 	log.Infof("Image Path: %v", image_path)
 
 	if err := a.srvc.CreateEvent(c.Request().Context(), &userRepo.InsertEventParams{
@@ -154,7 +156,7 @@ func (a *UserAPI) postCreateEventController(c echo.Context) error {
 		EventDate:        event.EventDate,
 		EventLocation:    event.EventLocation,
 		EventDescription: event.EventDescription,
-		Uuid:             uuid.NewString(),
+		Uuid:             eventUuid,
 		EventImageUrl:    image_path,
 		OrganizationFk:   org_user.OrganizationFk,
 	}); err != nil {
@@ -162,7 +164,9 @@ func (a *UserAPI) postCreateEventController(c echo.Context) error {
 		return nil
 	}
 
-	return c.JSON(http.StatusAccepted, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"uuid": eventUuid,
+	})
 }
 
 func (a *UserAPI) postEventInviteLinkController(c echo.Context) error {

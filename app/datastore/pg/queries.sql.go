@@ -11,46 +11,6 @@ import (
 	"time"
 )
 
-const getEventById = `-- name: GetEventById :one
-SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events WHERE id = $1::int LIMIT 1
-`
-
-func (q *Queries) GetEventById(ctx context.Context, eventID int32) (*Event, error) {
-	row := q.db.QueryRowContext(ctx, getEventById, eventID)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.EventName,
-		&i.EventDate,
-		&i.EventLocation,
-		&i.EventDescription,
-		&i.Uuid,
-		&i.EventImageUrl,
-		&i.OrganizationFk,
-	)
-	return &i, err
-}
-
-const getEventByUuid = `-- name: GetEventByUuid :one
-SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events WHERE uuid = $1::text LIMIT 1
-`
-
-func (q *Queries) GetEventByUuid(ctx context.Context, eventUuid string) (*Event, error) {
-	row := q.db.QueryRowContext(ctx, getEventByUuid, eventUuid)
-	var i Event
-	err := row.Scan(
-		&i.ID,
-		&i.EventName,
-		&i.EventDate,
-		&i.EventLocation,
-		&i.EventDescription,
-		&i.Uuid,
-		&i.EventImageUrl,
-		&i.OrganizationFk,
-	)
-	return &i, err
-}
-
 const getEvents = `-- name: GetEvents :many
 SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_date > NOW() ORDER BY event_date - NOW() ASC LIMIT 50
 `
@@ -106,6 +66,64 @@ func (q *Queries) GetEvents(ctx context.Context) ([]*GetEventsRow, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getOrgUser = `-- name: GetOrgUser :one
+SELECT u.id, u.uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token, o.id, policies_num, user_fk, organization_fk, org.id, org_name, city, org.uuid, org_image_url FROM users u INNER JOIN org_users o ON u.id = o.user_fk INNER JOIN organizations org ON org.id = o.organization_fk WHERE u.uuid = $1::text AND org.uuid = $2::text LIMIT 1
+`
+
+type GetOrgUserParams struct {
+	UserUuid string
+	OrgUuid  string
+}
+
+type GetOrgUserRow struct {
+	ID             int32
+	Uuid           string
+	Email          string
+	PasswordHash   string
+	PhoneNumber    string
+	FirstName      string
+	LastName       string
+	ImageUrl       string
+	Validated      bool
+	RefreshToken   string
+	ID_2           int32
+	PoliciesNum    int32
+	UserFk         int32
+	OrganizationFk int32
+	ID_3           int32
+	OrgName        string
+	City           string
+	Uuid_2         string
+	OrgImageUrl    string
+}
+
+func (q *Queries) GetOrgUser(ctx context.Context, arg *GetOrgUserParams) (*GetOrgUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getOrgUser, arg.UserUuid, arg.OrgUuid)
+	var i GetOrgUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Uuid,
+		&i.Email,
+		&i.PasswordHash,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.ImageUrl,
+		&i.Validated,
+		&i.RefreshToken,
+		&i.ID_2,
+		&i.PoliciesNum,
+		&i.UserFk,
+		&i.OrganizationFk,
+		&i.ID_3,
+		&i.OrgName,
+		&i.City,
+		&i.Uuid_2,
+		&i.OrgImageUrl,
+	)
+	return &i, err
 }
 
 const getOrganizationByUuid = `-- name: GetOrganizationByUuid :one
@@ -258,64 +276,6 @@ func (q *Queries) GetUserEvents(ctx context.Context, userID int32) ([]*GetUserEv
 		return nil, err
 	}
 	return items, nil
-}
-
-const getUserOrgUserJoin = `-- name: GetUserOrgUserJoin :one
-SELECT u.id, u.uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token, o.id, policies_num, user_fk, organization_fk, org.id, org_name, city, org.uuid, org_image_url FROM users u INNER JOIN org_users o ON u.id = o.user_fk INNER JOIN organizations org ON org.id = o.organization_fk WHERE u.uuid = $1::text AND org.uuid = $2::text LIMIT 1
-`
-
-type GetUserOrgUserJoinParams struct {
-	UserUuid string
-	OrgUuid  string
-}
-
-type GetUserOrgUserJoinRow struct {
-	ID             int32
-	Uuid           string
-	Email          string
-	PasswordHash   string
-	PhoneNumber    string
-	FirstName      string
-	LastName       string
-	ImageUrl       string
-	Validated      bool
-	RefreshToken   string
-	ID_2           int32
-	PoliciesNum    int32
-	UserFk         int32
-	OrganizationFk int32
-	ID_3           int32
-	OrgName        string
-	City           string
-	Uuid_2         string
-	OrgImageUrl    string
-}
-
-func (q *Queries) GetUserOrgUserJoin(ctx context.Context, arg *GetUserOrgUserJoinParams) (*GetUserOrgUserJoinRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserOrgUserJoin, arg.UserUuid, arg.OrgUuid)
-	var i GetUserOrgUserJoinRow
-	err := row.Scan(
-		&i.ID,
-		&i.Uuid,
-		&i.Email,
-		&i.PasswordHash,
-		&i.PhoneNumber,
-		&i.FirstName,
-		&i.LastName,
-		&i.ImageUrl,
-		&i.Validated,
-		&i.RefreshToken,
-		&i.ID_2,
-		&i.PoliciesNum,
-		&i.UserFk,
-		&i.OrganizationFk,
-		&i.ID_3,
-		&i.OrgName,
-		&i.City,
-		&i.Uuid_2,
-		&i.OrgImageUrl,
-	)
-	return &i, err
 }
 
 const getUserOrganizations = `-- name: GetUserOrganizations :many

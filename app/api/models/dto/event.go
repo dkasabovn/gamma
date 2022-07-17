@@ -13,6 +13,8 @@ type ResEvent struct {
 	Uuid             string    `json:"uuid"`
 	EventImageUrl    string    `json:"event_image"`
 	OrgUuid          *string   `json:"org_uuid,omitempty"`
+	OrgName          *string   `json:"org_name,omitempty"`
+	OrgImage         *string   `json:"org_image,omitempty"`
 }
 
 type ReqEvent struct {
@@ -43,6 +45,8 @@ func ConvertEvent(event *userRepo.GetEventsRow) *ResEvent {
 		Uuid:             event.Uuid,
 		EventImageUrl:    event.EventImageUrl,
 		OrgUuid:          &event.Uuid_2,
+		OrgName:          &event.OrgName,
+		OrgImage:         &event.OrgImageUrl,
 	}
 }
 
@@ -55,6 +59,8 @@ func ConvertSearchEvent(event *userRepo.SearchEventsRow) *ResEvent {
 		Uuid:             event.Uuid,
 		EventImageUrl:    event.EventImageUrl,
 		OrgUuid:          &event.Uuid_2,
+		OrgName:          &event.OrgName,
+		OrgImage:         &event.OrgImageUrl,
 	}
 }
 

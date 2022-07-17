@@ -6,6 +6,10 @@ import (
 	"gamma/app/services/user"
 
 	"github.com/labstack/echo/v4"
+
+	_ "gamma/app/cmd/user/docs"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 var (
@@ -19,6 +23,11 @@ type UserAPI struct {
 	store objectstore.Storage
 }
 
+// @title Gamma User Api
+// @version 0.0
+// @description The api docs
+// @BasePath /
+
 func StartAPI(port string) {
 
 	apiInstance = &UserAPI{
@@ -28,6 +37,7 @@ func StartAPI(port string) {
 		store: objectstore.GetStorage(),
 	}
 
+	apiInstance.echo.GET("/swagger/*", echoSwagger.WrapHandler)
 	apiInstance.addOpenRoutes()
 	apiInstance.addUserRoutes()
 

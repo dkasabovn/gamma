@@ -28,7 +28,7 @@ func (a *UserAPI) getUserController(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
 
-	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
 		"user":   user,
 		"events": userEvents,
 	}))
@@ -47,7 +47,7 @@ func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, core.ApiError(http.StatusNotFound))
 	}
 
-	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
 		"organizations": dto.ConvertOrganizations(orgs),
 	}))
 }

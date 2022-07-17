@@ -36,7 +36,7 @@ func (a *UserAPI) signUpController(c echo.Context) error {
 }
 
 func (a *UserAPI) signInController(c echo.Context) error {
-	// TODOF: handle password reset / clues maybe
+	// TODO: handle password reset / clues maybe
 	var rawSignIn dto.UserSignIn
 	if err := c.Bind(&rawSignIn); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))

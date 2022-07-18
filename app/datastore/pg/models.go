@@ -20,12 +20,6 @@ type Event struct {
 	OrganizationFk   int32
 }
 
-type EventApplication struct {
-	ID      int32
-	UserFk  int32
-	EventFk int32
-}
-
 type Invite struct {
 	ID             int32
 	ExpirationDate time.Time
@@ -65,7 +59,8 @@ type User struct {
 }
 
 type UserEvent struct {
-	ID      int32
-	UserFk  int32
-	EventFk int32
+	ID               int32
+	UserFk           int32
+	EventFk          int32
+	ApplicationState string
 }

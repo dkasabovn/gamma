@@ -96,3 +96,7 @@ func (a *UserAPI) postEventApplicationRouter(g *echo.Group) {
 func (a *UserAPI) postEventInviteLinkRouter(g *echo.Group) {
 	g.POST("/invite/events/:org_uuid", a.postEventInviteLinkController)
 }
+
+func (a *UserAPI) postEventApplyRouter(g *echo.Group) {
+	g.POST("/events/apply/:event_uuid", func(c echo.Context) error { return nil })
+}

@@ -72,7 +72,7 @@ func (a *UserAPI) getEventsRouter(g *echo.Group) {
 // @Param org_uuid path string true "Org uuid"
 // @Param event_data body dto.ReqEvent true "Also needs 'event_image' which is a file"
 // @Success 200
-// @Router /api/event/{org_uuid} [post]
+// @Router /api/events/{org_uuid} [post]
 func (a *UserAPI) createEventRouter(g *echo.Group) {
 	g.POST("/events/:org_uuid", a.postCreateEventController)
 }
@@ -84,7 +84,7 @@ func (a *UserAPI) createEventRouter(g *echo.Group) {
 // @Param Authorization header string true "Bearer <your_token>"
 // @Param org_uuid path string true "Org uuid"
 // @Success 200
-// @Router /api/event/{org_uuid} [get]
+// @Router /api/events/{org_uuid} [get]
 func (a *UserAPI) getEventsByOrgRouter(g *echo.Group) {
 	g.GET("/events/:org_uuid", a.getEventsByOrgController)
 }

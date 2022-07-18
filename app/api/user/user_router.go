@@ -74,7 +74,7 @@ func (a *UserAPI) getEventsRouter(g *echo.Group) {
 // @Success 200
 // @Router /api/event/{org_uuid} [post]
 func (a *UserAPI) createEventRouter(g *echo.Group) {
-	g.POST("/event/:org_uuid", a.postCreateEventController)
+	g.POST("/events/:org_uuid", a.postCreateEventController)
 }
 
 // @Summary Org Events

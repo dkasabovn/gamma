@@ -2,6 +2,7 @@ package iface
 
 import (
 	"context"
+
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/system/auth/ecJwt"
 )
@@ -20,4 +21,8 @@ type UserService interface {
 	SearchEvents(ctx context.Context, filter string) ([]*userRepo.SearchEventsRow, error)
 	GetUserEvents(ctx context.Context, userId int) ([]*userRepo.GetUserEventsRow, error)
 	CreateInvite(ctx context.Context, inviteParams *userRepo.InsertInviteParams) error
+	GetOrgUserInvites(ctx context.Context, params *userRepo.GetOrgUserInvitesParams) ([]*userRepo.Invite, error)
+	GetInvite(ctx context.Context, inviteUuid string) (*userRepo.Invite, error)
+	GetEvent(ctx context.Context, eventUuid string) (*userRepo.Event, error)
+	GetOrganization(ctx context.Context, orgUuid string) (*userRepo.Organization, error)
 }

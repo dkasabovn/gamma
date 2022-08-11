@@ -3,12 +3,13 @@ package user
 import (
 	"context"
 	"fmt"
+	"sync"
+
 	"gamma/app/datastore"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/services/iface"
 	"gamma/app/system/auth/argon"
 	"gamma/app/system/auth/ecJwt"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
@@ -59,7 +60,6 @@ func (u *userService) SignInUser(ctx context.Context, email, password string) (*
 	}
 
 	valid, err := argon.PasswordIsMatch(password, user.PasswordHash)
-
 	if err != nil {
 		log.Errorf("error comparing password hashes: %s", err)
 		return nil, err
@@ -127,4 +127,20 @@ func (u *userService) SearchEvents(ctx context.Context, filter string) ([]*userR
 
 func (u *userService) CreateInvite(ctx context.Context, inviteParams *userRepo.InsertInviteParams) error {
 	return u.userRepo.InsertInvite(ctx, inviteParams)
+}
+
+func (u *userService) GetOrgUserInvites(ctx context.Context, params *userRepo.GetOrgUserInvitesParams) ([]*userRepo.Invite, error) {
+	return u.userRepo.GetOrgUserInvites(ctx, params)
+}
+
+func (u *userService) GetInvite(ctx context.Context, inviteUuid string) (*userRepo.Invite, error) {
+	return u.userRepo.GetInvite(ctx, inviteUuid)
+}
+
+func (u *userService) GetEvent(ctx context.Context, eventUuid string) (*userRepo.Event, error) {
+	return u.userRepo.GetEvent(ctx, eventUuid)
+}
+
+func (u *userService) GetOrganization(ctx context.Context, orgUuid string) (*userRepo.Organization, error) {
+	return u.userRepo.GetOrganization(ctx, orgUuid)
 }

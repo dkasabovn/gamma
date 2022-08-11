@@ -9,6 +9,7 @@ type InviteOption func(*Invite)
 const (
 	EVENT InviteTarget = iota
 	ORGANIZATION
+	CORRUPT
 )
 
 type Invite struct {

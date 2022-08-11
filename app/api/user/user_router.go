@@ -28,7 +28,6 @@ func (a *UserAPI) addUserRoutes() {
 		a.createEventRouter(authRequired)
 		a.postEventInviteLinkRouter(authRequired)
 	}
-
 }
 
 // @Summary Self
@@ -96,3 +95,23 @@ func (a *UserAPI) postEventApplicationRouter(g *echo.Group) {
 func (a *UserAPI) postEventInviteLinkRouter(g *echo.Group) {
 	g.POST("/invite/events/:org_uuid", a.postEventInviteLinkController)
 }
+
+// @Summary Get Invites
+// @Description Get invites for a particular event
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer <your_token>"
+// @Param org_uuid path string true "Org uuid"
+// @Param entity_uuid query string true "Entity uuid"
+// @Success 200
+// @Router /api/invite/events/{org_uuid} [get]
+func (a *UserAPI) getOrgUserInvitesRouter(g *echo.Group) {
+	g.GET("/invite/events/:org_uuid", a.getOrgUserInvitesController)
+}
+
+// @Summary Get invite
+func (a *UserAPI) getInviteRouter(g *echo.Group) {
+	g.GET("/invite/:invite_uuid", a.getInviteController)
+}
+
+// TODO: Put user information

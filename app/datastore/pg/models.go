@@ -5,7 +5,6 @@
 package userRepo
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -30,10 +29,10 @@ type Invite struct {
 	ID             int32
 	ExpirationDate time.Time
 	Capacity       int32
-	PolicyJson     json.RawMessage
 	Uuid           string
-	OrgUserUuid    string
-	OrgFk          int32
+	OrgUserFk      int32
+	EntityUuid     string
+	EntityType     int32
 }
 
 type OrgUser struct {

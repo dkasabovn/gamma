@@ -7,7 +7,9 @@ SELECT * FROM users WHERE uuid = sqlc.arg(uuid)::text LIMIT 1;
 SELECT * FROM users WHERE email = sqlc.arg(email)::text LIMIT 1;
 
 -- name: GetOrgUser :one
-SELECT * FROM users u INNER JOIN org_users o ON u.id = o.user_fk INNER JOIN organizations org ON org.id = o.organization_fk WHERE u.uuid = sqlc.arg(user_uuid)::text AND org.uuid = sqlc.arg(org_uuid)::text LIMIT 1;
+WITH org_id AS (
+	SELECT id FROM organizations o WHERE o.uuid = sqlc.arg(org_uuid)::text
+) SELECT * FROM users u INNER JOIN org_users o ON u.id = o.user_fk WHERE o.organization_fk = (SELECT id FROM org_id LIMIT 1) AND u.uuid = sqlc.arg(user_uuid);
 
 -- name: GetUserOrganizations :many
 SELECT * FROM org_users ou INNER JOIN organizations og ON ou.organization_fk = og.id WHERE ou.user_fk = sqlc.arg(user_id)::int;
@@ -27,6 +29,18 @@ SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WH
 -- name: SearchEvents :many
 SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_name LIKE sqlc.arg(event_name_like_query)::text LIMIT 10;
 
+-- name: GetOrgUserInvites :many
+SELECT * FROM invites i WHERE org_user_fk = $1 AND entity_uuid = $2;
+
+-- name: GetInvite :one
+SELECT * FROM invites i WHERE uuid = $1;
+
+-- name: GetEvent :one
+SELECT * FROM events e WHERE uuid = $1;
+
+-- name: GetOrganization :one
+SELECT * FROM organizations o WHERE uuid = $1;
+
 -- PUTS
 
 -- name: InsertUser :exec
@@ -42,7 +56,7 @@ INSERT INTO org_users (policies_num, user_fk, organization_fk) VALUES ($1,$2,$3)
 INSERT INTO events (event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- name: InsertInvite :exec
-INSERT INTO invites (expiration_date, capacity, policy_json, uuid, org_user_uuid, org_fk) VALUES ($1, $2, $3, $4, $5, $6);
+INSERT INTO invites (expiration_date, capacity, uuid, org_user_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6);
 
 -- UPDATES
 

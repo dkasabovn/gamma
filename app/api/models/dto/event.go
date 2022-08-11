@@ -2,6 +2,7 @@ package dto
 
 import (
 	userRepo "gamma/app/datastore/pg"
+	"gamma/app/domain/bo"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type ResEvent struct {
 	OrgUuid          *string   `json:"org_uuid,omitempty"`
 	OrgName          *string   `json:"org_name,omitempty"`
 	OrgImage         *string   `json:"org_image,omitempty"`
+	ApplicationState string    `json:"state,omitempty"`
 }
 
 type ReqEvent struct {
@@ -47,20 +49,7 @@ func ConvertEvent(event *userRepo.GetEventsRow) *ResEvent {
 		OrgUuid:          &event.Uuid_2,
 		OrgName:          &event.OrgName,
 		OrgImage:         &event.OrgImageUrl,
-	}
-}
-
-func ConvertSearchEvent(event *userRepo.SearchEventsRow) *ResEvent {
-	return &ResEvent{
-		EventName:        event.EventName,
-		EventDate:        event.EventDate,
-		EventLocation:    event.EventLocation,
-		EventDescription: event.EventDescription,
-		Uuid:             event.Uuid,
-		EventImageUrl:    event.EventImageUrl,
-		OrgUuid:          &event.Uuid_2,
-		OrgName:          &event.OrgName,
-		OrgImage:         &event.OrgImageUrl,
+		ApplicationState: string(bo.ParseApplicationState(event.ApplicationState)),
 	}
 }
 
@@ -76,14 +65,6 @@ func ConvertEvents(events []*userRepo.GetEventsRow) []*ResEvent {
 	event_list := make([]*ResEvent, len(events))
 	for i, event := range events {
 		event_list[i] = ConvertEvent(event)
-	}
-	return event_list
-}
-
-func ConvertSearchEvents(events []*userRepo.SearchEventsRow) []*ResEvent {
-	event_list := make([]*ResEvent, len(events))
-	for i, event := range events {
-		event_list[i] = ConvertSearchEvent(event)
 	}
 	return event_list
 }

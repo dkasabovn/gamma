@@ -38,18 +38,12 @@ CREATE TABLE events (
     organization_fk INT NOT NULL
 );
 
--- Events that users have been accepted to
+-- 
 CREATE TABLE user_events (
     id SERIAL PRIMARY KEY,
     user_fk INT NOT NULL,
-    event_fk INT NOT NULL
-);
-
--- Contains event applications 
-CREATE TABLE event_applications (
-    id SERIAL PRIMARY KEY,
-    user_fk INT NOT NULL,
-    event_fk INT NOT NULL
+    event_fk INT NOT NULL,
+    application_state TEXT NOT NULL
 );
 
 -- Policy Json

@@ -7,6 +7,7 @@ package userRepo
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -31,7 +32,10 @@ func (q *Queries) GetEvent(ctx context.Context, uuid string) (*Event, error) {
 }
 
 const getEvents = `-- name: GetEvents :many
-SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_date > NOW() ORDER BY event_date - NOW() ASC LIMIT 50
+SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url, ue.id, user_fk, event_fk, application_state FROM events e
+    INNER JOIN organizations o ON o.id = e.organization_fk 
+    LEFT JOIN user_events ue ON e.id = ue.event_fk
+    WHERE event_date > NOW() AND ue.user_fk = $1::int ORDER BY event_date - NOW() ASC LIMIT 50
 `
 
 type GetEventsRow struct {
@@ -48,10 +52,14 @@ type GetEventsRow struct {
 	City             string
 	Uuid_2           string
 	OrgImageUrl      string
+	ID_3             sql.NullInt32
+	UserFk           sql.NullInt32
+	EventFk          sql.NullInt32
+	ApplicationState sql.NullString
 }
 
-func (q *Queries) GetEvents(ctx context.Context) ([]*GetEventsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getEvents)
+func (q *Queries) GetEvents(ctx context.Context, userID int32) ([]*GetEventsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getEvents, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,6 +81,10 @@ func (q *Queries) GetEvents(ctx context.Context) ([]*GetEventsRow, error) {
 			&i.City,
 			&i.Uuid_2,
 			&i.OrgImageUrl,
+			&i.ID_3,
+			&i.UserFk,
+			&i.EventFk,
+			&i.ApplicationState,
 		); err != nil {
 			return nil, err
 		}
@@ -313,13 +325,14 @@ func (q *Queries) GetUserByUuid(ctx context.Context, uuid string) (*User, error)
 }
 
 const getUserEvents = `-- name: GetUserEvents :many
-SELECT ue.id, user_fk, event_fk, e.id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM user_events ue INNER JOIN events e ON ue.event_fk = e.id WHERE ue.user_fk = $1::int
+SELECT ue.id, user_fk, event_fk, application_state, e.id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM user_events ue INNER JOIN events e ON ue.event_fk = e.id WHERE ue.user_fk = $1::int
 `
 
 type GetUserEventsRow struct {
 	ID               int32
 	UserFk           int32
 	EventFk          int32
+	ApplicationState string
 	ID_2             int32
 	EventName        string
 	EventDate        time.Time
@@ -343,6 +356,7 @@ func (q *Queries) GetUserEvents(ctx context.Context, userID int32) ([]*GetUserEv
 			&i.ID,
 			&i.UserFk,
 			&i.EventFk,
+			&i.ApplicationState,
 			&i.ID_2,
 			&i.EventName,
 			&i.EventDate,
@@ -537,66 +551,9 @@ func (q *Queries) InsertUser(ctx context.Context, arg *InsertUserParams) error {
 	return err
 }
 
-const searchEvents = `-- name: SearchEvents :many
-SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_name LIKE $1::text LIMIT 10
-`
-
-type SearchEventsRow struct {
-	ID               int32
-	EventName        string
-	EventDate        time.Time
-	EventLocation    string
-	EventDescription string
-	Uuid             string
-	EventImageUrl    string
-	OrganizationFk   int32
-	ID_2             int32
-	OrgName          string
-	City             string
-	Uuid_2           string
-	OrgImageUrl      string
-}
-
-func (q *Queries) SearchEvents(ctx context.Context, eventNameLikeQuery string) ([]*SearchEventsRow, error) {
-	rows, err := q.db.QueryContext(ctx, searchEvents, eventNameLikeQuery)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []*SearchEventsRow
-	for rows.Next() {
-		var i SearchEventsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.EventName,
-			&i.EventDate,
-			&i.EventLocation,
-			&i.EventDescription,
-			&i.Uuid,
-			&i.EventImageUrl,
-			&i.OrganizationFk,
-			&i.ID_2,
-			&i.OrgName,
-			&i.City,
-			&i.Uuid_2,
-			&i.OrgImageUrl,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const truncateAll = `-- name: TruncateAll :exec
 
-TRUNCATE users, org_users, organizations, events, user_events, event_applications, invites
+TRUNCATE users, org_users, organizations, events, user_events, invites
 `
 
 // UTIL

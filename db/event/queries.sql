@@ -24,10 +24,10 @@ SELECT * FROM user_events ue INNER JOIN events e ON ue.event_fk = e.id WHERE ue.
 SELECT * FROM organizations WHERE uuid = sqlc.arg(organization_uuid)::text LIMIT 1;
 
 -- name: GetEvents :many
-SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_date > NOW() ORDER BY event_date - NOW() ASC LIMIT 50;
-
--- name: SearchEvents :many
-SELECT * FROM events e INNER JOIN organizations o ON o.id = e.organization_fk WHERE event_name LIKE sqlc.arg(event_name_like_query)::text LIMIT 10;
+SELECT * FROM events e
+    INNER JOIN organizations o ON o.id = e.organization_fk 
+    LEFT JOIN user_events ue ON e.id = ue.event_fk
+    WHERE event_date > NOW() AND ue.user_fk = sqlc.arg(user_id)::int ORDER BY event_date - NOW() ASC LIMIT 50;
 
 -- name: GetOrgUserInvites :many
 SELECT * FROM invites i WHERE org_user_fk = $1 AND entity_uuid = $2;
@@ -65,4 +65,4 @@ UPDATE invites SET use_limit = use_limit - 1 WHERE id = $1 AND use_limit > 0;
 -- UTIL
 
 -- name: TruncateAll :exec
-TRUNCATE users, org_users, organizations, events, user_events, event_applications, invites;
+TRUNCATE users, org_users, organizations, events, user_events, invites;

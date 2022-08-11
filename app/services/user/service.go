@@ -2,7 +2,6 @@ package user
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"gamma/app/datastore"
@@ -105,8 +104,8 @@ func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]*userRep
 	return u.userRepo.GetUserEvents(ctx, int32(userId))
 }
 
-func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.GetEventsRow, error) {
-	return u.userRepo.GetEvents(ctx)
+func (u *userService) GetEvents(ctx context.Context, userId int) ([]*userRepo.GetEventsRow, error) {
+	return u.userRepo.GetEvents(ctx, int32(userId))
 }
 
 func (u *userService) CreateEvent(ctx context.Context, eventParams *userRepo.InsertEventParams) error {
@@ -119,10 +118,6 @@ func (u *userService) CreateOrganization(ctx context.Context, orgParams *userRep
 
 func (u *userService) CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error {
 	return u.userRepo.InsertOrgUser(ctx, orgUserParams)
-}
-
-func (u *userService) SearchEvents(ctx context.Context, filter string) ([]*userRepo.SearchEventsRow, error) {
-	return u.userRepo.SearchEvents(ctx, fmt.Sprintf("'%% %s %%'", filter))
 }
 
 func (u *userService) CreateInvite(ctx context.Context, inviteParams *userRepo.InsertInviteParams) error {

@@ -5,7 +5,6 @@
 package userRepo
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -20,18 +19,14 @@ type Event struct {
 	OrganizationFk   int32
 }
 
-type EventApplication struct {
-	ID      int32
-	UserFk  int32
-	EventFk int32
-}
-
 type Invite struct {
 	ID             int32
 	ExpirationDate time.Time
-	UseLimit       int32
-	PolicyJson     json.RawMessage
+	Capacity       int32
 	Uuid           string
+	OrgUserFk      int32
+	EntityUuid     string
+	EntityType     int32
 }
 
 type OrgUser struct {
@@ -63,7 +58,8 @@ type User struct {
 }
 
 type UserEvent struct {
-	ID      int32
-	UserFk  int32
-	EventFk int32
+	ID               int32
+	UserFk           int32
+	EventFk          int32
+	ApplicationState string
 }

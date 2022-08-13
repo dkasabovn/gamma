@@ -23,14 +23,34 @@ func (a *UserAPI) addOpenRoutes() {
 
 }
 
+// @Summary Sign Up
+// @Description Sign Up User
+// @Accept json
+// @Produce json
+// @Param Details body dto.UserSignUp true "Data required to create an account"
+// @Success 200
+// @Router /auth/signup [post]
 func (a *UserAPI) signupRouter(g *echo.Group) {
 	g.POST("/signup", a.signUpController)
 }
 
+// @Summary Sign In
+// @Description Sign In User
+// @Accept json
+// @Produce json
+// @Param Details body dto.UserSignIn true "Username and Password"
+// @Success 200
+// @Router /auth/signin [post]
 func (a *UserAPI) loginRouter(g *echo.Group) {
 	g.POST("/signin", a.signInController)
 }
 
-func  (a *UserAPI) refreshRouter(g *echo.Group) {
+// @Summary Refresh Tokens
+// @Description Send in a valid refresh token (http only cookie) and get a new set of tokens
+// @Accept json
+// @Produce json
+// @Success 200
+// @Router /auth/refresh [get]
+func (a *UserAPI) refreshRouter(g *echo.Group) {
 	g.GET("/refresh", a.refreshTokenController)
 }

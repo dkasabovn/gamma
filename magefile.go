@@ -86,3 +86,13 @@ func (Generate) PrivatePublicKeys() error {
 		"360",
 	)
 }
+
+func (Generate) Swagger() error {
+	if err := sh.RunV("rm", "-rf", "app/cmd/user/docs"); err != nil {
+		return err
+	}
+	if err := sh.RunV("swag", "init", "-g", "api/user/api.go", "-d", "app", "-o", "app/cmd/user/docs"); err != nil {
+		return err
+	}
+	return nil
+}

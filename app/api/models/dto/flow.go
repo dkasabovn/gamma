@@ -1,6 +1,6 @@
 package dto
 
-type UserSignup struct {
+type UserSignUp struct {
 	Email       string `json:"email"`
 	PhoneNumber string `json:"phone_number"`
 	RawPassword string `json:"password"`

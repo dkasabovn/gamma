@@ -1,6 +1,6 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    uuid TEXT NOT NULL,
+    uuid TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     phone_number TEXT NOT NULL UNIQUE,
@@ -23,7 +23,7 @@ CREATE TABLE organizations (
     id SERIAL PRIMARY KEY,
     org_name TEXT NOT NULL,
     city TEXT NOT NULL,
-    uuid TEXT NOT NULL,
+    uuid TEXT NOT NULL UNIQUE,
     org_image_url TEXT NOT NULL
 );
 
@@ -33,32 +33,28 @@ CREATE TABLE events (
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
     event_location TEXT NOT NULL,
     event_description TEXT NOT NULL,
-    uuid TEXT NOT NULL,
+    uuid TEXT NOT NULL UNIQUE,
     event_image_url TEXT NOT NULL,
     organization_fk INT NOT NULL
 );
 
--- Events that users have been accepted to
+-- 
 CREATE TABLE user_events (
     id SERIAL PRIMARY KEY,
     user_fk INT NOT NULL,
-    event_fk INT NOT NULL
-);
-
--- Contains event applications 
-CREATE TABLE event_applications (
-    id SERIAL PRIMARY KEY,
-    user_fk INT NOT NULL,
-    event_fk INT NOT NULL
+    event_fk INT NOT NULL,
+    application_state TEXT NOT NULL
 );
 
 -- Policy Json
 CREATE TABLE invites (
     id SERIAL PRIMARY KEY,
     expiration_date TIMESTAMP NOT NULL,
-    use_limit INT NOT NULL,
-    policy_json JSON NOT NULL,
-    uuid TEXT NOT NULL
+    capacity INT NOT NULL,
+    uuid TEXT NOT NULL UNIQUE,
+	org_user_fk INT NOT NULL,
+	entity_uuid TEXT NOT NULL,
+	entity_type int NOT NULL
 );
 
 ALTER TABLE org_users
@@ -76,6 +72,11 @@ ALTER TABLE user_events
 ALTER TABLE user_events
     ADD CONSTRAINT fk_user_events_event FOREIGN KEY (event_fk) REFERENCES events(id) ON DELETE CASCADE;
 
+ALTER TABLE invites
+	ADD CONSTRAINT fk_invites_org_user FOREIGN KEY (org_user_fk) REFERENCES org_users(id) ON DELETE CASCADE;
+
 CREATE INDEX IF NOT EXISTS index_users_on_uuid ON users USING btree(uuid);
 
 CREATE INDEX IF NOT EXISTS index_organizations_on_uuid ON organizations USING btree(uuid);
+
+CREATE INDEX IF NOT EXISTS index_invites_on_entity_uuid ON invites USING btree(entity_uuid);

@@ -2,33 +2,41 @@ package user_api
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
 	"gamma/app/datastore/objectstore"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
-	"gamma/app/system/auth/ecJwt"
-	"io/ioutil"
-	"net/http"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/gommon/log"
 )
 
 func (a *UserAPI) getUserController(c echo.Context) error {
-	token := c.Get("user").(*jwt.Token)
-	claims := token.Claims.(*ecJwt.GammaClaims)
-	uuid := claims.Uuid
-
-	user, err := a.srvc.GetUser(c.Request().Context(), uuid)
+	user, err := core.ExtractUser(c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+		log.Errorf("could not get user: %v", err)
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
 	}
 
-	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
-		"user": user,
+	userEvents, err := a.srvc.GetUserEvents(c.Request().Context(), int(user.ID))
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	userOrgs, err := a.srvc.GetUserOrganizations(c.Request().Context(), user.ID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"user":          user,
+		"events":        userEvents,
+		"organizations": dto.ConvertUserOrganizationRows(userOrgs),
 	}))
 }
 
@@ -45,36 +53,25 @@ func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, core.ApiError(http.StatusNotFound))
 	}
 
-	return c.JSON(http.StatusAccepted, core.ApiSuccess(map[string]interface{}{
-		"organizations": dto.ConvertOrganizations(orgs),
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"organizations": dto.ConvertUserOrganizationRows(orgs),
 	}))
 }
 
 func (a *UserAPI) getEventsController(c echo.Context) error {
-	_, err := core.ExtractUser(c)
+	user, err := core.ExtractUser(c)
 	if err != nil {
 		log.Errorf("could not get user: %v", err)
 		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
 	}
-	if filter := c.QueryParam("filter"); filter != "" {
-		events, err := a.srvc.SearchEvents(c.Request().Context(), filter)
-		if err != nil {
-			log.Errorf("could not get any events")
-			return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
-		}
-		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-			"events": dto.ConvertSearchEvents(events),
-		}))
-	} else {
-		events, err := a.srvc.GetEvents(c.Request().Context())
-		if err != nil {
-			log.Errorf("could not get any events")
-			return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
-		}
-		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-			"events": dto.ConvertEvents(events),
-		}))
+	events, err := a.srvc.GetEvents(c.Request().Context(), int(user.ID))
+	if err != nil {
+		log.Errorf("could not get any events")
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 	}
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"events": dto.ConvertEvents(events),
+	}))
 }
 
 func (a *UserAPI) getEventsByOrgController(c echo.Context) error {
@@ -145,6 +142,8 @@ func (a *UserAPI) postCreateEventController(c echo.Context) error {
 		return nil
 	}
 
+	eventUuid := uuid.NewString()
+
 	log.Infof("Image Path: %v", image_path)
 
 	if err := a.srvc.CreateEvent(c.Request().Context(), &userRepo.InsertEventParams{
@@ -152,7 +151,7 @@ func (a *UserAPI) postCreateEventController(c echo.Context) error {
 		EventDate:        event.EventDate,
 		EventLocation:    event.EventLocation,
 		EventDescription: event.EventDescription,
-		Uuid:             uuid.NewString(),
+		Uuid:             eventUuid,
 		EventImageUrl:    image_path,
 		OrganizationFk:   org_user.OrganizationFk,
 	}); err != nil {
@@ -160,5 +159,115 @@ func (a *UserAPI) postCreateEventController(c echo.Context) error {
 		return nil
 	}
 
-	return c.JSON(http.StatusAccepted, nil)
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"uuid": eventUuid,
+	})
+}
+
+func (a *UserAPI) postEventInviteLinkController(c echo.Context) error {
+	org_user, err := core.ExtractOrguser(c, c.Param("org_uuid"))
+	if err != nil {
+		log.Errorf("user is not an org user")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	policy_num := bo.PolicyNumber(org_user.PoliciesNum)
+	if !policy_num.Can(bo.MODIFY_EVENTS) && !policy_num.Is(bo.SUPER_ADMIN) {
+		log.Errorf("user is not authorized to create events")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	var inviteParams dto.InviteCreate
+	if err := c.Bind(&inviteParams); err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+	}
+
+	inviteUser, err := a.srvc.GetOrgUser(c.Request().Context(), inviteParams.UserUuid, c.Param("org_uuid"))
+	if err != nil {
+		log.Errorf("Could not fetch org user: %v", err)
+		return c.JSON(http.StatusInternalServerError, http.StatusInternalServerError)
+	}
+
+	inviteUuid := uuid.NewString()
+
+	if err := a.srvc.CreateInvite(c.Request().Context(), &userRepo.InsertInviteParams{
+		ExpirationDate: inviteParams.ExpirationDate,
+		Capacity:       int32(inviteParams.Capacity),
+		Uuid:           inviteUuid,
+		OrgUserFk:      inviteUser.ID_2,
+		EntityUuid:     inviteParams.EntityUuid,
+		EntityType:     int32(bo.EVENT),
+	}); err != nil {
+		log.Errorf("could not create invite: %v", err)
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"invite_uuid": inviteUuid,
+	}))
+}
+
+func (a *UserAPI) getOrgUserInvitesController(c echo.Context) error {
+	org_user, err := core.ExtractOrguser(c, c.Param("org_uuid"))
+	if err != nil {
+		log.Errorf("user is not an org user")
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+
+	var inviteGet dto.InviteGetEntity
+	if err := c.Bind(&inviteGet); err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	invites, err := a.srvc.GetOrgUserInvites(c.Request().Context(), &userRepo.GetOrgUserInvitesParams{
+		OrgUserFk:  org_user.ID_2,
+		EntityUuid: inviteGet.EntityUuid,
+	})
+	if err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"invites": dto.ConvertInvites(invites),
+	}))
+}
+
+func (a *UserAPI) getInviteController(c echo.Context) error {
+	var inviteGet dto.InviteGet
+	if err := c.Bind(&inviteGet); err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	invite, err := a.srvc.GetInvite(c.Request().Context(), inviteGet.InviteUuid)
+	if err != nil {
+		log.Error(err)
+		return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+	}
+
+	if invite.EntityType == int32(bo.EVENT) {
+		event, err := a.srvc.GetEvent(c.Request().Context(), invite.EntityUuid)
+		if err != nil {
+			log.Error(err)
+			return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+		}
+		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+			"invite": dto.ConvertInvite(invite),
+			"entity": dto.ConvertOrgEvent(event),
+		}))
+	} else if invite.EntityType == int32(bo.ORGANIZATION) {
+		organization, err := a.srvc.GetOrganization(c.Request().Context(), invite.EntityUuid)
+		if err != nil {
+			log.Error(err)
+			return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+		}
+		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+			"invite": dto.ConvertInvite(invite),
+			"entity": dto.ConvertOrganization(organization),
+		}))
+	}
+
+	return c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
 }

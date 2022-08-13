@@ -2,13 +2,13 @@ package user
 
 import (
 	"context"
-	"fmt"
+	"sync"
+
 	"gamma/app/datastore"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/services/iface"
 	"gamma/app/system/auth/argon"
 	"gamma/app/system/auth/ecJwt"
-	"sync"
 
 	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
@@ -40,8 +40,8 @@ func (u *userService) GetUserByEmail(ctx context.Context, email string) (*userRe
 	return u.userRepo.GetUserByEmail(ctx, email)
 }
 
-func (u *userService) GetUserOrgUserByUuid(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetUserOrgUserJoinRow, error) {
-	return u.userRepo.GetUserOrgUserJoin(ctx, &userRepo.GetUserOrgUserJoinParams{
+func (u *userService) GetOrgUser(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetOrgUserRow, error) {
+	return u.userRepo.GetOrgUser(ctx, &userRepo.GetOrgUserParams{
 		UserUuid: user_uuid,
 		OrgUuid:  org_uuid,
 	})
@@ -59,7 +59,6 @@ func (u *userService) SignInUser(ctx context.Context, email, password string) (*
 	}
 
 	valid, err := argon.PasswordIsMatch(password, user.PasswordHash)
-
 	if err != nil {
 		log.Errorf("error comparing password hashes: %s", err)
 		return nil, err
@@ -105,8 +104,8 @@ func (u *userService) GetUserEvents(ctx context.Context, userId int) ([]*userRep
 	return u.userRepo.GetUserEvents(ctx, int32(userId))
 }
 
-func (u *userService) GetEvents(ctx context.Context) ([]*userRepo.GetEventsRow, error) {
-	return u.userRepo.GetEvents(ctx)
+func (u *userService) GetEvents(ctx context.Context, userId int) ([]*userRepo.GetEventsRow, error) {
+	return u.userRepo.GetEvents(ctx, int32(userId))
 }
 
 func (u *userService) CreateEvent(ctx context.Context, eventParams *userRepo.InsertEventParams) error {
@@ -121,6 +120,22 @@ func (u *userService) CreateOrgUser(ctx context.Context, orgUserParams *userRepo
 	return u.userRepo.InsertOrgUser(ctx, orgUserParams)
 }
 
-func (u *userService) SearchEvents(ctx context.Context, filter string) ([]*userRepo.SearchEventsRow, error) {
-	return u.userRepo.SearchEvents(ctx, fmt.Sprintf("'%% %s %%'", filter))
+func (u *userService) CreateInvite(ctx context.Context, inviteParams *userRepo.InsertInviteParams) error {
+	return u.userRepo.InsertInvite(ctx, inviteParams)
+}
+
+func (u *userService) GetOrgUserInvites(ctx context.Context, params *userRepo.GetOrgUserInvitesParams) ([]*userRepo.Invite, error) {
+	return u.userRepo.GetOrgUserInvites(ctx, params)
+}
+
+func (u *userService) GetInvite(ctx context.Context, inviteUuid string) (*userRepo.Invite, error) {
+	return u.userRepo.GetInvite(ctx, inviteUuid)
+}
+
+func (u *userService) GetEvent(ctx context.Context, eventUuid string) (*userRepo.Event, error) {
+	return u.userRepo.GetEvent(ctx, eventUuid)
+}
+
+func (u *userService) GetOrganization(ctx context.Context, orgUuid string) (*userRepo.Organization, error) {
+	return u.userRepo.GetOrganization(ctx, orgUuid)
 }

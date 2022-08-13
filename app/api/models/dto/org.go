@@ -10,7 +10,16 @@ type ResOrganization struct {
 	PolicyNum   int32  `json:"policy_num"`
 }
 
-func ConvertOrganization(org *userRepo.GetUserOrganizationsRow) *ResOrganization {
+func ConvertOrganization(org *userRepo.Organization) *ResOrganization {
+	return &ResOrganization{
+		OrgName:     org.OrgName,
+		City:        org.City,
+		Uuid:        org.Uuid,
+		OrgImageUrl: org.OrgImageUrl,
+	}
+}
+
+func ConvertUserOrganizationRow(org *userRepo.GetUserOrganizationsRow) *ResOrganization {
 	return &ResOrganization{
 		OrgName:     org.OrgName,
 		City:        org.City,
@@ -20,10 +29,10 @@ func ConvertOrganization(org *userRepo.GetUserOrganizationsRow) *ResOrganization
 	}
 }
 
-func ConvertOrganizations(orgs []*userRepo.GetUserOrganizationsRow) []*ResOrganization {
+func ConvertUserOrganizationRows(orgs []*userRepo.GetUserOrganizationsRow) []*ResOrganization {
 	org_list := make([]*ResOrganization, len(orgs))
 	for i, org := range orgs {
-		org_list[i] = ConvertOrganization(org)
+		org_list[i] = ConvertUserOrganizationRow(org)
 	}
 	return org_list
 }

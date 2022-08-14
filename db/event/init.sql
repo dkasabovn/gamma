@@ -34,8 +34,7 @@ CREATE TABLE events (
     event_image_url TEXT NOT NULL,
     organization_fk uuid NOT NULL
 );
-
--- 
+ 
 CREATE TABLE user_events (
     id SERIAL PRIMARY KEY,
     user_fk uuid NOT NULL,
@@ -43,7 +42,6 @@ CREATE TABLE user_events (
     application_state VARCHAR(4) NOT NULL
 );
 
--- Policy Json
 CREATE TABLE invites (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     expiration_date TIMESTAMP NOT NULL,

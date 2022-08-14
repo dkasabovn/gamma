@@ -105,7 +105,7 @@ func ExtractUser(c echo.Context) (*userRepo.User, error) {
 func ExtractOrguser(c echo.Context, orgUuidString string) (*userRepo.GetOrgUserRow, error) {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*ecJwt.GammaClaims)
-	orgUuid, err := uuid.FromBytes([]byte(orgUuidString))
+	orgUuid, err := uuid.Parse(orgUuidString)
 	if err != nil {
 		log.Errorf("org uuid is not in uuid format: %v", err)
 		return nil, err

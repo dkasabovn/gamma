@@ -161,7 +161,7 @@ func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetOrgU
 		EventDescription: eventParams.EventDescription,
 		EventImageUrl:    imageUrl,
 		// At this point orgfk should be vetted
-		OrganizationFk: uuid.Must(uuid.FromBytes([]byte(eventParams.OrganizationID))),
+		OrganizationFk: uuid.Must(uuid.Parse(eventParams.OrganizationID)),
 	}); err != nil {
 		log.Errorf("%v", err)
 		return err
@@ -174,6 +174,11 @@ func (u *userService) CreateOrganization(ctx context.Context, orgParams *userRep
 	return u.userRepo.InsertOrganization(ctx, orgParams)
 }
 
+func (u *userService) CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error {
+	return u.userRepo.InsertOrgUser(ctx, orgUserParams)
+}
+
+// TODO: Remove this and come up with a test only alternative
 func (u *userService) DANGER() error {
 	return u.userRepo.TruncateAll(context.Background())
 }

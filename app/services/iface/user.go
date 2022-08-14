@@ -19,5 +19,6 @@ type UserService interface {
 	GetEvents(ctx context.Context, searchInput *dto.EventSearch) ([]*userRepo.GetEventsWithOrganizationsRow, error)
 	CreateEvent(ctx context.Context, orgUser *userRepo.GetOrgUserRow, eventParams *dto.EventUpsert) error
 	CreateOrganization(ctx context.Context, orgParams *userRepo.InsertOrganizationParams) error
+	CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error
 	DANGER() error
 }

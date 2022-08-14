@@ -22,6 +22,7 @@ func (a *UserAPI) addUserRoutes() {
 
 	{
 		a.getUserRouter(authRequired)
+		a.putUserRouter(authRequired)
 		a.getEventsRouter(authRequired)
 		a.getUserOrganizationsRouter(authRequired)
 		a.getEventsByOrgRouter(authRequired)
@@ -39,6 +40,10 @@ func (a *UserAPI) addUserRoutes() {
 // @Router /api/user [get]
 func (a *UserAPI) getUserRouter(g *echo.Group) {
 	g.GET("/user", a.getUserController)
+}
+
+func (a *UserAPI) putUserRouter(g *echo.Group) {
+	g.PUT("/user", a.putUserController)
 }
 
 // @Summary Self Orgs

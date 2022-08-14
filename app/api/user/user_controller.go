@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"reflect"
 
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
@@ -38,6 +39,31 @@ func (a *UserAPI) getUserController(c echo.Context) error {
 		"events":        userEvents,
 		"organizations": dto.ConvertUserOrganizationRows(userOrgs),
 	}))
+}
+
+func (a *UserAPI) putUserController(c echo.Context) error {
+	// prevUser, err := core.ExtractUser(c)
+	// if err != nil {
+	// 	log.Errorf("could not get user: %v", err)
+	// 	return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	// }
+
+	var newUser userRepo.UpdateUserParams
+	if err := c.Bind(&newUser); err != nil {
+		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+	}
+
+	v := reflect.ValueOf(newUser)
+	typeOfUser := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		fmt.Printf("Field: %s\tValue: %v\n", typeOfUser.Field(i).Name, v.Field(i).Interface())
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"newUser": newUser,
+	}))
+
 }
 
 func (a *UserAPI) getUserOrganizationsController(c echo.Context) error {

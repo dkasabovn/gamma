@@ -7,27 +7,16 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.4.0
-<<<<<<< HEAD
-	github.com/labstack/echo/v4 v4.6.1
-	github.com/labstack/gommon v0.3.0
-=======
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/labstack/gommon v0.3.1
->>>>>>> 3d750b02e6c6e3f5990a25b0e14fa5eaf63503c3
 	github.com/lib/pq v1.10.3
 	github.com/magefile/mage v1.11.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.17.0
-<<<<<<< HEAD
-	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	google.golang.org/api v0.69.0
-	syreclabs.com/go/faker v1.2.3
-=======
 	github.com/swaggo/echo-swagger v1.3.3
 	github.com/swaggo/swag v1.8.3
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 	google.golang.org/api v0.69.0
->>>>>>> 3d750b02e6c6e3f5990a25b0e14fa5eaf63503c3
 )
 
 require (
@@ -44,14 +33,9 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/googleapis/gax-go/v2 v2.1.1 // indirect
-<<<<<<< HEAD
-	github.com/kr/pretty v0.3.0 // indirect
-	github.com/mattn/go-colorable v0.1.11 // indirect
-=======
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
->>>>>>> 3d750b02e6c6e3f5990a25b0e14fa5eaf63503c3
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/swaggo/files v0.0.0-20220610200504-28940afbdbfe // indirect

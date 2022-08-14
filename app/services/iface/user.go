@@ -9,7 +9,7 @@ import (
 
 type UserService interface {
 	CreateUser(ctx context.Context, input *userRepo.InsertUserParams) (*ecJwt.GammaJwt, error)
-	//UpdateUser(ctx context.Context, uuid string) (*userRepo.User, error)
+	UpdateUser(ctx context.Context, user *userRepo.UpdateUserParams) error
 	SignInUser(ctx context.Context, email, password string) (*ecJwt.GammaJwt, error)
 	GetUser(ctx context.Context, uuid string) (*userRepo.User, error)
 	GetOrgUser(ctx context.Context, user_uuid, org_uuid string) (*userRepo.GetOrgUserRow, error)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
@@ -42,24 +41,38 @@ func (a *UserAPI) getUserController(c echo.Context) error {
 }
 
 func (a *UserAPI) putUserController(c echo.Context) error {
-	// prevUser, err := core.ExtractUser(c)
-	// if err != nil {
-	// 	log.Errorf("could not get user: %v", err)
-	// 	return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
-	// }
+	prevUser, err := core.ExtractUser(c)
+	if err != nil {
+		log.Errorf("could not get user: %v", err)
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
 
 	var newUser userRepo.UpdateUserParams
 	if err := c.Bind(&newUser); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
 	}
 
-	v := reflect.ValueOf(newUser)
-	typeOfUser := v.Type()
-
-	for i := 0; i < v.NumField(); i++ {
-		fmt.Printf("Field: %s\tValue: %v\n", typeOfUser.Field(i).Name, v.Field(i).Interface())
+	newUser.Uuid = prevUser.Uuid
+	if newUser.Email == "" {
+		newUser.Email = prevUser.Email
+	}
+	if newUser.PasswordHash == "" {
+		newUser.PasswordHash = prevUser.PasswordHash
+	}
+	if newUser.PhoneNumber == "" {
+		newUser.PhoneNumber = prevUser.PhoneNumber
+	}
+	if newUser.FirstName == "" {
+		newUser.FirstName = prevUser.FirstName
+	}
+	if newUser.LastName == "" {
+		newUser.LastName = prevUser.LastName
+	}
+	if newUser.ImageUrl == "" {
+		newUser.ImageUrl = prevUser.ImageUrl
 	}
 
+	err = a.srvc.UpdateUser(c.Request().Context(), &newUser)
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
 		"newUser": newUser,
 	}))

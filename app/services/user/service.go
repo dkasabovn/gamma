@@ -36,9 +36,9 @@ func (u *userService) GetUser(ctx context.Context, uuid string) (*userRepo.User,
 	return u.userRepo.GetUserByUuid(ctx, uuid)
 }
 
-// func (u *userService) UpdateUser(ctx context.Context, uuid string) (*userRepo.User, error) {
-// 	return u.userRepo.UpdateUser(ctx, uuid)
-// }
+func (u *userService) UpdateUser(ctx context.Context, user *userRepo.UpdateUserParams) error {
+	return u.userRepo.UpdateUser(ctx, user)
+}
 
 func (u *userService) GetUserByEmail(ctx context.Context, email string) (*userRepo.User, error) {
 	return u.userRepo.GetUserByEmail(ctx, email)

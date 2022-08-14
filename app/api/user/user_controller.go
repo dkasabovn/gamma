@@ -10,6 +10,7 @@ import (
 	"gamma/app/datastore/objectstore"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
+	"gamma/app/system/auth/argon"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -58,6 +59,12 @@ func (a *UserAPI) putUserController(c echo.Context) error {
 	}
 	if newUser.PasswordHash == "" {
 		newUser.PasswordHash = prevUser.PasswordHash
+	} else {
+		hash, err := argon.PasswordToHash(newUser.PasswordHash)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, core.ApiError(http.StatusInternalServerError))
+		}
+		newUser.PasswordHash = hash
 	}
 	if newUser.PhoneNumber == "" {
 		newUser.PhoneNumber = prevUser.PhoneNumber

@@ -6,8 +6,7 @@ type UserSignUp struct {
 	RawPassword string `json:"password"`
 	FirstName   string `json:"first_name"`
 	LastName    string `json:"last_name"`
-	UserName    string `json:"user_name"`
-	ImageUrl    string `json:"image_url"`
+	UserName    string `json:"username"`
 }
 
 type UserSignIn struct {

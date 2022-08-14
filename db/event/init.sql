@@ -1,59 +1,55 @@
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    uuid TEXT NOT NULL UNIQUE,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     phone_number TEXT NOT NULL UNIQUE,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    username TEXT NOT NULL,
     image_url TEXT NOT NULL,
-    validated BOOLEAN NOT NULL,
-    refresh_token TEXT NOT NULL
+    validated BOOLEAN NOT NULL
 );
 
 -- users that belong to an organization
 CREATE TABLE org_users (
     id SERIAL PRIMARY KEY,
     policies_num INT NOT NULL,
-    user_fk INT NOT NULL,
-    organization_fk INT NOT NULL
+    user_fk uuid NOT NULL,
+    organization_fk uuid NOT NULL
 );
 
 CREATE TABLE organizations (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     org_name TEXT NOT NULL,
     city TEXT NOT NULL,
-    uuid TEXT NOT NULL UNIQUE,
     org_image_url TEXT NOT NULL
 );
 
 CREATE TABLE events (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     event_name TEXT NOT NULL,
     event_date TIMESTAMP WITH TIME ZONE NOT NULL,
     event_location TEXT NOT NULL,
     event_description TEXT NOT NULL,
-    uuid TEXT NOT NULL UNIQUE,
     event_image_url TEXT NOT NULL,
-    organization_fk INT NOT NULL
+    organization_fk uuid NOT NULL
 );
 
 -- 
 CREATE TABLE user_events (
     id SERIAL PRIMARY KEY,
-    user_fk INT NOT NULL,
-    event_fk INT NOT NULL,
-    application_state TEXT NOT NULL
+    user_fk uuid NOT NULL,
+    event_fk uuid NOT NULL,
+    application_state VARCHAR(4) NOT NULL
 );
 
 -- Policy Json
 CREATE TABLE invites (
-    id SERIAL PRIMARY KEY,
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     expiration_date TIMESTAMP NOT NULL,
     capacity INT NOT NULL,
-    uuid TEXT NOT NULL UNIQUE,
 	org_user_fk INT NOT NULL,
-	entity_uuid TEXT NOT NULL,
+	entity_uuid uuid NOT NULL,
 	entity_type int NOT NULL
 );
 
@@ -74,9 +70,3 @@ ALTER TABLE user_events
 
 ALTER TABLE invites
 	ADD CONSTRAINT fk_invites_org_user FOREIGN KEY (org_user_fk) REFERENCES org_users(id) ON DELETE CASCADE;
-
-CREATE INDEX IF NOT EXISTS index_users_on_uuid ON users USING btree(uuid);
-
-CREATE INDEX IF NOT EXISTS index_organizations_on_uuid ON organizations USING btree(uuid);
-
-CREATE INDEX IF NOT EXISTS index_invites_on_entity_uuid ON invites USING btree(entity_uuid);

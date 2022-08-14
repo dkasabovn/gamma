@@ -8,7 +8,7 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/labstack/gommon/log"
+	"gamma/app/system/log"
 )
 
 type fsStore struct {
@@ -26,18 +26,18 @@ func newFsStore() Storage {
 	}
 }
 
-func (f *fsStore) Get(ctx context.Context, key string) (Object, error) {
+func (f *fsStore) Get(ctx context.Context, key string) (*Object, error) {
 	b, err := os.ReadFile(path.Join(f.folderDir, key))
 	if err != nil {
-		return Object{}, err
+		return nil, err
 	}
-	return Object{
+	return &Object{
 		Data: b,
 		Key:  key,
 	}, nil
 }
 
-func (f *fsStore) Put(ctx context.Context, key string, put Object) (string, error) {
+func (f *fsStore) Put(ctx context.Context, key string, put *Object) (string, error) {
 	fullPath := path.Join(f.folderDir, key)
 	log.Infof("fullPath: %s", fullPath)
 	err := os.MkdirAll(filepath.Dir(fullPath), 0755)

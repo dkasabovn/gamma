@@ -1,4 +1,4 @@
-package datastore
+package userRepo
 
 import (
 	"database/sql"

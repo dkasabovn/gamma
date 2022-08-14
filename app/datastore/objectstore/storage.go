@@ -12,10 +12,10 @@ var (
 
 func GetStorage() Storage {
 	storeSync.Do(func() {
-		if system.ENVIRONMENT == "local" {
-			storeInst = newFsStore()
-		} else {
+		if system.ENVIRONMENT == "prod" {
 			storeInst = newCloudStore()
+		} else {
+			storeInst = newFsStore()
 		}
 	})
 	return storeInst

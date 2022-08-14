@@ -7,16 +7,17 @@ package userRepo
 
 import (
 	"context"
-	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const getEvent = `-- name: GetEvent :one
-SELECT id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM events e WHERE uuid = $1
+SELECT id, event_name, event_date, event_location, event_description, event_image_url, organization_fk FROM events e WHERE id = $1
 `
 
-func (q *Queries) GetEvent(ctx context.Context, uuid string) (*Event, error) {
-	row := q.db.QueryRowContext(ctx, getEvent, uuid)
+func (q *Queries) GetEvent(ctx context.Context, id uuid.UUID) (*Event, error) {
+	row := q.db.QueryRowContext(ctx, getEvent, id)
 	var i Event
 	err := row.Scan(
 		&i.ID,
@@ -24,67 +25,60 @@ func (q *Queries) GetEvent(ctx context.Context, uuid string) (*Event, error) {
 		&i.EventDate,
 		&i.EventLocation,
 		&i.EventDescription,
-		&i.Uuid,
 		&i.EventImageUrl,
 		&i.OrganizationFk,
 	)
 	return &i, err
 }
 
-const getEvents = `-- name: GetEvents :many
-SELECT e.id, event_name, event_date, event_location, event_description, e.uuid, event_image_url, organization_fk, o.id, org_name, city, o.uuid, org_image_url, ue.id, user_fk, event_fk, application_state FROM events e
-    INNER JOIN organizations o ON o.id = e.organization_fk 
-    LEFT JOIN user_events ue ON e.id = ue.event_fk
-    WHERE event_date > NOW() AND ue.user_fk = $1::int ORDER BY event_date - NOW() ASC LIMIT 50
+const getEventsWithOrganizations = `-- name: GetEventsWithOrganizations :many
+SELECT e.id, event_name, event_date, event_location, event_description, event_image_url, organization_fk, o.id, org_name, city, org_image_url FROM events e INNER JOIN organizations o ON e.organization_fk = o.id
+WHERE e.event_date > $1
+    AND (CASE WHEN $2::bool THEN o.id = $3 ELSE TRUE END)
+ORDER BY e.event_date DESC
 `
 
-type GetEventsRow struct {
-	ID               int32
+type GetEventsWithOrganizationsParams struct {
+	DateFloor          time.Time
+	FilterOrganization bool
+	OrgUuid            uuid.UUID
+}
+
+type GetEventsWithOrganizationsRow struct {
+	ID               uuid.UUID
 	EventName        string
 	EventDate        time.Time
 	EventLocation    string
 	EventDescription string
-	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   int32
-	ID_2             int32
+	OrganizationFk   uuid.UUID
+	ID_2             uuid.UUID
 	OrgName          string
 	City             string
-	Uuid_2           string
 	OrgImageUrl      string
-	ID_3             sql.NullInt32
-	UserFk           sql.NullInt32
-	EventFk          sql.NullInt32
-	ApplicationState sql.NullString
 }
 
-func (q *Queries) GetEvents(ctx context.Context, userID int32) ([]*GetEventsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getEvents, userID)
+func (q *Queries) GetEventsWithOrganizations(ctx context.Context, arg *GetEventsWithOrganizationsParams) ([]*GetEventsWithOrganizationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getEventsWithOrganizations, arg.DateFloor, arg.FilterOrganization, arg.OrgUuid)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetEventsRow
+	var items []*GetEventsWithOrganizationsRow
 	for rows.Next() {
-		var i GetEventsRow
+		var i GetEventsWithOrganizationsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.EventName,
 			&i.EventDate,
 			&i.EventLocation,
 			&i.EventDescription,
-			&i.Uuid,
 			&i.EventImageUrl,
 			&i.OrganizationFk,
 			&i.ID_2,
 			&i.OrgName,
 			&i.City,
-			&i.Uuid_2,
 			&i.OrgImageUrl,
-			&i.ID_3,
-			&i.UserFk,
-			&i.EventFk,
-			&i.ApplicationState,
 		); err != nil {
 			return nil, err
 		}
@@ -100,17 +94,16 @@ func (q *Queries) GetEvents(ctx context.Context, userID int32) ([]*GetEventsRow,
 }
 
 const getInvite = `-- name: GetInvite :one
-SELECT id, expiration_date, capacity, uuid, org_user_fk, entity_uuid, entity_type FROM invites i WHERE uuid = $1
+SELECT id, expiration_date, capacity, org_user_fk, entity_uuid, entity_type FROM invites i WHERE id = $1
 `
 
-func (q *Queries) GetInvite(ctx context.Context, uuid string) (*Invite, error) {
-	row := q.db.QueryRowContext(ctx, getInvite, uuid)
+func (q *Queries) GetInvite(ctx context.Context, id uuid.UUID) (*Invite, error) {
+	row := q.db.QueryRowContext(ctx, getInvite, id)
 	var i Invite
 	err := row.Scan(
 		&i.ID,
 		&i.ExpirationDate,
 		&i.Capacity,
-		&i.Uuid,
 		&i.OrgUserFk,
 		&i.EntityUuid,
 		&i.EntityType,
@@ -118,67 +111,17 @@ func (q *Queries) GetInvite(ctx context.Context, uuid string) (*Invite, error) {
 	return &i, err
 }
 
-const getOrgUser = `-- name: GetOrgUser :one
-WITH org_id AS (
-	SELECT id FROM organizations o WHERE o.uuid = $2::text
-) SELECT u.id, uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token, o.id, policies_num, user_fk, organization_fk FROM users u INNER JOIN org_users o ON u.id = o.user_fk WHERE o.organization_fk = (SELECT id FROM org_id LIMIT 1) AND u.uuid = $1
+const getInvitesForOrgUser = `-- name: GetInvitesForOrgUser :many
+SELECT id, expiration_date, capacity, org_user_fk, entity_uuid, entity_type FROM invites i WHERE org_user_fk = $1 AND entity_uuid = $2
 `
 
-type GetOrgUserParams struct {
-	UserUuid string
-	OrgUuid  string
-}
-
-type GetOrgUserRow struct {
-	ID             int32
-	Uuid           string
-	Email          string
-	PasswordHash   string
-	PhoneNumber    string
-	FirstName      string
-	LastName       string
-	ImageUrl       string
-	Validated      bool
-	RefreshToken   string
-	ID_2           int32
-	PoliciesNum    int32
-	UserFk         int32
-	OrganizationFk int32
-}
-
-func (q *Queries) GetOrgUser(ctx context.Context, arg *GetOrgUserParams) (*GetOrgUserRow, error) {
-	row := q.db.QueryRowContext(ctx, getOrgUser, arg.UserUuid, arg.OrgUuid)
-	var i GetOrgUserRow
-	err := row.Scan(
-		&i.ID,
-		&i.Uuid,
-		&i.Email,
-		&i.PasswordHash,
-		&i.PhoneNumber,
-		&i.FirstName,
-		&i.LastName,
-		&i.ImageUrl,
-		&i.Validated,
-		&i.RefreshToken,
-		&i.ID_2,
-		&i.PoliciesNum,
-		&i.UserFk,
-		&i.OrganizationFk,
-	)
-	return &i, err
-}
-
-const getOrgUserInvites = `-- name: GetOrgUserInvites :many
-SELECT id, expiration_date, capacity, uuid, org_user_fk, entity_uuid, entity_type FROM invites i WHERE org_user_fk = $1 AND entity_uuid = $2
-`
-
-type GetOrgUserInvitesParams struct {
+type GetInvitesForOrgUserParams struct {
 	OrgUserFk  int32
-	EntityUuid string
+	EntityUuid uuid.UUID
 }
 
-func (q *Queries) GetOrgUserInvites(ctx context.Context, arg *GetOrgUserInvitesParams) ([]*Invite, error) {
-	rows, err := q.db.QueryContext(ctx, getOrgUserInvites, arg.OrgUserFk, arg.EntityUuid)
+func (q *Queries) GetInvitesForOrgUser(ctx context.Context, arg *GetInvitesForOrgUserParams) ([]*Invite, error) {
+	rows, err := q.db.QueryContext(ctx, getInvitesForOrgUser, arg.OrgUserFk, arg.EntityUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +133,6 @@ func (q *Queries) GetOrgUserInvites(ctx context.Context, arg *GetOrgUserInvitesP
 			&i.ID,
 			&i.ExpirationDate,
 			&i.Capacity,
-			&i.Uuid,
 			&i.OrgUserFk,
 			&i.EntityUuid,
 			&i.EntityType,
@@ -208,45 +150,89 @@ func (q *Queries) GetOrgUserInvites(ctx context.Context, arg *GetOrgUserInvitesP
 	return items, nil
 }
 
-const getOrganization = `-- name: GetOrganization :one
-SELECT id, org_name, city, uuid, org_image_url FROM organizations o WHERE uuid = $1
+const getOrgUser = `-- name: GetOrgUser :one
+SELECT ou.id, policies_num, user_fk, organization_fk, u.id, email, password_hash, phone_number, first_name, last_name, username, image_url, validated FROM org_users ou INNER JOIN  users u ON ou.user_fk = u.id WHERE ou.organization_fk = $1 AND u.id = $2 LIMIT 1
 `
 
-func (q *Queries) GetOrganization(ctx context.Context, uuid string) (*Organization, error) {
-	row := q.db.QueryRowContext(ctx, getOrganization, uuid)
+type GetOrgUserParams struct {
+	OrgUuid  uuid.UUID
+	UserUuid uuid.UUID
+}
+
+type GetOrgUserRow struct {
+	ID             int32
+	PoliciesNum    int32
+	UserFk         uuid.UUID
+	OrganizationFk uuid.UUID
+	ID_2           uuid.UUID
+	Email          string
+	PasswordHash   string
+	PhoneNumber    string
+	FirstName      string
+	LastName       string
+	Username       string
+	ImageUrl       string
+	Validated      bool
+}
+
+func (q *Queries) GetOrgUser(ctx context.Context, arg *GetOrgUserParams) (*GetOrgUserRow, error) {
+	row := q.db.QueryRowContext(ctx, getOrgUser, arg.OrgUuid, arg.UserUuid)
+	var i GetOrgUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.PoliciesNum,
+		&i.UserFk,
+		&i.OrganizationFk,
+		&i.ID_2,
+		&i.Email,
+		&i.PasswordHash,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.Username,
+		&i.ImageUrl,
+		&i.Validated,
+	)
+	return &i, err
+}
+
+const getOrganization = `-- name: GetOrganization :one
+SELECT id, org_name, city, org_image_url FROM organizations o WHERE id = $1
+`
+
+func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (*Organization, error) {
+	row := q.db.QueryRowContext(ctx, getOrganization, id)
 	var i Organization
 	err := row.Scan(
 		&i.ID,
 		&i.OrgName,
 		&i.City,
-		&i.Uuid,
 		&i.OrgImageUrl,
 	)
 	return &i, err
 }
 
 const getOrganizationByUuid = `-- name: GetOrganizationByUuid :one
-SELECT id, org_name, city, uuid, org_image_url FROM organizations WHERE uuid = $1::text LIMIT 1
+SELECT id, org_name, city, org_image_url FROM organizations o WHERE o.id = $1 LIMIT 1
 `
 
-func (q *Queries) GetOrganizationByUuid(ctx context.Context, organizationUuid string) (*Organization, error) {
+func (q *Queries) GetOrganizationByUuid(ctx context.Context, organizationUuid uuid.UUID) (*Organization, error) {
 	row := q.db.QueryRowContext(ctx, getOrganizationByUuid, organizationUuid)
 	var i Organization
 	err := row.Scan(
 		&i.ID,
 		&i.OrgName,
 		&i.City,
-		&i.Uuid,
 		&i.OrgImageUrl,
 	)
 	return &i, err
 }
 
 const getOrganizationEvents = `-- name: GetOrganizationEvents :many
-SELECT e.id, e.event_name, e.event_date, e.event_location, e.event_description, e.uuid, e.event_image_url, e.organization_fk FROM events e INNER JOIN organizations o ON e.organization_fk = o.id WHERE o.uuid = $1::text
+SELECT id, event_name, event_date, event_location, event_description, event_image_url, organization_fk FROM events e WHERE e.organization_fk = $1
 `
 
-func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]*Event, error) {
+func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid uuid.UUID) ([]*Event, error) {
 	rows, err := q.db.QueryContext(ctx, getOrganizationEvents, orgUuid)
 	if err != nil {
 		return nil, err
@@ -261,7 +247,6 @@ func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]
 			&i.EventDate,
 			&i.EventLocation,
 			&i.EventDescription,
-			&i.Uuid,
 			&i.EventImageUrl,
 			&i.OrganizationFk,
 		); err != nil {
@@ -279,7 +264,7 @@ func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid string) ([]
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token FROM users WHERE email = $1::text LIMIT 1
+SELECT id, email, password_hash, phone_number, first_name, last_name, username, image_url, validated FROM users WHERE email = $1 LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, error) {
@@ -287,64 +272,61 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, erro
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Uuid,
 		&i.Email,
 		&i.PasswordHash,
 		&i.PhoneNumber,
 		&i.FirstName,
 		&i.LastName,
+		&i.Username,
 		&i.ImageUrl,
 		&i.Validated,
-		&i.RefreshToken,
 	)
 	return &i, err
 }
 
 const getUserByUuid = `-- name: GetUserByUuid :one
 
-SELECT id, uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token FROM users WHERE uuid = $1::text LIMIT 1
+SELECT id, email, password_hash, phone_number, first_name, last_name, username, image_url, validated FROM users WHERE id = $1 LIMIT 1
 `
 
 // GETS
-func (q *Queries) GetUserByUuid(ctx context.Context, uuid string) (*User, error) {
+func (q *Queries) GetUserByUuid(ctx context.Context, uuid uuid.UUID) (*User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUuid, uuid)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Uuid,
 		&i.Email,
 		&i.PasswordHash,
 		&i.PhoneNumber,
 		&i.FirstName,
 		&i.LastName,
+		&i.Username,
 		&i.ImageUrl,
 		&i.Validated,
-		&i.RefreshToken,
 	)
 	return &i, err
 }
 
 const getUserEvents = `-- name: GetUserEvents :many
-SELECT ue.id, user_fk, event_fk, application_state, e.id, event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk FROM user_events ue INNER JOIN events e ON ue.event_fk = e.id WHERE ue.user_fk = $1::int
+SELECT ue.id, user_fk, event_fk, application_state, e.id, event_name, event_date, event_location, event_description, event_image_url, organization_fk FROM user_events ue INNER JOIN events e ON ue.event_fk = e.id WHERE ue.user_fk = $1
 `
 
 type GetUserEventsRow struct {
 	ID               int32
-	UserFk           int32
-	EventFk          int32
+	UserFk           uuid.UUID
+	EventFk          uuid.UUID
 	ApplicationState string
-	ID_2             int32
+	ID_2             uuid.UUID
 	EventName        string
 	EventDate        time.Time
 	EventLocation    string
 	EventDescription string
-	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   int32
+	OrganizationFk   uuid.UUID
 }
 
-func (q *Queries) GetUserEvents(ctx context.Context, userID int32) ([]*GetUserEventsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserEvents, userID)
+func (q *Queries) GetUserEvents(ctx context.Context, userUuid uuid.UUID) ([]*GetUserEventsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserEvents, userUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -362,7 +344,6 @@ func (q *Queries) GetUserEvents(ctx context.Context, userID int32) ([]*GetUserEv
 			&i.EventDate,
 			&i.EventLocation,
 			&i.EventDescription,
-			&i.Uuid,
 			&i.EventImageUrl,
 			&i.OrganizationFk,
 		); err != nil {
@@ -380,23 +361,22 @@ func (q *Queries) GetUserEvents(ctx context.Context, userID int32) ([]*GetUserEv
 }
 
 const getUserOrganizations = `-- name: GetUserOrganizations :many
-SELECT ou.id, policies_num, user_fk, organization_fk, og.id, org_name, city, uuid, org_image_url FROM org_users ou INNER JOIN organizations og ON ou.organization_fk = og.id WHERE ou.user_fk = $1::int
+SELECT ou.id, policies_num, user_fk, organization_fk, og.id, org_name, city, org_image_url FROM org_users ou INNER JOIN organizations og ON ou.organization_fk = og.id WHERE ou.user_fk = $1
 `
 
 type GetUserOrganizationsRow struct {
 	ID             int32
 	PoliciesNum    int32
-	UserFk         int32
-	OrganizationFk int32
-	ID_2           int32
+	UserFk         uuid.UUID
+	OrganizationFk uuid.UUID
+	ID_2           uuid.UUID
 	OrgName        string
 	City           string
-	Uuid           string
 	OrgImageUrl    string
 }
 
-func (q *Queries) GetUserOrganizations(ctx context.Context, userID int32) ([]*GetUserOrganizationsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserOrganizations, userID)
+func (q *Queries) GetUserOrganizations(ctx context.Context, userUuid uuid.UUID) ([]*GetUserOrganizationsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserOrganizations, userUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +392,6 @@ func (q *Queries) GetUserOrganizations(ctx context.Context, userID int32) ([]*Ge
 			&i.ID_2,
 			&i.OrgName,
 			&i.City,
-			&i.Uuid,
 			&i.OrgImageUrl,
 		); err != nil {
 			return nil, err
@@ -429,26 +408,26 @@ func (q *Queries) GetUserOrganizations(ctx context.Context, userID int32) ([]*Ge
 }
 
 const insertEvent = `-- name: InsertEvent :exec
-INSERT INTO events (event_name, event_date, event_location, event_description, uuid, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7)
+INSERT INTO events (id, event_name, event_date, event_location, event_description, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7)
 `
 
 type InsertEventParams struct {
+	ID               uuid.UUID
 	EventName        string
 	EventDate        time.Time
 	EventLocation    string
 	EventDescription string
-	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   int32
+	OrganizationFk   uuid.UUID
 }
 
 func (q *Queries) InsertEvent(ctx context.Context, arg *InsertEventParams) error {
 	_, err := q.db.ExecContext(ctx, insertEvent,
+		arg.ID,
 		arg.EventName,
 		arg.EventDate,
 		arg.EventLocation,
 		arg.EventDescription,
-		arg.Uuid,
 		arg.EventImageUrl,
 		arg.OrganizationFk,
 	)
@@ -456,23 +435,23 @@ func (q *Queries) InsertEvent(ctx context.Context, arg *InsertEventParams) error
 }
 
 const insertInvite = `-- name: InsertInvite :exec
-INSERT INTO invites (expiration_date, capacity, uuid, org_user_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6)
+INSERT INTO invites (id, expiration_date, capacity, org_user_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6)
 `
 
 type InsertInviteParams struct {
+	ID             uuid.UUID
 	ExpirationDate time.Time
 	Capacity       int32
-	Uuid           string
 	OrgUserFk      int32
-	EntityUuid     string
+	EntityUuid     uuid.UUID
 	EntityType     int32
 }
 
 func (q *Queries) InsertInvite(ctx context.Context, arg *InsertInviteParams) error {
 	_, err := q.db.ExecContext(ctx, insertInvite,
+		arg.ID,
 		arg.ExpirationDate,
 		arg.Capacity,
-		arg.Uuid,
 		arg.OrgUserFk,
 		arg.EntityUuid,
 		arg.EntityType,
@@ -486,8 +465,8 @@ INSERT INTO org_users (policies_num, user_fk, organization_fk) VALUES ($1,$2,$3)
 
 type InsertOrgUserParams struct {
 	PoliciesNum    int32
-	UserFk         int32
-	OrganizationFk int32
+	UserFk         uuid.UUID
+	OrganizationFk uuid.UUID
 }
 
 func (q *Queries) InsertOrgUser(ctx context.Context, arg *InsertOrgUserParams) error {
@@ -495,58 +474,56 @@ func (q *Queries) InsertOrgUser(ctx context.Context, arg *InsertOrgUserParams) e
 	return err
 }
 
-const insertOrganization = `-- name: InsertOrganization :one
-INSERT INTO organizations (org_name, city, uuid, org_image_url) VALUES ($1,$2,$3,$4) RETURNING id
+const insertOrganization = `-- name: InsertOrganization :exec
+INSERT INTO organizations (id, org_name, city, org_image_url) VALUES ($1,$2,$3,$4)
 `
 
 type InsertOrganizationParams struct {
+	ID          uuid.UUID
 	OrgName     string
 	City        string
-	Uuid        string
 	OrgImageUrl string
 }
 
-func (q *Queries) InsertOrganization(ctx context.Context, arg *InsertOrganizationParams) (int32, error) {
-	row := q.db.QueryRowContext(ctx, insertOrganization,
+func (q *Queries) InsertOrganization(ctx context.Context, arg *InsertOrganizationParams) error {
+	_, err := q.db.ExecContext(ctx, insertOrganization,
+		arg.ID,
 		arg.OrgName,
 		arg.City,
-		arg.Uuid,
 		arg.OrgImageUrl,
 	)
-	var id int32
-	err := row.Scan(&id)
-	return id, err
+	return err
 }
 
 const insertUser = `-- name: InsertUser :exec
 
-INSERT INTO users (uuid, email, password_hash, phone_number, first_name, last_name, image_url, validated, refresh_token) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+INSERT INTO users (id, email, password_hash, phone_number, first_name, last_name, username, image_url, validated) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
 `
 
 type InsertUserParams struct {
-	Uuid         string
+	ID           uuid.UUID
 	Email        string
 	PasswordHash string
 	PhoneNumber  string
 	FirstName    string
 	LastName     string
+	Username     string
 	ImageUrl     string
 	Validated    bool
-	RefreshToken string
 }
 
 // PUTS
 func (q *Queries) InsertUser(ctx context.Context, arg *InsertUserParams) error {
 	_, err := q.db.ExecContext(ctx, insertUser,
-		arg.Uuid,
+		arg.ID,
 		arg.Email,
 		arg.PasswordHash,
 		arg.PhoneNumber,
 		arg.FirstName,
 		arg.LastName,
+		arg.Username,
 		arg.ImageUrl,
 		arg.Validated,
-		arg.RefreshToken,
 	)
 	return err
 }

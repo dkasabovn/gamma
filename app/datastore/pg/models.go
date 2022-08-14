@@ -6,60 +6,58 @@ package userRepo
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Event struct {
-	ID               int32
+	ID               uuid.UUID
 	EventName        string
 	EventDate        time.Time
 	EventLocation    string
 	EventDescription string
-	Uuid             string
 	EventImageUrl    string
-	OrganizationFk   int32
+	OrganizationFk   uuid.UUID
 }
 
 type Invite struct {
-	ID             int32
+	ID             uuid.UUID
 	ExpirationDate time.Time
 	Capacity       int32
-	Uuid           string
 	OrgUserFk      int32
-	EntityUuid     string
+	EntityUuid     uuid.UUID
 	EntityType     int32
 }
 
 type OrgUser struct {
 	ID             int32
 	PoliciesNum    int32
-	UserFk         int32
-	OrganizationFk int32
+	UserFk         uuid.UUID
+	OrganizationFk uuid.UUID
 }
 
 type Organization struct {
-	ID          int32
+	ID          uuid.UUID
 	OrgName     string
 	City        string
-	Uuid        string
 	OrgImageUrl string
 }
 
 type User struct {
-	ID           int32
-	Uuid         string
+	ID           uuid.UUID
 	Email        string
 	PasswordHash string
 	PhoneNumber  string
 	FirstName    string
 	LastName     string
+	Username     string
 	ImageUrl     string
 	Validated    bool
-	RefreshToken string
 }
 
 type UserEvent struct {
 	ID               int32
-	UserFk           int32
-	EventFk          int32
+	UserFk           uuid.UUID
+	EventFk          uuid.UUID
 	ApplicationState string
 }

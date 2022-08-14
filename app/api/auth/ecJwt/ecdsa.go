@@ -1,15 +1,13 @@
 package ecJwt
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"io/ioutil"
 	"log"
 	"time"
 
-	userRepo "gamma/app/datastore/pg"
-
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 )
 
 var (
@@ -18,16 +16,9 @@ var (
 )
 
 type GammaClaims struct {
-	Uuid      string `json:"uuid"`
-	ImageUrl  string `json:"image_url"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	UUID     uuid.UUID `json:"uuid"`
+	Username string    `json:"username"`
 	jwt.StandardClaims
-}
-
-type GammaJwt struct {
-	BearerToken  string `json:"bearer_token" header:"Authorization"`
-	RefreshToken string `json:"refresh_token" param:"refresh_token"`
 }
 
 func LoadPrivatePublicKeyPairsDev() {
@@ -52,7 +43,7 @@ func ECDSASign(claims *GammaClaims) (string, string) {
 	}
 
 	refreshClaims := &GammaClaims{
-		Uuid: claims.Uuid,
+		UUID: claims.UUID,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(7 * 24 * time.Hour).Unix(),
 			Issuer:    "auth.gamma",
@@ -98,19 +89,4 @@ func ECDSAVerify(tokenStr string) (*jwt.Token, bool) {
 		return publicKeyS, nil
 	})
 	return token, err == nil
-}
-
-func GetTokens(ctx context.Context, user *userRepo.User) *GammaJwt {
-	claims := &GammaClaims{
-		Uuid:      user.Uuid,
-		ImageUrl:  user.ImageUrl,
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-	}
-
-	accessToken, refreshToken := ECDSASign(claims)
-	return &GammaJwt{
-		BearerToken:  accessToken,
-		RefreshToken: refreshToken,
-	}
 }

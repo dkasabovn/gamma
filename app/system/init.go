@@ -1,7 +1,8 @@
 package system
 
 import (
-	"gamma/app/system/auth/ecJwt"
+	"gamma/app/api/auth/ecJwt"
+	"gamma/app/system/log"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -22,4 +23,5 @@ func Initialize() {
 	ENVIRONMENT = os.Getenv("ENVIRONMENT")
 	BUCKET_NAME = os.Getenv("BUCKET_NAME")
 	ecJwt.LoadPrivatePublicKeyPairsDev()
+	log.Debugf("%s", ENVIRONMENT)
 }

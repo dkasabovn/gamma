@@ -1,4 +1,4 @@
-package datastore
+package objectstore
 
 import (
 	"context"
@@ -9,17 +9,15 @@ import (
 	"google.golang.org/api/option"
 )
 
-var BUCKET_NAME string
 var csCon *storage.Client
-var CSSingleton sync.Once
+var storageSingleton sync.Once
 
-func StorageInstance() *storage.Client {
-	CSSingleton.Do(func() {
+func storageInstance() *storage.Client {
+	storageSingleton.Do(func() {
 		client, err := storage.NewClient(context.Background(), option.WithCredentialsFile(os.Getenv("CLOUD_CREDENTIALS_FILE")))
 		if err != nil {
 			panic("Could not open file")
 		}
-		BUCKET_NAME = os.Getenv("BUCKET_NAME")
 		csCon = client
 	})
 	return csCon

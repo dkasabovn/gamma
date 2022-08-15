@@ -160,7 +160,7 @@ var _ = Describe("Service", func() {
 					EventImage:       []byte{},
 				}
 
-				err := userSvc.CreateEvent(context.Background(), &userRepo.GetOrgUserRow{
+				err := userSvc.CreateEvent(context.Background(), &userRepo.GetUserWithOrgRow{
 					ID:             0,
 					PoliciesNum:    int32(bo.Create(bo.CREATE_EVENTS)),
 					UserFk:         partialUser.UUID,
@@ -183,7 +183,7 @@ var _ = Describe("Service", func() {
 					EventImage:       []byte{},
 				}
 
-				err := userSvc.CreateEvent(context.Background(), &userRepo.GetOrgUserRow{
+				err := userSvc.CreateEvent(context.Background(), &userRepo.GetUserWithOrgRow{
 					ID:             0,
 					PoliciesNum:    int32(bo.Create(bo.AFFILIATED)),
 					UserFk:         partialUser.UUID,
@@ -195,4 +195,6 @@ var _ = Describe("Service", func() {
 			})
 		})
 	})
+
+	// TODO: test create invite
 })

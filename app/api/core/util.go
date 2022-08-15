@@ -102,7 +102,7 @@ func ExtractUser(c echo.Context) (*userRepo.User, error) {
 	return user, nil
 }
 
-func ExtractOrguser(c echo.Context, orgUuidString string) (*userRepo.GetOrgUserRow, error) {
+func ExtractOrguser(c echo.Context, orgUuidString string) (*userRepo.GetUserWithOrgRow, error) {
 	userToken := c.Get("user").(*jwt.Token)
 	claims := userToken.Claims.(*ecJwt.GammaClaims)
 	orgUuid, err := uuid.Parse(orgUuidString)
@@ -110,7 +110,7 @@ func ExtractOrguser(c echo.Context, orgUuidString string) (*userRepo.GetOrgUserR
 		log.Errorf("org uuid is not in uuid format: %v", err)
 		return nil, err
 	}
-	user, err := user.GetUserService().GetOrgUser(c.Request().Context(), claims.UUID, orgUuid)
+	user, err := user.GetUserService().GetUserWithOrg(c.Request().Context(), claims.UUID, orgUuid)
 	if err != nil {
 		log.Errorf("Could not extract org user from token: %s; %v", userToken.Raw, err)
 		return nil, err

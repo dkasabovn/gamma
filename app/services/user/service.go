@@ -98,8 +98,8 @@ func (u *userService) GetUser(ctx context.Context, userUUID uuid.UUID) (*userRep
 	return u.userRepo.GetUserByUuid(ctx, userUUID)
 }
 
-func (u *userService) GetOrgUser(ctx context.Context, userUUID uuid.UUID, orgUUID uuid.UUID) (*userRepo.GetOrgUserRow, error) {
-	return u.userRepo.GetOrgUser(ctx, &userRepo.GetOrgUserParams{
+func (u *userService) GetUserWithOrg(ctx context.Context, userUUID uuid.UUID, orgUUID uuid.UUID) (*userRepo.GetUserWithOrgRow, error) {
+	return u.userRepo.GetUserWithOrg(ctx, &userRepo.GetUserWithOrgParams{
 		UserUuid: userUUID,
 		OrgUuid:  orgUUID,
 	})
@@ -136,7 +136,7 @@ func (u *userService) GetEvents(ctx context.Context, searchParams *dto.EventSear
 	return u.userRepo.GetEventsWithOrganizations(ctx, params)
 }
 
-func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetOrgUserRow, eventParams *dto.EventUpsert) error {
+func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, eventParams *dto.EventUpsert) error {
 	// TODO: validation
 	policyNumber := bo.PolicyNumber(orgUser.PoliciesNum)
 	if !policyNumber.Can(bo.CREATE_EVENTS) {
@@ -168,6 +168,61 @@ func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetOrgU
 	}
 
 	return nil
+}
+
+func (u *userService) CreateInvite(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, inviteParams *dto.InviteCreate) error {
+	// TODO: validation
+	policyNumber := bo.PolicyNumber(orgUser.PoliciesNum)
+	if !policyNumber.Can(bo.CREATE_INVITES) {
+		return errors.New("user cannot create invites")
+	}
+
+	/* org user is the user creating the invite
+	now we have to find the org_user target */
+
+	targetUserUuid, err := uuid.Parse(inviteParams.UserUuid)
+	if err != nil {
+		return err
+	}
+
+	targetOrgUser, err := u.userRepo.GetOrgUser(ctx, &userRepo.GetOrgUserParams{
+		UserFk:         targetUserUuid,
+		OrganizationFk: orgUser.OrganizationFk,
+	})
+	if err != nil {
+		return err
+	}
+
+	targetEntityUuid, err := uuid.Parse(inviteParams.EntityUuid)
+	if err != nil {
+		return err
+	}
+
+	if err := u.userRepo.InsertInvite(ctx, &userRepo.InsertInviteParams{
+		ID:             uuid.New(),
+		ExpirationDate: inviteParams.ExpirationDate,
+		Capacity:       int32(inviteParams.Capacity),
+		OrgUserFk:      targetOrgUser.ID,
+		OrgFk:          orgUser.OrganizationFk,
+		EntityUuid:     targetEntityUuid,
+		EntityType:     0,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *userService) GetInvite(ctx context.Context, inviteUUID uuid.UUID) (*userRepo.Invite, error) {
+	return u.userRepo.GetInvite(ctx, inviteUUID)
+}
+
+func (u *userService) GetEvent(ctx context.Context, eventUUID uuid.UUID) (*userRepo.Event, error) {
+	return u.userRepo.GetEvent(ctx, eventUUID)
+}
+
+func (u *userService) GetOrganization(ctx context.Context, orgUUID uuid.UUID) (*userRepo.Organization, error) {
+	return u.userRepo.GetOrganization(ctx, orgUUID)
 }
 
 func (u *userService) CreateOrganization(ctx context.Context, orgParams *userRepo.InsertOrganizationParams) error {

@@ -7,6 +7,9 @@ SELECT * FROM users WHERE id = sqlc.arg(uuid) LIMIT 1;
 SELECT * FROM users WHERE email = sqlc.arg(email) LIMIT 1;
 
 -- name: GetOrgUser :one
+SELECT * FROM org_users ou WHERE ou.user_fk = $1 AND ou.organization_fk = $2 LIMIT 1;
+
+-- name: GetUserWithOrg :one
 SELECT * FROM org_users ou INNER JOIN  users u ON ou.user_fk = u.id WHERE ou.organization_fk = sqlc.arg(org_uuid) AND u.id = sqlc.arg(user_uuid) LIMIT 1;
 
 -- name: GetUserOrganizations :many
@@ -54,7 +57,7 @@ INSERT INTO org_users (policies_num, user_fk, organization_fk) VALUES ($1,$2,$3)
 INSERT INTO events (id, event_name, event_date, event_location, event_description, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- name: InsertInvite :exec
-INSERT INTO invites (id, expiration_date, capacity, org_user_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6);
+INSERT INTO invites (id, expiration_date, capacity, org_user_fk, org_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- UPDATES
 

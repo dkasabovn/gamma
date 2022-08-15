@@ -47,6 +47,7 @@ CREATE TABLE invites (
     expiration_date TIMESTAMP NOT NULL,
     capacity INT NOT NULL,
 	org_user_fk INT NOT NULL,
+    org_fk uuid NOT NULL,
 	entity_uuid uuid NOT NULL,
 	entity_type int NOT NULL
 );
@@ -68,3 +69,6 @@ ALTER TABLE user_events
 
 ALTER TABLE invites
 	ADD CONSTRAINT fk_invites_org_user FOREIGN KEY (org_user_fk) REFERENCES org_users(id) ON DELETE CASCADE;
+
+ALTER TABLE invites
+    ADD CONSTRAINT fk_invites_organization FOREIGN KEY (org_fk) REFERENCES organizations(id) ON DELETE CASCADE;

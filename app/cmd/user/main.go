@@ -1,9 +1,18 @@
 package main
 
 import (
-	"gamma/app/system"
+	user "gamma/app/api/userv2"
+	"log"
+
+	"github.com/labstack/echo/v4"
+)
+
+const (
+	port = "8080"
 )
 
 func main() {
-	system.Initialize()
+	e := echo.New()
+	user.AddRoutes(e)
+	log.Fatalf("%v", e.Start(port))
 }

@@ -185,14 +185,6 @@ func (u *userService) CreateInvite(ctx context.Context, orgUser *userRepo.GetUse
 		return err
 	}
 
-	targetOrgUser, err := u.userRepo.GetOrgUser(ctx, &userRepo.GetOrgUserParams{
-		UserFk:         targetUserUuid,
-		OrganizationFk: orgUser.OrganizationFk,
-	})
-	if err != nil {
-		return err
-	}
-
 	targetEntityUuid, err := uuid.Parse(inviteParams.EntityUuid)
 	if err != nil {
 		return err
@@ -202,7 +194,7 @@ func (u *userService) CreateInvite(ctx context.Context, orgUser *userRepo.GetUse
 		ID:             uuid.New(),
 		ExpirationDate: inviteParams.ExpirationDate,
 		Capacity:       int32(inviteParams.Capacity),
-		OrgUserFk:      targetOrgUser.ID,
+		UserFk:         targetUserUuid,
 		OrgFk:          orgUser.OrganizationFk,
 		EntityUuid:     targetEntityUuid,
 		EntityType:     0,
@@ -213,8 +205,16 @@ func (u *userService) CreateInvite(ctx context.Context, orgUser *userRepo.GetUse
 	return nil
 }
 
-func (u *userService) GetInvite(ctx context.Context, inviteUUID uuid.UUID) (*userRepo.Invite, error) {
-	return u.userRepo.GetInvite(ctx, inviteUUID)
+func (u *userService) GetInvite(ctx context.Context, inviteParams *dto.InviteGet) (*userRepo.Invite, error) {
+	uuid, err := uuid.Parse(inviteParams.InviteID)
+	if err != nil {
+		return nil, err
+	}
+	return u.userRepo.GetInvite(ctx, uuid)
+}
+
+func (u *userService) GetInvitesForOrgUser(ctx context.Context, userUuid uuid.UUID) ([]*userRepo.Invite, error) {
+	return u.userRepo.GetInvitesForOrgUser(ctx, userUuid)
 }
 
 func (u *userService) GetEvent(ctx context.Context, eventUUID uuid.UUID) (*userRepo.Event, error) {

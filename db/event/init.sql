@@ -46,7 +46,7 @@ CREATE TABLE invites (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     expiration_date TIMESTAMP NOT NULL,
     capacity INT NOT NULL,
-	org_user_fk INT NOT NULL,
+	user_fk uuid NOT NULL,
     org_fk uuid NOT NULL,
 	entity_uuid uuid NOT NULL,
 	entity_type int NOT NULL
@@ -68,7 +68,7 @@ ALTER TABLE user_events
     ADD CONSTRAINT fk_user_events_event FOREIGN KEY (event_fk) REFERENCES events(id) ON DELETE CASCADE;
 
 ALTER TABLE invites
-	ADD CONSTRAINT fk_invites_org_user FOREIGN KEY (org_user_fk) REFERENCES org_users(id) ON DELETE CASCADE;
+	ADD CONSTRAINT fk_invites_org_user FOREIGN KEY (user_fk) REFERENCES users(id) ON DELETE CASCADE;
 
 ALTER TABLE invites
     ADD CONSTRAINT fk_invites_organization FOREIGN KEY (org_fk) REFERENCES organizations(id) ON DELETE CASCADE;

@@ -31,7 +31,7 @@ WHERE e.event_date > @date_floor
 ORDER BY e.event_date DESC;
 
 -- name: GetInvitesForOrgUser :many
-SELECT * FROM invites i WHERE org_user_fk = $1 AND entity_uuid = $2;
+SELECT * FROM invites i WHERE user_fk = $1;
 
 -- name: GetInvite :one
 SELECT * FROM invites i WHERE id = $1;
@@ -57,7 +57,7 @@ INSERT INTO org_users (policies_num, user_fk, organization_fk) VALUES ($1,$2,$3)
 INSERT INTO events (id, event_name, event_date, event_location, event_description, event_image_url, organization_fk) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- name: InsertInvite :exec
-INSERT INTO invites (id, expiration_date, capacity, org_user_fk, org_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6,$7);
+INSERT INTO invites (id, expiration_date, capacity, user_fk, org_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
 -- UPDATES
 

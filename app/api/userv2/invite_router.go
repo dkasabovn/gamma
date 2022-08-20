@@ -19,12 +19,13 @@ func inviteRoutes(e *echo.Echo) {
 		Claims:         &ecJwt.GammaClaims{},
 		ParseTokenFunc: core.JwtParserFunction,
 	}))
+
+	getInviteRouter(grp)
+	createInviteRouter(grp)
 }
 
 func getInviteRouter(g *echo.Group) {
-	g.GET("/invite/:invite_id", func(c echo.Context) error {
-		return nil
-	})
+	g.GET("/invite/:invite_id", getInviteController)
 }
 
 func getSelfInvitesRouter(g *echo.Group) {
@@ -40,7 +41,5 @@ func acceptInviteRouter(g *echo.Group) {
 }
 
 func createInviteRouter(g *echo.Group) {
-	g.POST("/new", func(c echo.Context) error {
-		return nil
-	})
+	g.POST("/new", createInviteController)
 }

@@ -24,7 +24,7 @@ type Invite struct {
 	ID             uuid.UUID
 	ExpirationDate time.Time
 	Capacity       int32
-	OrgUserFk      int32
+	UserFk         uuid.UUID
 	OrgFk          uuid.UUID
 	EntityUuid     uuid.UUID
 	EntityType     int32

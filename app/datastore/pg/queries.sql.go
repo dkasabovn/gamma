@@ -94,7 +94,7 @@ func (q *Queries) GetEventsWithOrganizations(ctx context.Context, arg *GetEvents
 }
 
 const getInvite = `-- name: GetInvite :one
-SELECT id, expiration_date, capacity, org_user_fk, org_fk, entity_uuid, entity_type FROM invites i WHERE id = $1
+SELECT id, expiration_date, capacity, user_fk, org_fk, entity_uuid, entity_type FROM invites i WHERE id = $1
 `
 
 func (q *Queries) GetInvite(ctx context.Context, id uuid.UUID) (*Invite, error) {
@@ -104,7 +104,7 @@ func (q *Queries) GetInvite(ctx context.Context, id uuid.UUID) (*Invite, error) 
 		&i.ID,
 		&i.ExpirationDate,
 		&i.Capacity,
-		&i.OrgUserFk,
+		&i.UserFk,
 		&i.OrgFk,
 		&i.EntityUuid,
 		&i.EntityType,
@@ -113,16 +113,11 @@ func (q *Queries) GetInvite(ctx context.Context, id uuid.UUID) (*Invite, error) 
 }
 
 const getInvitesForOrgUser = `-- name: GetInvitesForOrgUser :many
-SELECT id, expiration_date, capacity, org_user_fk, org_fk, entity_uuid, entity_type FROM invites i WHERE org_user_fk = $1 AND entity_uuid = $2
+SELECT id, expiration_date, capacity, user_fk, org_fk, entity_uuid, entity_type FROM invites i WHERE user_fk = $1
 `
 
-type GetInvitesForOrgUserParams struct {
-	OrgUserFk  int32
-	EntityUuid uuid.UUID
-}
-
-func (q *Queries) GetInvitesForOrgUser(ctx context.Context, arg *GetInvitesForOrgUserParams) ([]*Invite, error) {
-	rows, err := q.db.QueryContext(ctx, getInvitesForOrgUser, arg.OrgUserFk, arg.EntityUuid)
+func (q *Queries) GetInvitesForOrgUser(ctx context.Context, userFk uuid.UUID) ([]*Invite, error) {
+	rows, err := q.db.QueryContext(ctx, getInvitesForOrgUser, userFk)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +129,7 @@ func (q *Queries) GetInvitesForOrgUser(ctx context.Context, arg *GetInvitesForOr
 			&i.ID,
 			&i.ExpirationDate,
 			&i.Capacity,
-			&i.OrgUserFk,
+			&i.UserFk,
 			&i.OrgFk,
 			&i.EntityUuid,
 			&i.EntityType,
@@ -458,14 +453,14 @@ func (q *Queries) InsertEvent(ctx context.Context, arg *InsertEventParams) error
 }
 
 const insertInvite = `-- name: InsertInvite :exec
-INSERT INTO invites (id, expiration_date, capacity, org_user_fk, org_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6,$7)
+INSERT INTO invites (id, expiration_date, capacity, user_fk, org_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6,$7)
 `
 
 type InsertInviteParams struct {
 	ID             uuid.UUID
 	ExpirationDate time.Time
 	Capacity       int32
-	OrgUserFk      int32
+	UserFk         uuid.UUID
 	OrgFk          uuid.UUID
 	EntityUuid     uuid.UUID
 	EntityType     int32
@@ -476,7 +471,7 @@ func (q *Queries) InsertInvite(ctx context.Context, arg *InsertInviteParams) err
 		arg.ID,
 		arg.ExpirationDate,
 		arg.Capacity,
-		arg.OrgUserFk,
+		arg.UserFk,
 		arg.OrgFk,
 		arg.EntityUuid,
 		arg.EntityType,

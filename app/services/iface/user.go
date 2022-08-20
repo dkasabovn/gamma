@@ -21,7 +21,8 @@ type UserService interface {
 	CreateOrganization(ctx context.Context, orgParams *userRepo.InsertOrganizationParams) error
 	CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error
 	CreateInvite(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, inviteParams *dto.InviteCreate) error
-	GetInvite(ctx context.Context, inviteUUID uuid.UUID) (*userRepo.Invite, error)
+	GetInvite(ctx context.Context, inviteParams *dto.InviteGet) (*userRepo.Invite, error)
+	GetInvitesForOrgUser(ctx context.Context, userUuid uuid.UUID) ([]*userRepo.Invite, error)
 	GetEvent(ctx context.Context, eventUUID uuid.UUID) (*userRepo.Event, error)
 	GetOrganization(ctx context.Context, orgUUID uuid.UUID) (*userRepo.Organization, error)
 	DANGER() error

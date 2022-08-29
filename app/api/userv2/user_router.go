@@ -21,13 +21,13 @@ func userRoutes(e *echo.Echo) {
 	}))
 
 	getSelfRouter(grp)
+	updateSelfRouter(grp)
 }
 
 func getSelfRouter(g *echo.Group) {
 	g.GET("/me", getSelfController)
 }
 
-// TODO: Grant
 func updateSelfRouter(g *echo.Group) {
-	g.PUT("/me", func(c echo.Context) error { return nil })
+	g.PUT("/me", updateSelfController)
 }

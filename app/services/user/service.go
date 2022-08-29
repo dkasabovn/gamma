@@ -72,6 +72,8 @@ func (u *userService) SignUpUser(ctx context.Context, signUpParams *dto.UserSign
 		log.Infof("%v", err)
 		return nil, err
 	}
+	print(signUpParams.FirstName)
+	print(signUpParams.Email)
 
 	if err := u.userRepo.InsertUser(ctx, &userRepo.InsertUserParams{
 		ID:           newUuid,
@@ -92,6 +94,19 @@ func (u *userService) SignUpUser(ctx context.Context, signUpParams *dto.UserSign
 		UUID:     newUuid,
 		Username: signUpParams.UserName,
 	}, nil
+}
+
+func (u *userService) UpdateUser(ctx context.Context, updateParams *userRepo.User) error {
+	return u.userRepo.UpdateUser(ctx, &userRepo.UpdateUserParams{
+		ID:           updateParams.ID,
+		FirstName:    updateParams.FirstName,
+		LastName:     updateParams.LastName,
+		Email:        updateParams.Email,
+		PhoneNumber:  updateParams.PhoneNumber,
+		PasswordHash: updateParams.PasswordHash,
+		ImageUrl:     updateParams.ImageUrl,
+		Username:     updateParams.Username,
+	})
 }
 
 func (u *userService) GetUser(ctx context.Context, userUUID uuid.UUID) (*userRepo.User, error) {
@@ -163,6 +178,49 @@ func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetUser
 		// At this point orgfk should be vetted
 		OrganizationFk: uuid.Must(uuid.Parse(eventParams.OrganizationID)),
 	}); err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *userService) UpdateEvent(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, eventParams *dto.EventUpdate, eventID uuid.UUID) error {
+	policyNumber := bo.PolicyNumber(orgUser.PoliciesNum)
+	if !policyNumber.Can(bo.MODIFY_EVENTS) {
+		return errors.New("user cannot modify events")
+	}
+
+	imageUrl, err := u.storage.Put(ctx, fmt.Sprintf("users/%s.webp", eventParams.EventID), &objectstore.Object{
+		Data: eventParams.EventImage,
+	})
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	if err := u.userRepo.UpdateEvent(ctx, &userRepo.UpdateEventParams{
+		ID:               eventID,
+		EventName:        eventParams.EventName,
+		EventDate:        eventParams.EventDate,
+		EventLocation:    eventParams.EventLocation,
+		EventDescription: eventParams.EventDescription,
+		EventImageUrl:    imageUrl,
+	}); err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *userService) DeleteEvent(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, eventID uuid.UUID) error {
+	policyNumber := bo.PolicyNumber(orgUser.PoliciesNum)
+	if !policyNumber.Can(bo.CREATE_EVENTS) {
+		return errors.New("user cannot create or delete events")
+	}
+
+	if err := u.userRepo.DeleteEvent(ctx, eventID); err != nil {
 		log.Errorf("%v", err)
 		return err
 	}

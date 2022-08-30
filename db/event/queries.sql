@@ -63,6 +63,17 @@ INSERT INTO invites (id, expiration_date, capacity, user_fk, org_fk, entity_uuid
 
 UPDATE invites SET use_limit = use_limit - 1 WHERE id = $1 AND use_limit > 0;
 
+-- name: UpdateUser :exec
+UPDATE users SET first_name = $2, last_name = $3, email = $4, phone_number = $5, password_hash = $6, image_url = $7, username = $8 WHERE id = $1;
+
+-- name: UpdateEvent :exec
+UPDATE events SET event_name = $2, event_date = $3, event_location = $4, event_description = $5, event_image_url = $6 WHERE id = $1;
+
+-- DELETE
+
+-- name: DeleteEvent :exec
+DELETE FROM events WHERE id = $1;
+
 -- UTIL
 
 -- name: TruncateAll :exec

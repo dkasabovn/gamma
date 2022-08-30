@@ -1,6 +1,8 @@
 package user
 
 import (
+	"fmt"
+	"gamma/app/api/auth/argon"
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
 	"gamma/app/services/user"
@@ -34,4 +36,53 @@ func getSelfController(c echo.Context) error {
 		"user_events":        dto.ConvertUserEvents(userEvents),
 		"user_organizations": dto.ConvertOrganizationsWithPermissions(userOrgs),
 	}))
+}
+
+func updateSelfController(c echo.Context) error {
+	prevUser, err := core.ExtractUser(c)
+	if err != nil {
+		log.Errorf("could not get user: %v", err)
+		return c.JSON(http.StatusUnauthorized, core.ApiError(http.StatusUnauthorized))
+	}
+	fmt.Print(prevUser.Email)
+
+	var newUser dto.UserUpdate
+	if err := c.Bind(&newUser); err != nil {
+		return c.JSON(http.StatusBadRequest, core.ApiError(http.StatusBadRequest))
+	}
+
+	if newUser.Email != "" {
+		prevUser.Email = newUser.Email
+	}
+
+	if newUser.FirstName != "" {
+		prevUser.FirstName = newUser.FirstName
+	}
+
+	if newUser.LastName != "" {
+		prevUser.LastName = newUser.LastName
+	}
+
+	if newUser.RawPassword != "" {
+		hash, err := argon.PasswordToHash(newUser.RawPassword)
+		if err != nil {
+			log.Infof("%v", err)
+			return err
+		}
+		prevUser.PasswordHash = hash
+	}
+
+	if newUser.UserName != "" {
+		prevUser.Username = newUser.UserName
+	}
+
+	if newUser.ImageUrl != "" {
+		prevUser.ImageUrl = newUser.ImageUrl
+	}
+
+	err = user.GetUserService().UpdateUser(c.Request().Context(), prevUser)
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"newUser": prevUser,
+	}))
+
 }

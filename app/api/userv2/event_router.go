@@ -33,23 +33,14 @@ func createEventRouter(g *echo.Group) {
 	g.POST("/new", createEventController)
 }
 
-// TODO: Grant
 func getEventRouter(g *echo.Group) {
-	g.GET("/event/:event_uuid", func(c echo.Context) error {
-		return nil
-	})
+	g.GET("/event/:event_uuid", getEventController)
 }
 
-// TODO: Grant
 func updateEventRouter(g *echo.Group) {
-	g.PUT("/event/:event_uuid", func(c echo.Context) error {
-		return nil
-	})
+	g.PUT("/event/:event_uuid", updateEventController)
 }
 
-// TODO: Grant
 func deleteEventRouter(g *echo.Group) {
-	g.DELETE("/event/:event_uuid", func(c echo.Context) error {
-		return nil
-	})
+	g.DELETE("/event/:event_uuid", deleteEventController)
 }

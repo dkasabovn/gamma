@@ -22,6 +22,8 @@ func inviteRoutes(e *echo.Echo) {
 
 	getInviteRouter(grp)
 	createInviteRouter(grp)
+	getSelfInvitesRouter(grp)
+	acceptInviteRouter(grp)
 }
 
 func getInviteRouter(g *echo.Group) {
@@ -29,15 +31,11 @@ func getInviteRouter(g *echo.Group) {
 }
 
 func getSelfInvitesRouter(g *echo.Group) {
-	g.GET("/me", func(c echo.Context) error {
-		return nil
-	})
+	g.GET("/me", getSelfInvitesController)
 }
 
 func acceptInviteRouter(g *echo.Group) {
-	g.GET("/accept/:invite_id", func(c echo.Context) error {
-		return nil
-	})
+	g.GET("/accept/:invite_id", acceptInviteController)
 }
 
 func createInviteRouter(g *echo.Group) {

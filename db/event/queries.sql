@@ -42,6 +42,9 @@ SELECT * FROM events e WHERE id = $1;
 -- name: GetOrganization :one
 SELECT * FROM organizations o WHERE id = $1;
 
+-- name: GetOrganizationUsers :one
+SELECT * FROM org_users OU INNER JOIN users u ON ou.user_fk = u.id WHERE ou.organization_fk = sqlc.arg(org_uuid);
+
 -- PUTS
 
 -- name: InsertUser :exec
@@ -59,9 +62,23 @@ INSERT INTO events (id, event_name, event_date, event_location, event_descriptio
 -- name: InsertInvite :exec
 INSERT INTO invites (id, expiration_date, capacity, user_fk, org_fk, entity_uuid, entity_type) VALUES ($1,$2,$3,$4,$5,$6,$7);
 
+-- name: InsertUserEvent :exec
+INSERT INTO user_events (user_fk, event_fk, application_state) VALUES ($1,$2,$3);
+
+-- name: BatchAddOrgUsersToEvent :exec
+INSERT INTO user_events (user_fk, event_fk, application_state) VALUES (
+    unnest(@user_uuids::uuid[]),
+    unnest(@event_uuids::uuid[]),
+    1
+);
+
 -- UPDATES
 
-UPDATE invites SET use_limit = use_limit - 1 WHERE id = $1 AND use_limit > 0;
+-- name: UseInvite :exec
+UPDATE invites SET use_limit = use_limit - 1 WHERE id = $1 AND use_limit != 0;
+
+-- name: UpdatePassword :exec
+UPDATE users SET password_hash = $1 WHERE id = $2;
 
 -- UTIL
 

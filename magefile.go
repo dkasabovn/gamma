@@ -10,6 +10,7 @@ import (
 type (
 	Run      mg.Namespace
 	Generate mg.Namespace
+	Build    mg.Namespace
 	Test     mg.Namespace
 )
 
@@ -33,6 +34,18 @@ func (Run) EventDB() error {
 	err = sh.RunV("docker", "run", "-p", "5432:5432", "-d", "--name=gamma_db", "gamma/eventdb")
 
 	return err
+}
+
+func (Build) EventDB() error {
+	err := sh.RunV("docker", "build", "-t", "gamma/eventdb", "-f", "./db/event/Dockerfile", "./db/event/")
+	if err != nil {
+		return err
+	}
+
+	sh.RunV("docker", "container", "stop", "gamma_db")
+	sh.RunV("docker", "container", "rm", "gamma_db")
+
+	return nil
 }
 
 func (Test) All() error {

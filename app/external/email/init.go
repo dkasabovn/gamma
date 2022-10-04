@@ -4,13 +4,26 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"gamma/app/system/log"
 	"html/template"
 	"io/fs"
 )
 
-// go:embed templates/*
+type TMPLType string
+
+const (
+	html TMPLType = "html"
+	text TMPLType = "text"
+)
+
+const (
+	ResetPassword string = "reset_password"
+)
+
+//go:embed templates/*
 var templatesFS embed.FS
-var templates map[string]*template.Template
+
+var templates = map[string]*template.Template{}
 
 func init() {
 	tmplFiles, err := fs.ReadDir(templatesFS, "templates")
@@ -24,13 +37,16 @@ func init() {
 			panic(err)
 		}
 
+		log.Infof("%s", template.Name())
+
 		templates[template.Name()] = template
 	}
 }
 
-func render(key string, data struct{}) (string, error) {
+func render(key string, renderType TMPLType, data interface{}) (string, error) {
 	var tmplOut bytes.Buffer
-	if err := templates[key].Execute(&tmplOut, data); err != nil {
+	// TODO: This probably doesn't work
+	if err := templates[fmt.Sprintf("%s_%s", key, renderType)].Execute(&tmplOut, data); err != nil {
 		return "", err
 	}
 	return tmplOut.String(), nil

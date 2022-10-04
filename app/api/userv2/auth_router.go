@@ -16,6 +16,8 @@ func authRoutes(e *echo.Echo) {
 	logInRouter(grp)
 	signUpRouter(grp)
 	refreshRouter(grp)
+	recoverPasswordRouter(grp)
+	resetPasswordRouter(grp)
 }
 
 func logInRouter(g *echo.Group) {
@@ -31,5 +33,9 @@ func refreshRouter(g *echo.Group) {
 }
 
 func recoverPasswordRouter(g *echo.Group) {
-	g.GET("/recover", func(c echo.Context) error { return nil })
+	g.POST("/recover", recoverPasswordController)
+}
+
+func resetPasswordRouter(g *echo.Group) {
+	g.POST("/reset", resetPasswordController)
 }

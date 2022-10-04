@@ -11,7 +11,9 @@ import (
 	"gamma/app/api/models/dto"
 	"gamma/app/datastore/objectstore"
 	userRepo "gamma/app/datastore/pg"
+	"gamma/app/datastore/redis"
 	"gamma/app/domain/bo"
+	"gamma/app/external/email"
 	"gamma/app/services/iface"
 	"gamma/app/system/log"
 
@@ -29,8 +31,9 @@ var (
 
 type userService struct {
 	userRepo *userRepo.Queries
-	// redis    redis.Redis
-	storage objectstore.Storage
+	redis    redis.Redis
+	storage  objectstore.Storage
+	email    email.Email
 }
 
 func GetUserService() iface.UserService {
@@ -39,6 +42,7 @@ func GetUserService() iface.UserService {
 			userRepo: userRepo.New(userRepo.RwInstance()),
 			// redis:    redis.GetRedis(),
 			storage: objectstore.GetStorage(),
+			email:   email.GetEmail(),
 		}
 	})
 	return userServiceInstance
@@ -94,6 +98,67 @@ func (u *userService) SignUpUser(ctx context.Context, signUpParams *dto.UserSign
 	}, nil
 }
 
+func (u *userService) ResetPasswordPreflight(ctx context.Context, resetParams *dto.UserResetPasswordPreflight) error {
+	user, err := u.userRepo.GetUserByEmail(ctx, resetParams.Email)
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	resetUUID := uuid.New()
+
+	if err := u.redis.Set(ctx, resetUUID.String(), user.ID.String(), time.Minute*10); err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	if err := u.email.SendEmail(ctx, email.ResetPassword, user.Email, "Reset Password", struct {
+		ResetUUID string
+	}{
+		ResetUUID: resetUUID.String(),
+	}); err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+	return err
+}
+
+func (u *userService) ResetPasswordConfirmed(ctx context.Context, resetParams *dto.UserResetPasswordConfirmed) error {
+	resetUUID, err := uuid.Parse(resetParams.ResetUUID)
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	userUUIDString, err := u.redis.Get(ctx, resetUUID.String())
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	userUUID, err := uuid.Parse(userUUIDString)
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	hash, err := argon.PasswordToHash(resetParams.RawPassword)
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	if err := u.userRepo.UpdatePassword(ctx, &userRepo.UpdatePasswordParams{
+		PasswordHash: hash,
+		ID:           userUUID,
+	}); err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	return nil
+}
+
 func (u *userService) GetUser(ctx context.Context, userUUID uuid.UUID) (*userRepo.User, error) {
 	return u.userRepo.GetUserByUuid(ctx, userUUID)
 }
@@ -114,8 +179,9 @@ func (u *userService) GetUserOrganizations(ctx context.Context, userUUID uuid.UU
 }
 
 func (u *userService) GetEvents(ctx context.Context, searchParams *dto.EventSearch) ([]*userRepo.GetEventsWithOrganizationsRow, error) {
+	// TODO: Revert date floor to time.Now() - for production
 	params := &userRepo.GetEventsWithOrganizationsParams{
-		DateFloor:          time.Now(),
+		DateFloor:          time.Now().Add(time.Hour * -4000),
 		FilterOrganization: false,
 		OrgUuid:            [16]byte{},
 	}
@@ -125,7 +191,7 @@ func (u *userService) GetEvents(ctx context.Context, searchParams *dto.EventSear
 	}
 
 	if searchParams.OrganizationID != nil {
-		orgUuid, err := uuid.FromBytes([]byte(*searchParams.OrganizationID))
+		orgUuid, err := uuid.Parse(*searchParams.OrganizationID)
 		if err != nil {
 			return nil, err
 		}
@@ -180,6 +246,8 @@ func (u *userService) CreateInvite(ctx context.Context, orgUser *userRepo.GetUse
 	/* org user is the user creating the invite
 	now we have to find the org_user target */
 
+	// TODO: specify entity type
+
 	targetUserUuid, err := uuid.Parse(inviteParams.UserUuid)
 	if err != nil {
 		return err
@@ -197,7 +265,7 @@ func (u *userService) CreateInvite(ctx context.Context, orgUser *userRepo.GetUse
 		UserFk:         targetUserUuid,
 		OrgFk:          orgUser.OrganizationFk,
 		EntityUuid:     targetEntityUuid,
-		EntityType:     0,
+		EntityType:     int32(inviteParams.EntityType),
 	}); err != nil {
 		return err
 	}
@@ -231,6 +299,62 @@ func (u *userService) CreateOrganization(ctx context.Context, orgParams *userRep
 
 func (u *userService) CreateOrgUser(ctx context.Context, orgUserParams *userRepo.InsertOrgUserParams) error {
 	return u.userRepo.InsertOrgUser(ctx, orgUserParams)
+}
+
+func (u *userService) InsertUserEvent(ctx context.Context, userEventParams *userRepo.InsertUserEventParams) error {
+	return u.userRepo.InsertUserEvent(ctx, userEventParams)
+}
+
+func (u *userService) GetOrganizationUsers(ctx context.Context, orgUUID uuid.UUID) (*userRepo.GetOrganizationUsersRow, error) {
+	return u.userRepo.GetOrganizationUsers(ctx, orgUUID)
+}
+
+func (u *userService) AcceptInvite(ctx context.Context, user *userRepo.User, acceptParams *dto.InviteGet) error {
+	invite, err := u.GetInvite(ctx, acceptParams)
+	if err != nil {
+		return err
+	}
+
+	if invite.Capacity == 0 || invite.ExpirationDate.Before(time.Now()) {
+		return errors.New("invite invalid")
+	}
+
+	tx, err := userRepo.RwInstance().Begin(ctx)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback(ctx)
+	qtx := u.userRepo.WithTx(tx)
+
+	if err := qtx.UseInvite(ctx, invite.ID); err != nil {
+		return err
+	}
+
+	switch invite.EntityType {
+	case int32(bo.ORGANIZATION):
+		if err := qtx.InsertOrgUser(ctx, &userRepo.InsertOrgUserParams{
+			PoliciesNum:    int32(bo.Create(bo.AFFILIATED)),
+			UserFk:         user.ID,
+			OrganizationFk: invite.EntityUuid,
+		}); err != nil {
+			return err
+		}
+	case int32(bo.EVENT):
+		if err := qtx.InsertUserEvent(ctx, &userRepo.InsertUserEventParams{
+			UserFk:           user.ID,
+			EventFk:          invite.EntityUuid,
+			ApplicationState: int32(bo.ACCEPTED),
+		}); err != nil {
+			return err
+		}
+	default:
+		return errors.New("corrupted invite")
+	}
+
+	// TODO: missing something? Tally: 1
+
+	return tx.Commit(ctx)
 }
 
 // TODO: Remove this and come up with a test only alternative

@@ -60,5 +60,5 @@ type UserEvent struct {
 	ID               int32
 	UserFk           uuid.UUID
 	EventFk          uuid.UUID
-	ApplicationState string
+	ApplicationState int32
 }

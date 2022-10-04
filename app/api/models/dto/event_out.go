@@ -23,7 +23,7 @@ type EventWithOrganization struct {
 
 type EventWithUserStatus struct {
 	Event
-	Status string
+	Status int
 }
 
 func ConvertEvent(event *userRepo.Event) *Event {
@@ -82,7 +82,7 @@ func ConvertUserEvent(userEvent *userRepo.GetUserEventsRow) *EventWithUserStatus
 			EventDescription: userEvent.EventDescription,
 			EventImageUrl:    userEvent.EventImageUrl,
 		},
-		Status: userEvent.ApplicationState,
+		Status: int(userEvent.ApplicationState),
 	}
 }
 

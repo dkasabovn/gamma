@@ -54,7 +54,7 @@ func FormImage(c echo.Context, data []byte, name string) error {
 		return err
 	}
 
-	if file.Header.Get("Content-Type") != "image/webp" || file.Size > 10000000 {
+	if file.Header.Get("Content-Type") != "image/webp" || file.Size > 100000000 {
 		log.Errorf("Image with content type %s and size %d is invalid", file.Header.Get("Coontent-Type"), file.Size)
 		return errors.New("image isn't the right format")
 	}
@@ -96,7 +96,7 @@ func ExtractUser(c echo.Context) (*userRepo.User, error) {
 	claims := userToken.Claims.(*ecJwt.GammaClaims)
 	user, err := user.GetUserService().GetUser(c.Request().Context(), claims.UUID)
 	if err != nil {
-		log.Errorf("Could not extract user from faulty token: %s", userToken.Raw)
+		log.Errorf("Could not extract user from faulty token: %s, %v", userToken.Raw, err)
 		return nil, err
 	}
 	return user, nil

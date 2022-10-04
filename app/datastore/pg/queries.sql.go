@@ -12,12 +12,30 @@ import (
 	"github.com/google/uuid"
 )
 
+const batchAddOrgUsersToEvent = `-- name: BatchAddOrgUsersToEvent :exec
+INSERT INTO user_events (user_fk, event_fk, application_state) VALUES (
+    unnest($1::uuid[]),
+    unnest($2::uuid[]),
+    1
+)
+`
+
+type BatchAddOrgUsersToEventParams struct {
+	UserUuids  []uuid.UUID
+	EventUuids []uuid.UUID
+}
+
+func (q *Queries) BatchAddOrgUsersToEvent(ctx context.Context, arg *BatchAddOrgUsersToEventParams) error {
+	_, err := q.db.Exec(ctx, batchAddOrgUsersToEvent, arg.UserUuids, arg.EventUuids)
+	return err
+}
+
 const getEvent = `-- name: GetEvent :one
 SELECT id, event_name, event_date, event_location, event_description, event_image_url, organization_fk FROM events e WHERE id = $1
 `
 
 func (q *Queries) GetEvent(ctx context.Context, id uuid.UUID) (*Event, error) {
-	row := q.db.QueryRowContext(ctx, getEvent, id)
+	row := q.db.QueryRow(ctx, getEvent, id)
 	var i Event
 	err := row.Scan(
 		&i.ID,
@@ -59,7 +77,7 @@ type GetEventsWithOrganizationsRow struct {
 }
 
 func (q *Queries) GetEventsWithOrganizations(ctx context.Context, arg *GetEventsWithOrganizationsParams) ([]*GetEventsWithOrganizationsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getEventsWithOrganizations, arg.DateFloor, arg.FilterOrganization, arg.OrgUuid)
+	rows, err := q.db.Query(ctx, getEventsWithOrganizations, arg.DateFloor, arg.FilterOrganization, arg.OrgUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -84,9 +102,6 @@ func (q *Queries) GetEventsWithOrganizations(ctx context.Context, arg *GetEvents
 		}
 		items = append(items, &i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -98,7 +113,7 @@ SELECT id, expiration_date, capacity, user_fk, org_fk, entity_uuid, entity_type 
 `
 
 func (q *Queries) GetInvite(ctx context.Context, id uuid.UUID) (*Invite, error) {
-	row := q.db.QueryRowContext(ctx, getInvite, id)
+	row := q.db.QueryRow(ctx, getInvite, id)
 	var i Invite
 	err := row.Scan(
 		&i.ID,
@@ -117,7 +132,7 @@ SELECT id, expiration_date, capacity, user_fk, org_fk, entity_uuid, entity_type 
 `
 
 func (q *Queries) GetInvitesForOrgUser(ctx context.Context, userFk uuid.UUID) ([]*Invite, error) {
-	rows, err := q.db.QueryContext(ctx, getInvitesForOrgUser, userFk)
+	rows, err := q.db.Query(ctx, getInvitesForOrgUser, userFk)
 	if err != nil {
 		return nil, err
 	}
@@ -138,9 +153,6 @@ func (q *Queries) GetInvitesForOrgUser(ctx context.Context, userFk uuid.UUID) ([
 		}
 		items = append(items, &i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -157,7 +169,7 @@ type GetOrgUserParams struct {
 }
 
 func (q *Queries) GetOrgUser(ctx context.Context, arg *GetOrgUserParams) (*OrgUser, error) {
-	row := q.db.QueryRowContext(ctx, getOrgUser, arg.UserFk, arg.OrganizationFk)
+	row := q.db.QueryRow(ctx, getOrgUser, arg.UserFk, arg.OrganizationFk)
 	var i OrgUser
 	err := row.Scan(
 		&i.ID,
@@ -173,7 +185,7 @@ SELECT id, org_name, city, org_image_url FROM organizations o WHERE id = $1
 `
 
 func (q *Queries) GetOrganization(ctx context.Context, id uuid.UUID) (*Organization, error) {
-	row := q.db.QueryRowContext(ctx, getOrganization, id)
+	row := q.db.QueryRow(ctx, getOrganization, id)
 	var i Organization
 	err := row.Scan(
 		&i.ID,
@@ -189,7 +201,7 @@ SELECT id, org_name, city, org_image_url FROM organizations o WHERE o.id = $1 LI
 `
 
 func (q *Queries) GetOrganizationByUuid(ctx context.Context, organizationUuid uuid.UUID) (*Organization, error) {
-	row := q.db.QueryRowContext(ctx, getOrganizationByUuid, organizationUuid)
+	row := q.db.QueryRow(ctx, getOrganizationByUuid, organizationUuid)
 	var i Organization
 	err := row.Scan(
 		&i.ID,
@@ -205,7 +217,7 @@ SELECT id, event_name, event_date, event_location, event_description, event_imag
 `
 
 func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid uuid.UUID) ([]*Event, error) {
-	rows, err := q.db.QueryContext(ctx, getOrganizationEvents, orgUuid)
+	rows, err := q.db.Query(ctx, getOrganizationEvents, orgUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -226,13 +238,51 @@ func (q *Queries) GetOrganizationEvents(ctx context.Context, orgUuid uuid.UUID) 
 		}
 		items = append(items, &i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getOrganizationUsers = `-- name: GetOrganizationUsers :one
+SELECT ou.id, policies_num, user_fk, organization_fk, u.id, email, password_hash, phone_number, first_name, last_name, username, image_url, validated FROM org_users OU INNER JOIN users u ON ou.user_fk = u.id WHERE ou.organization_fk = $1
+`
+
+type GetOrganizationUsersRow struct {
+	ID             int32
+	PoliciesNum    int32
+	UserFk         uuid.UUID
+	OrganizationFk uuid.UUID
+	ID_2           uuid.UUID
+	Email          string
+	PasswordHash   string
+	PhoneNumber    string
+	FirstName      string
+	LastName       string
+	Username       string
+	ImageUrl       string
+	Validated      bool
+}
+
+func (q *Queries) GetOrganizationUsers(ctx context.Context, orgUuid uuid.UUID) (*GetOrganizationUsersRow, error) {
+	row := q.db.QueryRow(ctx, getOrganizationUsers, orgUuid)
+	var i GetOrganizationUsersRow
+	err := row.Scan(
+		&i.ID,
+		&i.PoliciesNum,
+		&i.UserFk,
+		&i.OrganizationFk,
+		&i.ID_2,
+		&i.Email,
+		&i.PasswordHash,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.Username,
+		&i.ImageUrl,
+		&i.Validated,
+	)
+	return &i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -240,7 +290,7 @@ SELECT id, email, password_hash, phone_number, first_name, last_name, username, 
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -263,7 +313,7 @@ SELECT id, email, password_hash, phone_number, first_name, last_name, username, 
 
 // GETS
 func (q *Queries) GetUserByUuid(ctx context.Context, uuid uuid.UUID) (*User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUuid, uuid)
+	row := q.db.QueryRow(ctx, getUserByUuid, uuid)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -287,7 +337,7 @@ type GetUserEventsRow struct {
 	ID               int32
 	UserFk           uuid.UUID
 	EventFk          uuid.UUID
-	ApplicationState string
+	ApplicationState int32
 	ID_2             uuid.UUID
 	EventName        string
 	EventDate        time.Time
@@ -298,7 +348,7 @@ type GetUserEventsRow struct {
 }
 
 func (q *Queries) GetUserEvents(ctx context.Context, userUuid uuid.UUID) ([]*GetUserEventsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserEvents, userUuid)
+	rows, err := q.db.Query(ctx, getUserEvents, userUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -323,9 +373,6 @@ func (q *Queries) GetUserEvents(ctx context.Context, userUuid uuid.UUID) ([]*Get
 		}
 		items = append(items, &i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -348,7 +395,7 @@ type GetUserOrganizationsRow struct {
 }
 
 func (q *Queries) GetUserOrganizations(ctx context.Context, userUuid uuid.UUID) ([]*GetUserOrganizationsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserOrganizations, userUuid)
+	rows, err := q.db.Query(ctx, getUserOrganizations, userUuid)
 	if err != nil {
 		return nil, err
 	}
@@ -369,9 +416,6 @@ func (q *Queries) GetUserOrganizations(ctx context.Context, userUuid uuid.UUID) 
 			return nil, err
 		}
 		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -405,7 +449,7 @@ type GetUserWithOrgRow struct {
 }
 
 func (q *Queries) GetUserWithOrg(ctx context.Context, arg *GetUserWithOrgParams) (*GetUserWithOrgRow, error) {
-	row := q.db.QueryRowContext(ctx, getUserWithOrg, arg.OrgUuid, arg.UserUuid)
+	row := q.db.QueryRow(ctx, getUserWithOrg, arg.OrgUuid, arg.UserUuid)
 	var i GetUserWithOrgRow
 	err := row.Scan(
 		&i.ID,
@@ -440,7 +484,7 @@ type InsertEventParams struct {
 }
 
 func (q *Queries) InsertEvent(ctx context.Context, arg *InsertEventParams) error {
-	_, err := q.db.ExecContext(ctx, insertEvent,
+	_, err := q.db.Exec(ctx, insertEvent,
 		arg.ID,
 		arg.EventName,
 		arg.EventDate,
@@ -467,7 +511,7 @@ type InsertInviteParams struct {
 }
 
 func (q *Queries) InsertInvite(ctx context.Context, arg *InsertInviteParams) error {
-	_, err := q.db.ExecContext(ctx, insertInvite,
+	_, err := q.db.Exec(ctx, insertInvite,
 		arg.ID,
 		arg.ExpirationDate,
 		arg.Capacity,
@@ -490,7 +534,7 @@ type InsertOrgUserParams struct {
 }
 
 func (q *Queries) InsertOrgUser(ctx context.Context, arg *InsertOrgUserParams) error {
-	_, err := q.db.ExecContext(ctx, insertOrgUser, arg.PoliciesNum, arg.UserFk, arg.OrganizationFk)
+	_, err := q.db.Exec(ctx, insertOrgUser, arg.PoliciesNum, arg.UserFk, arg.OrganizationFk)
 	return err
 }
 
@@ -506,7 +550,7 @@ type InsertOrganizationParams struct {
 }
 
 func (q *Queries) InsertOrganization(ctx context.Context, arg *InsertOrganizationParams) error {
-	_, err := q.db.ExecContext(ctx, insertOrganization,
+	_, err := q.db.Exec(ctx, insertOrganization,
 		arg.ID,
 		arg.OrgName,
 		arg.City,
@@ -534,7 +578,7 @@ type InsertUserParams struct {
 
 // PUTS
 func (q *Queries) InsertUser(ctx context.Context, arg *InsertUserParams) error {
-	_, err := q.db.ExecContext(ctx, insertUser,
+	_, err := q.db.Exec(ctx, insertUser,
 		arg.ID,
 		arg.Email,
 		arg.PasswordHash,
@@ -548,6 +592,21 @@ func (q *Queries) InsertUser(ctx context.Context, arg *InsertUserParams) error {
 	return err
 }
 
+const insertUserEvent = `-- name: InsertUserEvent :exec
+INSERT INTO user_events (user_fk, event_fk, application_state) VALUES ($1,$2,$3)
+`
+
+type InsertUserEventParams struct {
+	UserFk           uuid.UUID
+	EventFk          uuid.UUID
+	ApplicationState int32
+}
+
+func (q *Queries) InsertUserEvent(ctx context.Context, arg *InsertUserEventParams) error {
+	_, err := q.db.Exec(ctx, insertUserEvent, arg.UserFk, arg.EventFk, arg.ApplicationState)
+	return err
+}
+
 const truncateAll = `-- name: TruncateAll :exec
 
 TRUNCATE users, org_users, organizations, events, user_events, invites
@@ -555,6 +614,31 @@ TRUNCATE users, org_users, organizations, events, user_events, invites
 
 // UTIL
 func (q *Queries) TruncateAll(ctx context.Context) error {
-	_, err := q.db.ExecContext(ctx, truncateAll)
+	_, err := q.db.Exec(ctx, truncateAll)
+	return err
+}
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE users SET password_hash = $1 WHERE id = $2
+`
+
+type UpdatePasswordParams struct {
+	PasswordHash string
+	ID           uuid.UUID
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg *UpdatePasswordParams) error {
+	_, err := q.db.Exec(ctx, updatePassword, arg.PasswordHash, arg.ID)
+	return err
+}
+
+const useInvite = `-- name: UseInvite :exec
+
+UPDATE invites SET use_limit = use_limit - 1 WHERE id = $1 AND use_limit != 0
+`
+
+// UPDATES
+func (q *Queries) UseInvite(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.Exec(ctx, useInvite, id)
 	return err
 }

@@ -1,23 +1,9 @@
 package bo
 
-import "database/sql"
-
-type ApplicationState string
+type ApplicationState int
 
 const (
-	APPLIED  ApplicationState = "APPLIED"
-	ACCEPTED ApplicationState = "ACCEPTED"
-	NULL     ApplicationState = "NULL"
+	APPLIED ApplicationState = iota
+	ACCEPTED
+	NULL
 )
-
-func ParseApplicationState(state sql.NullString) ApplicationState {
-	if state.Valid {
-		switch state.String {
-		case "APPLIED":
-			return APPLIED
-		case "ACCEPTED":
-			return ACCEPTED
-		}
-	}
-	return NULL
-}

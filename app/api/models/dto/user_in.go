@@ -13,3 +13,12 @@ type UserSignIn struct {
 	Email       string `json:"email"`
 	RawPassword string `json:"password"`
 }
+
+type UserResetPasswordPreflight struct {
+	Email string `json:"email"`
+}
+
+type UserResetPasswordConfirmed struct {
+	ResetUUID   string `json:"reset_uuid"`
+	RawPassword string `json:"password"`
+}

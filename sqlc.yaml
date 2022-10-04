@@ -3,6 +3,7 @@ packages:
   - path: "./app/datastore/pg"
     name: "userRepo"
     engine: "postgresql"
+    sql_package: "pgx/v4"
     schema: "./db/event/init.sql"
     queries: "./db/event/queries.sql"
     emit_result_struct_pointers: true

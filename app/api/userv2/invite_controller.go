@@ -87,3 +87,21 @@ func getSelfInvitesController(c echo.Context) error {
 		"invites": dto.ConvertInvites(invites),
 	}))
 }
+
+func acceptInviteController(c echo.Context) error {
+	self, err := core.ExtractUser(c)
+	if err != nil {
+		return core.JSONApiError(c, http.StatusUnauthorized)
+	}
+
+	var inviteGetDto dto.InviteGet
+	if err := c.Bind(&inviteGetDto); err != nil {
+		return core.JSONApiError(c, http.StatusBadRequest)
+	}
+
+	if err := user.GetUserService().AcceptInvite(c.Request().Context(), self, &inviteGetDto); err != nil {
+		return core.JSONApiError(c, http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))
+}

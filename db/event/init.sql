@@ -39,7 +39,7 @@ CREATE TABLE user_events (
     id SERIAL PRIMARY KEY,
     user_fk uuid NOT NULL,
     event_fk uuid NOT NULL,
-    application_state VARCHAR(4) NOT NULL
+    application_state INT NOT NULL
 );
 
 CREATE TABLE invites (
@@ -66,6 +66,9 @@ ALTER TABLE user_events
 
 ALTER TABLE user_events
     ADD CONSTRAINT fk_user_events_event FOREIGN KEY (event_fk) REFERENCES events(id) ON DELETE CASCADE;
+
+ALTER TABLE user_events
+    ADD CONSTRAINT unique_user_event_fks UNIQUE (user_fk, event_fk);
 
 ALTER TABLE invites
 	ADD CONSTRAINT fk_invites_org_user FOREIGN KEY (user_fk) REFERENCES users(id) ON DELETE CASCADE;

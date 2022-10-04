@@ -1,11 +1,12 @@
 package userRepo
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"sync"
 
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 const (
@@ -16,28 +17,43 @@ const (
 	dbname   = "postgres"
 )
 
-var dbCon *sql.DB
-var DBSingleton sync.Once
+var dbCon *pgxpool.Pool
+var dbSingleton sync.Once
 
-func RwInstance() *sql.DB {
-	DBSingleton.Do(func() {
-		dbCon = CreateConnection()
+func RwInstance() *pgxpool.Pool {
+	dbSingleton.Do(func() {
+		dbCon = CreatePool()
 	})
 	return dbCon
 }
 
-func CreateConnection() *sql.DB {
-	conString := fmt.Sprintf("port=%d host=%s user=%s password=%s dbname=%s sslmode=disable", port, host, user, password, dbname)
-	db, err := sql.Open("postgres", conString)
+func CreateConnection() *pgx.Conn {
+	conString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", user, password, host, port, dbname)
+	db, err := pgx.Connect(context.Background(), conString)
 	if err != nil {
 		panic(err)
 	}
 
-	err = db.Ping()
+	err = db.Ping(context.Background())
 
 	if err != nil {
 		panic(err)
 	}
 
 	return db
+}
+
+func CreatePool() *pgxpool.Pool {
+	pool, err := pgxpool.Connect(context.TODO(), fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", user, password, host, port, dbname))
+	if err != nil {
+		panic(err)
+	}
+
+	err = pool.Ping(context.Background())
+
+	if err != nil {
+		panic(err)
+	}
+
+	return pool
 }

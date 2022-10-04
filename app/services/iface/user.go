@@ -2,6 +2,7 @@ package iface
 
 import (
 	"context"
+
 	"gamma/app/api/models/dto"
 	userRepo "gamma/app/datastore/pg"
 	"gamma/app/domain/bo"
@@ -16,6 +17,7 @@ type UserService interface {
 	GetUserWithOrg(ctx context.Context, userUUID uuid.UUID, orgUUID uuid.UUID) (*userRepo.GetUserWithOrgRow, error)
 	GetUserEvents(ctx context.Context, userUUID uuid.UUID) ([]*userRepo.GetUserEventsRow, error)
 	GetUserOrganizations(ctx context.Context, userUUID uuid.UUID) ([]*userRepo.GetUserOrganizationsRow, error)
+	GetOrganizationUsers(ctx context.Context, orgUUID uuid.UUID) (*userRepo.GetOrganizationUsersRow, error)
 	GetEvents(ctx context.Context, searchInput *dto.EventSearch) ([]*userRepo.GetEventsWithOrganizationsRow, error)
 	CreateEvent(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, eventParams *dto.EventUpsert) error
 	CreateOrganization(ctx context.Context, orgParams *userRepo.InsertOrganizationParams) error
@@ -25,5 +27,8 @@ type UserService interface {
 	GetInvitesForOrgUser(ctx context.Context, userUuid uuid.UUID) ([]*userRepo.Invite, error)
 	GetEvent(ctx context.Context, eventUUID uuid.UUID) (*userRepo.Event, error)
 	GetOrganization(ctx context.Context, orgUUID uuid.UUID) (*userRepo.Organization, error)
+	AcceptInvite(ctx context.Context, user *userRepo.User, acceptParams *dto.InviteGet) error
+	ResetPasswordPreflight(ctx context.Context, resetParams *dto.UserResetPasswordPreflight) error
+	ResetPasswordConfirmed(ctx context.Context, resetParams *dto.UserResetPasswordConfirmed) error
 	DANGER() error
 }

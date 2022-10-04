@@ -9,10 +9,9 @@ const (
 	MODIFY_EVENTS                    = 1 << 3
 	CREATE_EVENTS                    = 1 << 4
 	MODIFY_ORGANIZATION              = 1 << 5
-	CREATE_ORGANIZATION              = 1 << 6
 	CREATE_INVITES                   = 1 << 7
 	MODIFY_ORG_USERS                 = 1 << 8
-	ADMIN                            = 1<<9 | MODIFY_ORG_USERS | MODIFY_EVENTS | MODIFY_ORGANIZATION | CREATE_EVENTS | CREATE_ORGANIZATION | ACCEPT_APPLICATIONS
+	ADMIN                            = 1<<9 | MODIFY_ORG_USERS | MODIFY_EVENTS | MODIFY_ORGANIZATION | CREATE_EVENTS | ACCEPT_APPLICATIONS
 	OWNER                            = 1<<10 | ADMIN
 )
 

@@ -1,13 +1,14 @@
 package user
 
 import (
+	"net/http"
+
 	"gamma/app/api/auth/ecJwt"
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
 	"gamma/app/domain/bo"
 	"gamma/app/services/user"
 	"gamma/app/system/log"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
@@ -15,6 +16,7 @@ import (
 func logInController(c echo.Context) error {
 	var logInDto dto.UserSignIn
 	if err := c.Bind(&logInDto); err != nil {
+		log.Errorf("%v", err)
 		return core.JSONApiError(c, http.StatusBadRequest)
 	}
 
@@ -98,4 +100,28 @@ func refreshController(c echo.Context) error {
 	}))
 }
 
-// TODO: recover password
+func recoverPasswordController(c echo.Context) error {
+	var resetPasswordDto dto.UserResetPasswordPreflight
+	if err := c.Bind(&resetPasswordDto); err != nil {
+		return core.JSONApiError(c, http.StatusBadRequest)
+	}
+
+	if err := user.GetUserService().ResetPasswordPreflight(c.Request().Context(), &resetPasswordDto); err != nil {
+		return core.JSONApiError(c, http.StatusUnauthorized)
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))
+}
+
+func resetPasswordController(c echo.Context) error {
+	var resetPasswordDto dto.UserResetPasswordConfirmed
+	if err := c.Bind(&resetPasswordDto); err != nil {
+		return core.JSONApiError(c, http.StatusBadRequest)
+	}
+
+	if err := user.GetUserService().ResetPasswordConfirmed(c.Request().Context(), &resetPasswordDto); err != nil {
+		return core.JSONApiError(c, http.StatusUnauthorized)
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))
+}

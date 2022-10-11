@@ -357,6 +357,34 @@ func (u *userService) AcceptInvite(ctx context.Context, user *userRepo.User, acc
 	return tx.Commit(ctx)
 }
 
+func (u *userService) UpdateEvent(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, eventParams *dto.EventUpsert, eventUUID uuid.UUID) error {
+	policyNumber := bo.PolicyNumber(orgUser.PoliciesNum)
+	if !policyNumber.Can(bo.MODIFY_EVENTS) {
+		return errors.New("user cannot create events")
+	}
+	// imageUrl, err := u.storage.Put(ctx, fmt.Sprintf("users/%s.webp", eventUUID.String()), &objectstore.Object{
+	// 	Data: eventParams.EventImage,
+	// })
+	// if err != nil {
+	// 	log.Errorf("%v", err)
+	// 	return err
+	// }
+	if err := u.userRepo.UpdateEvent(ctx, &userRepo.UpdateEventParams{
+		ID:               eventUUID,
+		EventName:        eventParams.EventName,
+		EventDate:        eventParams.EventDate,
+		EventLocation:    eventParams.EventLocation,
+		EventDescription: eventParams.EventDescription,
+		EventImageUrl:    "",
+	}); err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	return nil
+
+}
+
 // TODO: Remove this and come up with a test only alternative
 func (u *userService) DANGER() error {
 	return u.userRepo.TruncateAll(context.Background())

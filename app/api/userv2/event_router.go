@@ -22,6 +22,8 @@ func eventRoutes(e *echo.Echo) {
 
 	getEventsRouter(grp)
 	createEventRouter(grp)
+	getEventRouter(grp)
+	updateEventRouter(grp)
 }
 
 // With query option org_id
@@ -41,21 +43,17 @@ func validateOtherRouter(g *echo.Group) {
 
 // TODO: Grant
 func getEventRouter(g *echo.Group) {
-	g.GET("/event/:event_uuid", func(c echo.Context) error {
-		return nil
-	})
+	g.GET("/:event_uuid", getEventController)
 }
 
 // TODO: Grant
 func updateEventRouter(g *echo.Group) {
-	g.PUT("/event/:event_uuid", func(c echo.Context) error {
-		return nil
-	})
+	g.PUT("/:event_uuid", updateEventController)
 }
 
 // TODO: Grant
 func deleteEventRouter(g *echo.Group) {
-	g.DELETE("/event/:event_uuid", func(c echo.Context) error {
+	g.DELETE("/:event_uuid", func(c echo.Context) error {
 		return nil
 	})
 }

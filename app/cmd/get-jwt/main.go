@@ -7,6 +7,8 @@ import (
 	"gamma/app/domain/bo"
 	"gamma/app/services/user"
 	"gamma/app/system"
+	"log"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -14,8 +16,8 @@ import (
 func main() {
 	system.Initialize()
 	usr, _ := user.GetUserService().SignUpUser(context.Background(), &dto.UserSignUp{
-		Email:       "test@gmail.com",
-		PhoneNumber: "5126327045",
+		Email:       "test2@gmail.com",
+		PhoneNumber: "5127327045",
 		RawPassword: "test",
 		FirstName:   "Test",
 		LastName:    "Testacular",
@@ -24,7 +26,7 @@ func main() {
 	orgUuid := uuid.New()
 	user.GetUserService().CreateOrganization(context.Background(), &userRepo.InsertOrganizationParams{
 		ID:          orgUuid,
-		OrgName:     "Kappa Ligma Balls",
+		OrgName:     "Kappa Ligma Balls2",
 		City:        "Kappa City",
 		OrgImageUrl: "asdfasdf",
 	})
@@ -32,5 +34,19 @@ func main() {
 		PoliciesNum:    bo.ADMIN,
 		UserFk:         usr.UUID,
 		OrganizationFk: orgUuid,
+	})
+	orgUser, err := user.GetUserService().GetUserWithOrg(context.Background(), usr.UUID, orgUuid)
+	if err != nil {
+		log.Fatal(err)
+	}
+	var ppl []string
+	ppl = append(ppl, usr.UUID.String())
+	user.GetUserService().CreateEvent(context.Background(), orgUser, &dto.EventUpsert{
+		EventName:           "Woodstock",
+		EventDate:           time.Now().Add(100 * time.Hour),
+		EventLocation:       "2400 Pearl Street",
+		EventDescription:    "Awesome party. Awesome people. Awesome Time.",
+		OrganizationID:      orgUuid.String(),
+		OrganizationUserIDs: ppl,
 	})
 }

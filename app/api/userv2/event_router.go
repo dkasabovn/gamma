@@ -33,10 +33,8 @@ func createEventRouter(g *echo.Group) {
 	g.POST("/new", createEventController)
 }
 
-func validateOtherRouter(g *echo.Group) {
-	g.POST("/validate", func(c echo.Context) error {
-		return nil
-	})
+func checkRouter(g *echo.Group) {
+	g.POST("/validate", checkController)
 }
 
 // TODO: Grant

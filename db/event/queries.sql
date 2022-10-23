@@ -24,6 +24,9 @@ SELECT * FROM user_events ue INNER JOIN events e ON ue.event_fk = e.id WHERE ue.
 -- name: GetOrganizationByUuid :one
 SELECT * FROM organizations o WHERE o.id = sqlc.arg(organization_uuid) LIMIT 1;
 
+-- name: CheckUser :one
+SELECT * FROM user_events ue WHERE ue.user_fk = $1 AND ue.event_fk = $2 AND ue.application_state = 2;
+
 -- name: GetEventsWithOrganizations :many
 SELECT * FROM events e INNER JOIN organizations o ON e.organization_fk = o.id
 WHERE e.event_date > @date_floor

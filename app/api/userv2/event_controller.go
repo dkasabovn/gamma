@@ -1,11 +1,12 @@
 package user
 
 import (
+	"net/http"
+
 	"gamma/app/api/core"
 	"gamma/app/api/models/dto"
 	"gamma/app/services/user"
 	"gamma/app/system/log"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 )
@@ -55,18 +56,15 @@ func createEventController(c echo.Context) error {
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))
 }
 
-func validateOtherController(c echo.Context) error {
-	var eventValidateDto dto.EventValidate
-	if err := c.Bind(&eventValidateDto); err != nil {
+func checkController(c echo.Context) error {
+	var eventCheckDto dto.EventCheck
+	if err := c.Bind(&eventCheckDto); err != nil {
 		return core.JSONApiError(c, http.StatusBadRequest)
 	}
 
-	_, err := core.ExtractOrguser(c, eventValidateDto.OrganizationID)
-	if err != nil {
+	if err := user.GetUserService().CheckUser(c.Request().Context(), eventCheckDto.UserID, eventCheckDto.EventID); err != nil {
 		return core.JSONApiError(c, http.StatusUnauthorized)
 	}
 
-	// TODO: Check if user has user_event matching the requested validation, ensure orguser has the right privileges, send back users information
-
-	return nil
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))
 }

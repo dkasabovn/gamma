@@ -196,5 +196,41 @@ var _ = Describe("Service", func() {
 		})
 	})
 
+	// Ω
+	Describe("creating invite", func() {
+		userArgs := &dto.UserSignUp{
+			Email:       faker.Internet().Email(),
+			PhoneNumber: faker.PhoneNumber().PhoneNumber(),
+			RawPassword: faker.Internet().Password(8, 10),
+			FirstName:   faker.Name().FirstName(),
+			LastName:    faker.Name().LastName(),
+			UserName:    faker.Internet().UserName(),
+		}
+
+		var user *bo.PartialUser
+
+		JustBeforeEach(func() {
+			partialUser, err := userSvc.SignUpUser(context.Background(), userArgs)
+			user = partialUser
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+
+		Context("with correct rights", func() {
+			It("should not fail", func() {
+				ou, err := userSvc.GetUserWithOrg(context.Background(), user.UUID, orgUuid)
+				Ω(err).ShouldNot(HaveOccurred())
+				err = userSvc.CreateInvite(context.Background(), ou, &dto.InviteCreate{
+					ExpirationDate: time.Now().Add(time.Hour * 30),
+					Capacity:       faker.RandomInt(50, 100),
+					OrganizationID: orgUuid.String(),
+					UserUuid:       user.UUID.String(),
+					EntityUuid:     orgUuid.String(),
+					EntityType:     int(bo.ORGANIZATION),
+				})
+				Ω(err).ShouldNot(HaveOccurred())
+			})
+		})
+	})
+
 	// TODO: test create invite
 })

@@ -30,6 +30,27 @@ func (q *Queries) BatchAddOrgUsersToEvent(ctx context.Context, arg *BatchAddOrgU
 	return err
 }
 
+const checkUser = `-- name: CheckUser :one
+SELECT id, user_fk, event_fk, application_state FROM user_events ue WHERE ue.user_fk = $1 AND ue.event_fk = $2 AND ue.application_state = 2
+`
+
+type CheckUserParams struct {
+	UserFk  uuid.UUID
+	EventFk uuid.UUID
+}
+
+func (q *Queries) CheckUser(ctx context.Context, arg *CheckUserParams) (*UserEvent, error) {
+	row := q.db.QueryRow(ctx, checkUser, arg.UserFk, arg.EventFk)
+	var i UserEvent
+	err := row.Scan(
+		&i.ID,
+		&i.UserFk,
+		&i.EventFk,
+		&i.ApplicationState,
+	)
+	return &i, err
+}
+
 const getEvent = `-- name: GetEvent :one
 SELECT id, event_name, event_date, event_location, event_description, event_image_url, organization_fk FROM events e WHERE id = $1
 `

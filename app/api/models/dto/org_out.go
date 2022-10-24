@@ -7,7 +7,7 @@ import (
 )
 
 type Organization struct {
-	ID          uuid.UUID
+	ID          uuid.UUID `json:"OrgID"`
 	OrgName     string
 	City        string
 	OrgImageUrl string

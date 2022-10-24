@@ -83,6 +83,9 @@ UPDATE invites SET use_limit = use_limit - 1 WHERE id = $1 AND use_limit != 0;
 -- name: UpdatePassword :exec
 UPDATE users SET password_hash = $1 WHERE id = $2;
 
+-- name: UpdateEvent :exec
+UPDATE events SET event_name = $2, event_date = $3, event_location = $4, event_description = $5, event_image_url = $6 WHERE id = $1;
+
 -- UTIL
 
 -- name: TruncateAll :exec

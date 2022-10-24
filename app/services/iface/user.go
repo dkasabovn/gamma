@@ -26,6 +26,7 @@ type UserService interface {
 	GetInvite(ctx context.Context, inviteParams *dto.InviteGet) (*userRepo.Invite, error)
 	GetInvitesForOrgUser(ctx context.Context, userUuid uuid.UUID) ([]*userRepo.Invite, error)
 	GetEvent(ctx context.Context, eventUUID uuid.UUID) (*userRepo.Event, error)
+	UpdateEvent(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, eventParams *dto.EventUpsert, eventUUID uuid.UUID) error
 	GetOrganization(ctx context.Context, orgUUID uuid.UUID) (*userRepo.Organization, error)
 	AcceptInvite(ctx context.Context, user *userRepo.User, acceptParams *dto.InviteGet) error
 	ResetPasswordPreflight(ctx context.Context, resetParams *dto.UserResetPasswordPreflight) error

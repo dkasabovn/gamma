@@ -3,12 +3,10 @@ package dto
 import (
 	userRepo "gamma/app/datastore/pg"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Event struct {
-	ID               uuid.UUID
+	ID               string `json:"EventID"`
 	EventName        string
 	EventDate        time.Time
 	EventLocation    string
@@ -28,7 +26,7 @@ type EventWithUserStatus struct {
 
 func ConvertEvent(event *userRepo.Event) *Event {
 	return &Event{
-		ID:               event.ID,
+		ID:               event.ID.String(),
 		EventName:        event.EventName,
 		EventDate:        event.EventDate,
 		EventLocation:    event.EventLocation,
@@ -48,7 +46,7 @@ func ConvertEvents(events []*userRepo.Event) []*Event {
 func ConvertEventWithOrganization(eventWithOrg *userRepo.GetEventsWithOrganizationsRow) *EventWithOrganization {
 	return &EventWithOrganization{
 		Event: Event{
-			ID:               eventWithOrg.ID,
+			ID:               eventWithOrg.ID.String(),
 			EventName:        eventWithOrg.EventName,
 			EventDate:        eventWithOrg.EventDate,
 			EventLocation:    eventWithOrg.EventLocation,
@@ -75,7 +73,7 @@ func ConvertEventsWithOrganizations(eventsWithOrgs []*userRepo.GetEventsWithOrga
 func ConvertUserEvent(userEvent *userRepo.GetUserEventsRow) *EventWithUserStatus {
 	return &EventWithUserStatus{
 		Event: Event{
-			ID:               userEvent.EventFk,
+			ID:               userEvent.EventFk.String(),
 			EventName:        userEvent.EventName,
 			EventDate:        userEvent.EventDate,
 			EventLocation:    userEvent.EventLocation,

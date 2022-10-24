@@ -357,6 +357,32 @@ func (u *userService) AcceptInvite(ctx context.Context, user *userRepo.User, acc
 	return tx.Commit(ctx)
 }
 
+func (u *userService) UpdateEvent(ctx context.Context, orgUser *userRepo.GetUserWithOrgRow, eventParams *dto.EventUpsert, eventUUID uuid.UUID) error {
+	policyNumber := bo.PolicyNumber(orgUser.PoliciesNum)
+	if !policyNumber.Can(bo.MODIFY_EVENTS) {
+		return errors.New("user cannot create events")
+	}
+	// imageUrl, err := u.storage.Put(ctx, fmt.Sprintf("users/%s.webp", eventUUID.String()), &objectstore.Object{
+	// 	Data: eventParams.EventImage,
+	// })
+	// if err != nil {
+	// 	log.Errorf("%v", err)
+	// 	return err
+	// }
+	if err := u.userRepo.UpdateEvent(ctx, &userRepo.UpdateEventParams{
+		ID:               eventUUID,
+		EventName:        eventParams.EventName,
+		EventDate:        eventParams.EventDate,
+		EventLocation:    eventParams.EventLocation,
+		EventDescription: eventParams.EventDescription,
+		EventImageUrl:    "",
+	}); err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	return nil
+
 func (u *userService) CheckUser(ctx context.Context, userID string, eventID string) error {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {

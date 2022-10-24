@@ -352,7 +352,7 @@ func (u *userService) AcceptInvite(ctx context.Context, user *userRepo.User, acc
 		return errors.New("corrupted invite")
 	}
 
-	// TODO: missing something? Tally: 1
+	// TODO: missing something? Tally: 3
 
 	return tx.Commit(ctx)
 }
@@ -383,6 +383,22 @@ func (u *userService) UpdateEvent(ctx context.Context, orgUser *userRepo.GetUser
 
 	return nil
 
+func (u *userService) CheckUser(ctx context.Context, userID string, eventID string) error {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return err
+	}
+	eventUUID, err := uuid.Parse(eventID)
+	if err != nil {
+		return err
+	}
+	if _, err := u.userRepo.CheckUser(ctx, &userRepo.CheckUserParams{
+		UserFk:  userUUID,
+		EventFk: eventUUID,
+	}); err != nil {
+		return err
+	}
+	return nil
 }
 
 // TODO: Remove this and come up with a test only alternative

@@ -17,8 +17,7 @@ type EventSearch struct {
 	DateFloor      *time.Time `query:"date_floor"`
 }
 
-type EventValidate struct {
-	OtherJWT       string `json:"user_jwt"`
-	EventID        string `json:"event_id"`
-	OrganizationID string `json:"organization_id"`
+type EventCheck struct {
+	UserID  string `json:"user_id"`
+	EventID string `json:"event_id"`
 }

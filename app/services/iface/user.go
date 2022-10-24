@@ -31,5 +31,6 @@ type UserService interface {
 	AcceptInvite(ctx context.Context, user *userRepo.User, acceptParams *dto.InviteGet) error
 	ResetPasswordPreflight(ctx context.Context, resetParams *dto.UserResetPasswordPreflight) error
 	ResetPasswordConfirmed(ctx context.Context, resetParams *dto.UserResetPasswordConfirmed) error
+	CheckUser(ctx context.Context, userID string, eventID string) error
 	DANGER() error
 }

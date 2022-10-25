@@ -8,3 +8,4 @@ app/cmd/usersvc/.env
 *.pem
 *.env
 ga_service*.json
+.env.*

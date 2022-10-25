@@ -41,8 +41,8 @@ func GetUserService() iface.UserService {
 		userServiceInstance = &userService{
 			userRepo: userRepo.New(userRepo.RwInstance()),
 			// redis:    redis.GetRedis(),
-			storage: objectstore.GetStorage(),
-			email:   email.GetEmail(),
+			// storage: objectstore.GetStorage(),
+			email: email.GetEmail(),
 		}
 	})
 	return userServiceInstance

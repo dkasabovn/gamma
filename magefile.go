@@ -21,6 +21,10 @@ const (
 	POSTGRES_DB       = "postgres"
 )
 
+func (Build) UserSvc() error {
+	err := sh.RunV("docker", "build", "-t")
+}
+
 func (Run) EventDB() error {
 	// build the database
 	err := sh.RunV("docker", "build", "-t", "gamma/eventdb", "-f", "./db/event/Dockerfile", "./db/event/")

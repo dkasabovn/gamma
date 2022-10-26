@@ -3,18 +3,11 @@ package userRepo
 import (
 	"context"
 	"fmt"
+	"gamma/app/system"
 	"sync"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-)
-
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "nhPldb98Rt"
-	dbname   = "postgres"
 )
 
 var dbCon *pgxpool.Pool
@@ -28,7 +21,7 @@ func RwInstance() *pgxpool.Pool {
 }
 
 func CreateConnection() *pgx.Conn {
-	conString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", user, password, host, port, dbname)
+	conString := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", system.GetConfig().Username, system.GetConfig().Password, system.GetConfig().Hostname, 5432, "postgres")
 	db, err := pgx.Connect(context.Background(), conString)
 	if err != nil {
 		panic(err)
@@ -44,7 +37,7 @@ func CreateConnection() *pgx.Conn {
 }
 
 func CreatePool() *pgxpool.Pool {
-	pool, err := pgxpool.Connect(context.TODO(), fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", user, password, host, port, dbname))
+	pool, err := pgxpool.Connect(context.TODO(), fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable", system.GetConfig().Username, system.GetConfig().Password, system.GetConfig().Hostname, 5432, "postgres"))
 	if err != nil {
 		panic(err)
 	}

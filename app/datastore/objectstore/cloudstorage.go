@@ -16,7 +16,7 @@ type cloudStore struct {
 }
 
 func GenerateObjectUploadUrl(objectPath string) (string, error) {
-	url, err := storageInstance().Bucket(system.BUCKET_NAME).GenerateSignedPostPolicyV4(objectPath, &storage.PostPolicyV4Options{
+	url, err := storageInstance().Bucket(system.GetConfig().BucketName).GenerateSignedPostPolicyV4(objectPath, &storage.PostPolicyV4Options{
 		Expires:    time.Now().Add(15 * time.Minute),
 		Conditions: []storage.PostPolicyV4Condition{},
 	})
@@ -29,7 +29,7 @@ func GenerateObjectUploadUrl(objectPath string) (string, error) {
 
 func newCloudStore() Storage {
 	return &cloudStore{
-		bucket: storageInstance().Bucket(system.BUCKET_NAME),
+		bucket: storageInstance().Bucket(system.GetConfig().BucketName),
 	}
 }
 

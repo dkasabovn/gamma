@@ -24,7 +24,7 @@ func NewConfig() aws.Config {
 	)
 
 	// TODO: AWS Region
-	if system.ENVIRONMENT != "prod" {
+	if system.GetConfig().Environment != "prod" {
 		cfg, err = config.LoadDefaultConfig(context.Background(), config.WithRegion(""), config.WithEndpointResolverWithOptions(localStackResolver))
 	} else {
 		cfg, err = config.LoadDefaultConfig(context.Background(), config.WithRegion(""))

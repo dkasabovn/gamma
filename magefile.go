@@ -22,7 +22,7 @@ const (
 )
 
 func (Build) UserSvc() error {
-	err := sh.RunV("docker", "build", "-t")
+	return sh.RunV("docker", "build", "-t", "gamma/usersvc", "-f", "./app/cmd/user/Dockerfile", ".")
 }
 
 func (Run) EventDB() error {

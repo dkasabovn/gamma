@@ -1,3 +1,25 @@
-app = "gamma-staging-api"
+# fly.toml file generated for gamma-api on 2022-10-25T19:05:41-05:00
+
+app = "gamma-api"
 kill_signal = "SIGTERM"
-kill_timout = 5
+kill_timeout = 5
+
+[build]
+  dockerfile = "app/cmd/user/Dockerfile"
+
+[deploy]
+  strategy = "immediate"
+
+[env]
+  BUCKET_NAME = "gamma_staging_store"
+  ENVIRONMENT = "prod"
+  PORT = "8080"
+
+[[services]]
+  internal_port = 8080
+  protocol = "tcp"
+
+  [[services.ports]]
+    force_https = false
+    handlers = ["http"]
+    port = 80

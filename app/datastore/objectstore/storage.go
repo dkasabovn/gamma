@@ -12,7 +12,7 @@ var (
 
 func GetStorage() Storage {
 	storeSync.Do(func() {
-		if system.ENVIRONMENT == "prod" {
+		if system.GetConfig().Environment == "prod" {
 			storeInst = newCloudStore()
 		} else {
 			storeInst = newFsStore()

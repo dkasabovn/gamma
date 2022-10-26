@@ -22,6 +22,10 @@ func orgRoutes(e *echo.Echo) {
 
 }
 
+func createOrgRouter(g *echo.Group) {
+	g.POST("/org/new", createOrgController)
+}
+
 func getOrgRouter(g *echo.Group) {
 	g.GET("/org/:org_id", getOrgController)
 }

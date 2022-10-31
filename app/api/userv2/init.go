@@ -9,4 +9,5 @@ func AddRoutes(e *echo.Echo) {
 	authRoutes(e)
 	inviteRoutes(e)
 	userRoutes(e)
+	orgRoutes(e)
 }

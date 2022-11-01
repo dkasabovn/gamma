@@ -22,3 +22,13 @@ type UserResetPasswordConfirmed struct {
 	ResetUUID   string `json:"reset_uuid"`
 	RawPassword string `json:"password"`
 }
+
+type UserUpdate struct {
+	ID          string `json:"user_id"`
+	Email       string `json:"email"`
+	PhoneNumber string `json:"phone_number"`
+	FirstName   string `json:"first_name"`
+	LastName    string `json:"last_name"`
+	UserName    string `json:"username"`
+	ImageUrl    string `json:"image_url"`
+}

@@ -163,6 +163,24 @@ func (u *userService) GetUser(ctx context.Context, userUUID uuid.UUID) (*userRep
 	return u.userRepo.GetUserByUuid(ctx, userUUID)
 }
 
+func (u *userService) UpdateUser(ctx context.Context, updateUser *dto.UserUpdate) error {
+	userID, err := uuid.Parse(updateUser.ID)
+	if err != nil {
+		log.Errorf("%v", err)
+		return err
+	}
+
+	return u.userRepo.UpdateUser(ctx, &userRepo.UpdateUserParams{
+		FirstName:   updateUser.FirstName,
+		LastName:    updateUser.LastName,
+		Email:       updateUser.Email,
+		PhoneNumber: updateUser.PhoneNumber,
+		Username:    updateUser.UserName,
+		ImageUrl:    updateUser.ImageUrl,
+		ID:          userID,
+	})
+}
+
 func (u *userService) GetUserWithOrg(ctx context.Context, userUUID uuid.UUID, orgUUID uuid.UUID) (*userRepo.GetUserWithOrgRow, error) {
 	return u.userRepo.GetUserWithOrg(ctx, &userRepo.GetUserWithOrgParams{
 		UserUuid: userUUID,

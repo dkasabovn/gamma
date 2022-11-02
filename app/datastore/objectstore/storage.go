@@ -12,8 +12,8 @@ var (
 
 func GetStorage() Storage {
 	storeSync.Do(func() {
-		if system.GetConfig().Environment == "prod" {
-			storeInst = newCloudStore()
+		if system.GetConfig().Environment != "test" {
+			storeInst = newS3()
 		} else {
 			storeInst = newFsStore()
 		}

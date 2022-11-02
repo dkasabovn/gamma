@@ -14,6 +14,7 @@ type UserService interface {
 	SignInUser(ctx context.Context, email, password string) (*bo.PartialUser, error)
 	SignUpUser(ctx context.Context, signUpParams *dto.UserSignUp) (*bo.PartialUser, error)
 	GetUser(ctx context.Context, userUUID uuid.UUID) (*userRepo.User, error)
+	UpdateUser(ctx context.Context, updateUser *dto.UserUpdate) error
 	GetUserWithOrg(ctx context.Context, userUUID uuid.UUID, orgUUID uuid.UUID) (*userRepo.GetUserWithOrgRow, error)
 	GetUserEvents(ctx context.Context, userUUID uuid.UUID) ([]*userRepo.GetUserEventsRow, error)
 	GetUserOrganizations(ctx context.Context, userUUID uuid.UUID) ([]*userRepo.GetUserOrganizationsRow, error)

@@ -35,3 +35,19 @@ func getSelfController(c echo.Context) error {
 		"user_organizations": dto.ConvertOrganizationsWithPermissions(userOrgs),
 	}))
 }
+
+func updateSelfController(c echo.Context) error {
+	var updateUserDto dto.UserUpdate
+	if err := c.Bind(&updateUserDto); err != nil {
+		return core.JSONApiError(c, http.StatusBadRequest)
+	}
+	err := user.GetUserService().UpdateUser(c.Request().Context(), &updateUserDto)
+	if err != nil {
+		log.Errorf("could not update user: %v", err)
+		return core.JSONApiError(c, http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"user": "updated",
+	}))
+}

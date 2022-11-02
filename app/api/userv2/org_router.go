@@ -19,7 +19,11 @@ func orgRoutes(e *echo.Echo) {
 		Claims:         &ecJwt.GammaClaims{},
 		ParseTokenFunc: core.JwtParserFunction,
 	}))
+	createOrgRouter(grp)
+}
 
+func createOrgRouter(g *echo.Group) {
+	g.POST("/org/new", createOrgController)
 }
 
 func getOrgRouter(g *echo.Group) {

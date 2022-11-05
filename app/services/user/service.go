@@ -255,6 +255,15 @@ func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetUser
 		return err
 	}
 
+	for i := 0; i < len(eventParams.UserIDs); i++ {
+		if err = u.userRepo.InsertUserEvent(ctx, &userRepo.InsertUserEventParams{
+			UserFk:  uuid.Must(uuid.Parse(eventParams.UserIDs[i])),
+			EventFk: newUuid,
+		}); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

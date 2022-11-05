@@ -23,6 +23,7 @@ func userRoutes(e *echo.Echo) {
 	getSelfRouter(grp)
 	updateSelfRouter(grp)
 	getUserIds(grp)
+
 }
 
 func getSelfRouter(g *echo.Group) {

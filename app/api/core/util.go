@@ -108,12 +108,12 @@ func ExtractOrguser(c echo.Context, orgUuidString string) (*userRepo.GetUserWith
 	orgUuid, err := uuid.Parse(orgUuidString)
 	if err != nil {
 		log.Errorf("org uuid is not in uuid format: %v", err)
-		return nil, err
+		return nil, errors.New("org uuid is not in uuid format")
 	}
 	user, err := user.GetUserService().GetUserWithOrg(c.Request().Context(), claims.UUID, orgUuid)
 	if err != nil {
 		log.Errorf("Could not extract org user from token: %s; %v", userToken.Raw, err)
-		return nil, err
+		return nil, errors.New("could not extract org user from token")
 	}
 	return user, nil
 }

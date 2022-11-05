@@ -37,23 +37,27 @@ func getEventsController(c echo.Context) error {
 func createEventController(c echo.Context) error {
 	var eventCreateDto dto.EventUpsert
 	if err := c.Bind(&eventCreateDto); err != nil {
-		return core.JSONApiError(c, http.StatusBadRequest)
+		return c.JSON(http.StatusBadRequest, core.ApiSuccess(map[string]interface{}{
+			"error": "1",
+		}))
 	}
 
 	orgUser, err := core.ExtractOrguser(c, eventCreateDto.OrganizationID)
 	if err != nil {
 		// not working for some reason
-		return c.JSON(http.StatusUnauthorized, core.ApiSuccess(map[string]interface{}{
-			"org_id": eventCreateDto.OrganizationID,
-		}))
+		return core.JSONApiError(c, http.StatusUnauthorized)
 	}
 
 	if err := core.FormImage(c, eventCreateDto.EventImage, "event_image"); err != nil {
-		return core.JSONApiError(c, http.StatusBadRequest)
+		return c.JSON(http.StatusBadRequest, core.ApiSuccess(map[string]interface{}{
+			"error": "2",
+		}))
 	}
 
 	if err := user.GetUserService().CreateEvent(c.Request().Context(), orgUser, &eventCreateDto); err != nil {
-		return core.JSONApiError(c, http.StatusBadRequest)
+		return c.JSON(http.StatusBadRequest, core.ApiSuccess(map[string]interface{}{
+			"error": "3",
+		}))
 	}
 
 	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))

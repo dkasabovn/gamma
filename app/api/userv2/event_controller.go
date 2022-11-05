@@ -42,7 +42,10 @@ func createEventController(c echo.Context) error {
 
 	orgUser, err := core.ExtractOrguser(c, eventCreateDto.OrganizationID)
 	if err != nil {
-		return core.JSONApiError(c, http.StatusUnauthorized)
+		//status unauthorized
+		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+			"reason": "issue 1",
+		}))
 	}
 
 	if err := core.FormImage(c, eventCreateDto.EventImage, "event_image"); err != nil {

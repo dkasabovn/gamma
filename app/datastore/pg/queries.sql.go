@@ -400,6 +400,35 @@ func (q *Queries) GetUserEvents(ctx context.Context, userUuid uuid.UUID) ([]*Get
 	return items, nil
 }
 
+const getUserIds = `-- name: GetUserIds :many
+SELECT username, id FROM users
+`
+
+type GetUserIdsRow struct {
+	Username string
+	ID       uuid.UUID
+}
+
+func (q *Queries) GetUserIds(ctx context.Context) ([]*GetUserIdsRow, error) {
+	rows, err := q.db.Query(ctx, getUserIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetUserIdsRow
+	for rows.Next() {
+		var i GetUserIdsRow
+		if err := rows.Scan(&i.Username, &i.ID); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserOrganizations = `-- name: GetUserOrganizations :many
 SELECT ou.id, policies_num, user_fk, organization_fk, og.id, org_name, city, org_image_url FROM org_users ou INNER JOIN organizations og ON ou.organization_fk = og.id WHERE ou.user_fk = $1
 `

@@ -51,3 +51,14 @@ func updateSelfController(c echo.Context) error {
 		"user": "updated",
 	}))
 }
+
+func getIdsController(c echo.Context) error {
+	users, err := user.GetUserService().GetUserIds(c.Request().Context())
+	if err != nil {
+		log.Errorf("could not get user ID's", err)
+		return core.JSONApiError(c, http.StatusInternalServerError)
+	}
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"user_ids:": users,
+	}))
+}

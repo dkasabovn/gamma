@@ -163,6 +163,10 @@ func (u *userService) GetUser(ctx context.Context, userUUID uuid.UUID) (*userRep
 	return u.userRepo.GetUserByUuid(ctx, userUUID)
 }
 
+func (u *userService) GetUserIds(ctx context.Context) ([]*userRepo.GetUserIdsRow, error) {
+	return u.userRepo.GetUserIds(ctx)
+}
+
 func (u *userService) UpdateUser(ctx context.Context, updateUser *dto.UserUpdate) error {
 	userID, err := uuid.Parse(updateUser.ID)
 	if err != nil {

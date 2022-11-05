@@ -3,6 +3,9 @@
 -- name: GetUserByUuid :one
 SELECT * FROM users WHERE id = sqlc.arg(uuid) LIMIT 1;
 
+-- name: GetUserIds :many
+SELECT username, id FROM users;
+
 -- name: GetUserByEmail :one
 SELECT * FROM users WHERE email = sqlc.arg(email) LIMIT 1;
 

@@ -22,6 +22,7 @@ func userRoutes(e *echo.Echo) {
 
 	getSelfRouter(grp)
 	updateSelfRouter(grp)
+	getUserIds(grp)
 }
 
 func getSelfRouter(g *echo.Group) {
@@ -31,4 +32,8 @@ func getSelfRouter(g *echo.Group) {
 // TODO: Grant
 func updateSelfRouter(g *echo.Group) {
 	g.PUT("/me", updateSelfController)
+}
+
+func getUserIds(g *echo.Group) {
+	g.GET("/ids", getIdsController)
 }

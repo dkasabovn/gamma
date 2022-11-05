@@ -42,9 +42,9 @@ func createEventController(c echo.Context) error {
 
 	orgUser, err := core.ExtractOrguser(c, eventCreateDto.OrganizationID)
 	if err != nil {
-		//status unauthorized
+		// not working for some reason
 		return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
-			"reason": "issue 1",
+			"error": err,
 		}))
 	}
 

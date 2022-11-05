@@ -25,7 +25,7 @@ func getSelfController(c echo.Context) error {
 
 	userOrgs, err := user.GetUserService().GetUserOrganizations(c.Request().Context(), self.ID)
 	if err != nil {
-		log.Errorf("could nto get user organizations: %v", err)
+		log.Errorf("could not get user organizations: %v", err)
 		return core.JSONApiError(c, http.StatusInternalServerError)
 	}
 

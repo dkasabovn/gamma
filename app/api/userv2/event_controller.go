@@ -48,11 +48,11 @@ func createEventController(c echo.Context) error {
 		return core.JSONApiError(c, http.StatusUnauthorized)
 	}
 
-	if err := core.FormImage(c, eventCreateDto.EventImage, "event_image"); err != nil {
-		return c.JSON(http.StatusBadRequest, core.ApiSuccess(map[string]interface{}{
-			"error": "2",
-		}))
-	}
+	// if err := core.FormImage(c, eventCreateDto.EventImage, "event_image"); err != nil {
+	// 	return c.JSON(http.StatusBadRequest, core.ApiSuccess(map[string]interface{}{
+	// 		"error": "2",
+	// 	}))
+	// }
 
 	if err := user.GetUserService().CreateEvent(c.Request().Context(), orgUser, &eventCreateDto); err != nil {
 		return c.JSON(http.StatusBadRequest, core.ApiSuccess(map[string]interface{}{

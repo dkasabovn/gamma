@@ -233,13 +233,13 @@ func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetUser
 
 	newUuid := uuid.New()
 
-	imageUrl, err := u.storage.Put(ctx, fmt.Sprintf("users/%s.webp", newUuid.String()), &objectstore.Object{
-		Data: eventParams.EventImage,
-	})
-	if err != nil {
-		log.Errorf("%v", err)
-		return err
-	}
+	// imageUrl, err := u.storage.Put(ctx, fmt.Sprintf("users/%s.webp", newUuid.String()), &objectstore.Object{
+	// 	Data: eventParams.EventImage,
+	// })
+	// if err != nil {
+	// 	log.Errorf("%v", err)
+	// 	return err
+	// }
 
 	if err := u.userRepo.InsertEvent(ctx, &userRepo.InsertEventParams{
 		ID:               newUuid,
@@ -247,7 +247,7 @@ func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetUser
 		EventDate:        eventParams.EventDate,
 		EventLocation:    eventParams.EventLocation,
 		EventDescription: eventParams.EventDescription,
-		EventImageUrl:    imageUrl,
+		EventImageUrl:    "default.webp",
 		// At this point orgfk should be vetted
 		OrganizationFk: uuid.Must(uuid.Parse(eventParams.OrganizationID)),
 	}); err != nil {
@@ -256,7 +256,7 @@ func (u *userService) CreateEvent(ctx context.Context, orgUser *userRepo.GetUser
 	}
 
 	for i := 0; i < len(eventParams.UserIDs); i++ {
-		if err = u.userRepo.InsertUserEvent(ctx, &userRepo.InsertUserEventParams{
+		if err := u.userRepo.InsertUserEvent(ctx, &userRepo.InsertUserEventParams{
 			UserFk:  uuid.Must(uuid.Parse(eventParams.UserIDs[i])),
 			EventFk: newUuid,
 		}); err != nil {

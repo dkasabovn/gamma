@@ -8,6 +8,7 @@ import (
 	"gamma/app/services/user"
 	"gamma/app/system/log"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -69,9 +70,17 @@ func checkController(c echo.Context) error {
 		return core.JSONApiError(c, http.StatusBadRequest)
 	}
 
-	if err := user.GetUserService().CheckUser(c.Request().Context(), eventCheckDto.UserID, eventCheckDto.EventID); err != nil {
-		return core.JSONApiError(c, http.StatusUnauthorized)
+	userEvents, err := user.GetUserService().GetUserEvents(c.Request().Context(), uuid.Must(uuid.Parse(eventCheckDto.UserID)))
+	if err != nil {
+		log.Errorf("could not get user events: %v", err)
+		return core.JSONApiError(c, http.StatusInternalServerError)
 	}
 
-	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))
+	for i := 0; i < len(userEvents); i++ {
+		if userEvents[i].EventFk == uuid.Must(uuid.Parse(eventCheckDto.EventID)) {
+			return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{}))
+		}
+	}
+	return core.JSONApiError(c, http.StatusUnauthorized)
+
 }

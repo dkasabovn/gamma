@@ -23,6 +23,7 @@ func eventRoutes(e *echo.Echo) {
 	getEventsRouter(grp)
 	createEventRouter(grp)
 	checkRouter(grp)
+	getAllEventsRouter(grp)
 }
 
 // With query option org_id
@@ -36,6 +37,10 @@ func createEventRouter(g *echo.Group) {
 
 func checkRouter(g *echo.Group) {
 	g.POST("/validate", checkController)
+}
+
+func getAllEventsRouter(g *echo.Group) {
+	g.GET("/all", getAllEventsController)
 }
 
 // TODO: Grant

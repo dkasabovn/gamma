@@ -196,6 +196,10 @@ func (u *userService) GetUserEvents(ctx context.Context, userUUID uuid.UUID) ([]
 	return u.userRepo.GetUserEvents(ctx, userUUID)
 }
 
+func (u *userService) GetAllEvents(ctx context.Context) ([]*userRepo.GetAllEventsRow, error) {
+	return u.userRepo.GetAllEvents(ctx)
+}
+
 func (u *userService) GetUserOrganizations(ctx context.Context, userUUID uuid.UUID) ([]*userRepo.GetUserOrganizationsRow, error) {
 	return u.userRepo.GetUserOrganizations(ctx, userUUID)
 }

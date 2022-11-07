@@ -51,6 +51,9 @@ SELECT * FROM organizations o WHERE id = $1;
 -- name: GetOrganizationUsers :one
 SELECT * FROM org_users OU INNER JOIN users u ON ou.user_fk = u.id WHERE ou.organization_fk = sqlc.arg(org_uuid);
 
+-- name: GetAllEvents :many
+SELECT * FROM events e INNER JOIN organizations o ON e.org_fk = o.id;
+
 -- PUTS
 
 -- name: InsertUser :exec

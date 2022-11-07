@@ -84,3 +84,13 @@ func checkController(c echo.Context) error {
 	return core.JSONApiError(c, http.StatusUnauthorized)
 
 }
+
+func getAllEventsController(c echo.Context) error {
+	allEvents, err := user.GetUserService().GetAllEvents(c.Request().Context())
+	if err != nil {
+		return core.JSONApiError(c, http.StatusBadRequest)
+	}
+	return c.JSON(http.StatusOK, core.ApiSuccess(map[string]interface{}{
+		"events": allEvents,
+	}))
+}

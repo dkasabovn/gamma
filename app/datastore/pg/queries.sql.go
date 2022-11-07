@@ -51,6 +51,56 @@ func (q *Queries) CheckUser(ctx context.Context, arg *CheckUserParams) (*UserEve
 	return &i, err
 }
 
+const getAllEvents = `-- name: GetAllEvents :many
+SELECT e.id, event_name, event_date, event_location, event_description, event_image_url, organization_fk, o.id, org_name, city, org_image_url FROM events e INNER JOIN organizations o ON e.org_fk = o.id
+`
+
+type GetAllEventsRow struct {
+	ID               uuid.UUID
+	EventName        string
+	EventDate        time.Time
+	EventLocation    string
+	EventDescription string
+	EventImageUrl    string
+	OrganizationFk   uuid.UUID
+	ID_2             uuid.UUID
+	OrgName          string
+	City             string
+	OrgImageUrl      string
+}
+
+func (q *Queries) GetAllEvents(ctx context.Context) ([]*GetAllEventsRow, error) {
+	rows, err := q.db.Query(ctx, getAllEvents)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*GetAllEventsRow
+	for rows.Next() {
+		var i GetAllEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.EventName,
+			&i.EventDate,
+			&i.EventLocation,
+			&i.EventDescription,
+			&i.EventImageUrl,
+			&i.OrganizationFk,
+			&i.ID_2,
+			&i.OrgName,
+			&i.City,
+			&i.OrgImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getEvent = `-- name: GetEvent :one
 SELECT id, event_name, event_date, event_location, event_description, event_image_url, organization_fk FROM events e WHERE id = $1
 `

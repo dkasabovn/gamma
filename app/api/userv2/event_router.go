@@ -22,6 +22,7 @@ func eventRoutes(e *echo.Echo) {
 
 	getEventsRouter(grp)
 	createEventRouter(grp)
+	checkRouter(grp)
 }
 
 // With query option org_id
